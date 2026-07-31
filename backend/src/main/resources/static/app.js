@@ -9,9 +9,24 @@
   const btnCatalogo = document.getElementById('btnCatalogo');
   const toastEl = document.getElementById('toast');
   const tabs = document.querySelectorAll('.tab');
-  const ROOTS = ['#/inicio', '#/pedidos', '#/cabecotes', '#/encerrados', '#/dashboard'];
+  const btnSair = document.getElementById('btnSair');
+  const tabBarEl = document.querySelector('.tab-bar');
+  const ROOTS = ['#/inicio', '#/pedidos', '#/cabecotes', '#/encerrados', '#/dashboard', '#/login'];
 
   let catalogoCache = { cabecotes: [], servicos: [], pecas: [], categorias: [], clientes: [] };
+
+  // ---------- autenticação ----------
+
+  function getAuth() {
+    try {
+      return JSON.parse(localStorage.getItem('retifica_auth') || 'null');
+    } catch (e) {
+      return null;
+    }
+  }
+  function limparAuth() {
+    localStorage.removeItem('retifica_auth');
+  }
 
   // ---------- utilidades ----------
 
@@ -25,6 +40,10 @@
 
   async function api(method, path, body) {
     const opts = { method, headers: {} };
+    const auth = getAuth();
+    if (auth && auth.token) {
+      opts.headers['Authorization'] = 'Bearer ' + auth.token;
+    }
     if (body !== undefined) {
       opts.headers['Content-Type'] = 'application/json; charset=UTF-8';
       opts.body = JSON.stringify(body);
@@ -35,6 +54,11 @@
     } catch (e) {
       toast('Sem conexão com o servidor.', true);
       throw e;
+    }
+    if (resp.status === 401) {
+      limparAuth();
+      location.hash = '#/login';
+      throw new Error('HTTP 401');
     }
     if (resp.status === 204) return null;
     if (!resp.ok) {
@@ -154,10 +178,20 @@
     { re: /^#\/clientes$/, fn: () => telaClientes() },
     { re: /^#\/encerrados$/, fn: () => telaEncerrados() },
     { re: /^#\/dashboard$/, fn: () => telaDashboardEncerrados() },
+    { re: /^#\/login$/, fn: () => telaLogin() },
   ];
 
   function rotear() {
     const hash = location.hash || '#/inicio';
+
+    if (hash !== '#/login' && !getAuth()) { location.hash = '#/login'; return; }
+    if (hash === '#/login' && getAuth()) { location.hash = '#/inicio'; return; }
+
+    const logado = hash !== '#/login';
+    tabBarEl.hidden = !logado;
+    btnCatalogo.hidden = !logado;
+    btnSair.hidden = !logado;
+
     const raiz = '#/' + (hash.split('/')[1] || 'inicio');
     tabs.forEach(t => t.classList.toggle('active', ('#/' + t.dataset.tab) === raiz));
     btnVoltar.hidden = ROOTS.includes(hash);
@@ -175,6 +209,7 @@
     else location.hash = '#/inicio';
   });
   btnCatalogo.addEventListener('click', () => { location.hash = '#/catalogo'; });
+  btnSair.addEventListener('click', () => { limparAuth(); location.hash = '#/login'; });
   tabs.forEach(t => t.addEventListener('click', () => { location.hash = '#/' + t.dataset.tab; }));
   window.addEventListener('hashchange', rotear);
 
@@ -735,13 +770,13 @@
   // ---------- Cabeçotes ----------
 
   async function telaCabecotes() {
-    tituloTopo.textContent = 'Cabeçotes';
+    tituloTopo.textContent = 'Produtos';
     conteudo.innerHTML = '';
     conteudo.appendChild(el('div', { class: 'empty' }, 'Carregando...'));
     const [lista, categorias] = await Promise.all([api('GET', '/api/cabecotes'), api('GET', '/api/categorias')]);
     conteudo.innerHTML = '';
 
-    conteudo.appendChild(el('h2', { class: 'titulo' }, 'Cabeçotes'));
+    conteudo.appendChild(el('h2', { class: 'titulo' }, 'Produtos'));
     conteudo.appendChild(el('div', { class: 'subtitulo' }, 'Cabeçotes, blocos, bielas e virabrequins — ' + lista.length + ' cadastrados'));
 
     let emEdicaoId = null;
@@ -1159,6 +1194,56 @@
       el('span', { class: 'valor' }, moeda(totalGeral)),
     ));
     return wrap;
+  }
+
+  // ---------- Login ----------
+
+  function telaLogin() {
+    tituloTopo.textContent = 'Entrar';
+    conteudo.innerHTML = '';
+
+    const fldEmail = el('input', { class: 'input', type: 'email', placeholder: 'seu@email.com', autocomplete: 'username' });
+    const fldSenha = el('input', { class: 'input', type: 'password', placeholder: 'Senha', autocomplete: 'current-password' });
+    const erroEl = el('div', { class: 'empty', hidden: true, style: 'color:#a4453f;padding:0;text-align:left;margin-bottom:4px' });
+
+    async function entrar() {
+      erroEl.hidden = true;
+      if (!fldEmail.value.trim() || !fldSenha.value) {
+        erroEl.hidden = false; erroEl.textContent = 'Preencha e-mail e senha.';
+        return;
+      }
+      let resp;
+      try {
+        resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: fldEmail.value.trim(), senha: fldSenha.value })
+        });
+      } catch (e) {
+        erroEl.hidden = false; erroEl.textContent = 'Sem conexão com o servidor.';
+        return;
+      }
+      if (!resp.ok) {
+        erroEl.hidden = false; erroEl.textContent = 'E-mail ou senha inválidos.';
+        return;
+      }
+      const dados = await resp.json();
+      localStorage.setItem('retifica_auth', JSON.stringify(dados));
+      location.hash = '#/inicio';
+      rotear();
+    }
+
+    fldSenha.addEventListener('keydown', (e) => { if (e.key === 'Enter') entrar(); });
+
+    const form = el('div', { style: 'max-width:340px;margin:60px auto 0;display:flex;flex-direction:column;gap:14px' },
+      el('h2', { class: 'titulo' }, 'Retífica'),
+      el('div', { class: 'subtitulo' }, 'Entre com sua conta'),
+      erroEl,
+      campo('E-mail', fldEmail),
+      campo('Senha', fldSenha),
+      btnBlueprint('Entrar', 'btn-primary btn-block', { onclick: entrar })
+    );
+    conteudo.appendChild(form);
   }
 
   // ---------- boot ----------

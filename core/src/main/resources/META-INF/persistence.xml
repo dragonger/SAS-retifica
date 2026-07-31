@@ -16,6 +16,8 @@
         <class>org.example.model.CabecoteModel</class>
         <class>org.example.model.ServicoCatalogoModel</class>
         <class>org.example.model.PecaCatalogoModel</class>
+        <class>org.example.model.EmpresaModel</class>
+        <class>org.example.model.UsuarioModel</class>
 
         <properties>
             <!-- Banco H2 em arquivo fixo na pasta do usuário (~ = user.home),
