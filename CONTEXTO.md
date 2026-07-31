@@ -6,11 +6,11 @@ Sistema de gestão para uma retífica de motores. Nasceu como app desktop JavaFX
 
 Maven multi-módulo, raiz em `C:\Users\Miguel\Downloads\files\retifica-api\retificasDesktop`:
 
-- **core/** — entidades JPA, persistência (Hibernate + H2), repositórios, serviço de PDF. Sem dependência de UI. Usado por desktop e backend.
+- **core/** — entidades JPA, persistência (Hibernate + Postgres), repositórios, serviço de PDF. Sem dependência de UI. Usado por desktop e backend.
 - **desktop/** — app JavaFX original (continua funcionando, quase intocado).
 - **backend/** — API REST (Spring Boot) + a página web/mobile (PWA) servida como recurso estático (`backend/src/main/resources/static/`: `index.html`, `style.css`, `app.js`).
 
-**Banco**: H2 em arquivo único, `~/.retificasDesktop/retificas.mv.db`, modo `AUTO_SERVER=TRUE` — desktop e backend podem rodar ao mesmo tempo na mesma máquina e enxergam os mesmos dados automaticamente (não precisa de sincronização manual).
+**Banco (atualizado em 2026-07-31): Postgres**, não é mais H2. Local: container Docker via `docker-compose.yml` (`docker compose up -d`). Produção: Neon (gerenciado). Ver seção "Produção" abaixo pros detalhes — url/usuário/senha vêm de variáveis de ambiente (`DATABASE_URL`/`DATABASE_USER`/`DATABASE_PASSWORD`), lidas em runtime pelo `JPAUtil`; sem elas, cai nos defaults do `persistence.xml` (Postgres local do Docker). **O antigo arquivo H2** (`~/.retificasDesktop/retificas.mv.db`) e seus backups continuam em `~/.retificasDesktop/` como histórico — não é mais usado pelo app, mas é a fonte pra migração dos dados reais existentes.
 
 **Stack (atualizado em 2026-07-31)**: Spring Boot 4.1.0 (era 2.7.18), Java 21 LTS via `maven.compiler.release` (era 18, non-LTS), Jakarta EE — `core` usa `jakarta.persistence` (era `javax.persistence`), Hibernate ORM 7.4.1.Final via `org.hibernate.orm:hibernate-core` (era `org.hibernate:hibernate-entitymanager` 5.6.11), H2 2.4.240 (era 2.1.214). O BOM `spring-boot-dependencies` fica no `pom.xml` raiz (`dependencyManagement`), não só no `backend`, pra `core` também herdar versões gerenciadas sem depender do Spring em si. Rodando sobre JDK 26.0.1 (única JDK instalada na máquina — `maven.compiler.release=21` faz cross-compilation, não precisa de JDK 21 separada).
 
@@ -28,6 +28,12 @@ C:\Program Files\JetBrains\IntelliJ IDEA 2026.1.4\plugins\maven-plugin\lib\maven
 - **`saas`** → `https://github.com/dragonger/SAS-retifica.git` (público) — criado em 2026-07-31, recebeu o snapshot completo do projeto reestruturado (multi-módulo + dashboard + upgrade). Os dois remotes coexistem no mesmo diretório de trabalho; `git push` sem argumento vai pro `origin` (upstream configurado), pro outro é preciso `git push saas main` explícito.
 
 ## Como rodar
+
+**Banco local (obrigatório antes de compilar/rodar o backend ou o desktop):**
+```bash
+docker compose up -d
+```
+Sobe um Postgres em `localhost:5432` (usuário/senha/banco `retificas`, ver `docker-compose.yml`) — precisa do Docker Desktop aberto. Docker Desktop foi instalado em 2026-07-31 nesta máquina (exigiu habilitar WSL2 + reiniciar o Windows).
 
 **Compilar tudo:**
 ```bash
@@ -52,6 +58,19 @@ Gera uma URL pública tipo `https://palavras-aleatorias.trycloudflare.com` — *
 ```bash
 mvn -pl desktop -am javafx:run
 ```
+Desde a troca pra Postgres, o desktop também precisa do `docker compose up -d` rodando (ou apontar pra um Postgres real via env vars) — não lê mais um arquivo local sozinho.
+
+## Produção (Railway + Neon) — em andamento, 2026-07-31
+
+Branch `feature/producao-postgres-hosting`. Escolhas: hospedagem **Railway** (deploy via `Dockerfile` já criado na raiz), banco **Neon** (Postgres gerenciado). Decisão de projeto: **sem H2 daqui pra frente, nem em dev** — só Postgres (local via Docker, produção via Neon) pra não ter dois dialetos pra manter sincronizados.
+
+**Variáveis de ambiente que a produção precisa** (configurar no painel do Railway, nunca commitar):
+- `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` — do Neon.
+- `JWT_SECRET` — gerar um valor novo (base64, 32 bytes) só pra produção; **não reaproveitar** o `~/.retificasDesktop/jwt-secret.key` local.
+- `SSL_ENABLED=false` — o Railway termina HTTPS de verdade na borda; o app escuta HTTP puro por dentro.
+- `PORT` — o próprio Railway injeta essa automaticamente, não precisa setar.
+
+**Status**: código pronto e testado localmente contra Postgres via Docker (login, pedidos, dashboard, encerrados, PDF — tudo funcionando). Faltam as partes que só o Miguel pode fazer: criar conta/projeto no Neon, criar conta no Railway e conectar o repositório `SAS-retifica`, migrar os dados reais do H2 antigo pro Neon (procedimento documentado no plano de implementação da sessão), configurar as variáveis acima no Railway.
 
 ## Dados reais no banco (não apagar)
 - 1 cliente real: "MIGUEL BELIZARIO SANTOS"

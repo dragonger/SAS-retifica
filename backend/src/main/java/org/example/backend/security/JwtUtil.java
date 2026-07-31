@@ -19,9 +19,11 @@ import java.util.Base64;
 import java.util.Date;
 
 /**
- * Geração e validação de token JWT. A chave de assinatura é gerada na
- * primeira vez que o app roda e guardada em ~/.retificasDesktop/jwt-secret.key
- * — fora do repositório, nunca deve ir pro git (o repo é público).
+ * Geração e validação de token JWT. A chave de assinatura vem da variável de
+ * ambiente JWT_SECRET quando existir (produção — filesystem não é
+ * persistente no Railway); sem ela, é gerada na primeira vez que o app roda
+ * localmente e guardada em ~/.retificasDesktop/jwt-secret.key — fora do
+ * repositório, nunca deve ir pro git (o repo é público).
  */
 @Component
 public class JwtUtil {
@@ -57,6 +59,11 @@ public class JwtUtil {
     }
 
     private byte[] carregarOuGerarChave() {
+        String doAmbiente = System.getenv("JWT_SECRET");
+        if (doAmbiente != null && !doAmbiente.isBlank()) {
+            return Base64.getDecoder().decode(doAmbiente.trim());
+        }
+
         Path arquivo = Path.of(System.getProperty("user.home"), ".retificasDesktop", "jwt-secret.key");
         try {
             if (Files.exists(arquivo)) {
