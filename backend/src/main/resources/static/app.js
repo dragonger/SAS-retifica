@@ -75,7 +75,10 @@
   // navigator.share() com arquivo só funciona se for chamado bem perto do
   // toque — pré-carregar o PDF evita que o fetch "gaste" essa janela de gesto.
   function prepararOrcamento(id) {
-    const promise = fetch('/api/pedidos/' + id + '/pdf')
+    const auth = getAuth();
+    const promise = fetch('/api/pedidos/' + id + '/pdf', {
+      headers: auth && auth.token ? { 'Authorization': 'Bearer ' + auth.token } : {}
+    })
       .then(r => r.ok ? r.blob() : Promise.reject(new Error('HTTP ' + r.status)));
     promise.catch(() => {}); // evita "unhandled rejection" antes do clique
     return promise;
