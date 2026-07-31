@@ -42,12 +42,12 @@ public class BootstrapUsuario implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws IOException {
+    public void run(String... args) {
         EmpresaModel empresa = obterOuCriarEmpresa();
         backfillEmpresaId(empresa);
     }
 
-    private EmpresaModel obterOuCriarEmpresa() throws IOException {
+    private EmpresaModel obterOuCriarEmpresa() {
         if (usuarioRepository.contar() > 0) {
             EmpresaModel existente = empresaRepository.buscarPrimeira();
             if (existente != null) {
@@ -111,14 +111,27 @@ public class BootstrapUsuario implements CommandLineRunner {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private void gravarCredenciais(String senha) throws IOException {
-        Path arquivo = Path.of(System.getProperty("user.home"), ".retificasDesktop", "bootstrap-credentials.txt");
-        Files.createDirectories(arquivo.getParent());
-        String conteudo = "Login inicial do sistema (gerado automaticamente):\n"
-                + "E-mail: " + EMAIL_BOOTSTRAP + "\n"
-                + "Senha: " + senha + "\n"
-                + "Gerado em: " + LocalDateTime.now() + "\n";
-        Files.writeString(arquivo, conteudo, StandardCharsets.UTF_8);
-        System.out.println("=== Usuário inicial criado. Credenciais em " + arquivo + " ===");
+    /**
+     * A senha SEMPRE vai pro log (visível no painel do Railway em produção).
+     * Gravar em arquivo local é só um bônus pra dev — best-effort, porque em
+     * produção o filesystem não é gravável/persistente entre deploys.
+     */
+    private void gravarCredenciais(String senha) {
+        System.out.println("=== Usuário inicial criado ===");
+        System.out.println("E-mail: " + EMAIL_BOOTSTRAP);
+        System.out.println("Senha: " + senha);
+
+        try {
+            Path arquivo = Path.of(System.getProperty("user.home"), ".retificasDesktop", "bootstrap-credentials.txt");
+            Files.createDirectories(arquivo.getParent());
+            String conteudo = "Login inicial do sistema (gerado automaticamente):\n"
+                    + "E-mail: " + EMAIL_BOOTSTRAP + "\n"
+                    + "Senha: " + senha + "\n"
+                    + "Gerado em: " + LocalDateTime.now() + "\n";
+            Files.writeString(arquivo, conteudo, StandardCharsets.UTF_8);
+            System.out.println("(também gravado em " + arquivo + ")");
+        } catch (IOException e) {
+            System.out.println("(não foi possível gravar em arquivo local — tudo bem, use a senha do log acima)");
+        }
     }
 }

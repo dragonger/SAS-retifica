@@ -13,7 +13,7 @@
     <artifactId>retificas-core</artifactId>
     <packaging>jar</packaging>
 
-    <!-- Entidades, persistência (JPA/Hibernate/H2) e serviços de domínio
+    <!-- Entidades, persistência (JPA/Hibernate/Postgres) e serviços de domínio
          (ex.: geração de PDF) compartilhados entre o app desktop e o backend. -->
     <dependencies>
         <dependency>
@@ -21,8 +21,8 @@
             <artifactId>hibernate-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.librepdf</groupId>

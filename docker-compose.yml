@@ -1,0 +1,17 @@
+# Postgres local pra desenvolvimento (produção usa Neon).
+# Uso: docker compose up -d
+# Credenciais aqui batem com os defaults do core/src/main/resources/META-INF/persistence.xml.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: retificas
+      POSTGRES_USER: retificas
+      POSTGRES_PASSWORD: retificas
+    ports:
+      - "5432:5432"
+    volumes:
+      - retificas_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  retificas_postgres_data:

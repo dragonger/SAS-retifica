@@ -20,15 +20,16 @@
         <class>org.example.model.UsuarioModel</class>
 
         <properties>
-            <!-- Banco H2 em arquivo fixo na pasta do usuário (~ = user.home),
-                 independente do diretório de onde o app é iniciado. -->
-            <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
+            <!-- Valores default aqui batem com o Postgres local do docker-compose.yml
+                 (docker compose up -d). Em produção, JPAUtil sobrescreve url/user/password
+                 em runtime a partir de DATABASE_URL/DATABASE_USER/DATABASE_PASSWORD. -->
+            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
             <property name="jakarta.persistence.jdbc.url"
-                      value="jdbc:h2:file:~/.retificasDesktop/retificas;AUTO_SERVER=TRUE"/>
-            <property name="jakarta.persistence.jdbc.user" value="sa"/>
-            <property name="jakarta.persistence.jdbc.password" value=""/>
+                      value="jdbc:postgresql://localhost:5432/retificas"/>
+            <property name="jakarta.persistence.jdbc.user" value="retificas"/>
+            <property name="jakarta.persistence.jdbc.password" value="retificas"/>
 
-            <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
             <!-- Cria/atualiza o schema automaticamente a partir das entidades -->
             <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.show_sql" value="true"/>
