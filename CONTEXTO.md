@@ -98,9 +98,13 @@ Em 2026-07-31 o usuário pediu um levantamento pra transformar o sistema num Saa
 **Roteiro em 3 fases**:
 1. **Fundação**: `Usuario`/`Empresa`, Spring Security + JWT, retrofit de `empresa_id` nas 8 entidades, migrar os dados reais existentes pra dentro do sistema, trocar H2 por Postgres + Flyway.
 2. **Onboarding de outras oficinas**: cadastro self-serve, administração por empresa, deploy em hospedagem persistente com domínio próprio.
-3. **Produto vendável**: cobrança/assinatura, decisão final sobre o desktop JavaFX (migrar pra API autenticada ou aposentar), observabilidade/backup.
+3. **Produto vendável**: cobrança/assinatura (provável mensal), reformular o desktop como ferramenta financeira/relatórios (frontend mais robusto que o JavaFX atual — a operação de pedidos/cadastros fica só no PWA), observabilidade/backup.
 
-**Decisões já confirmadas pelo Miguel** (2026-07-31): os dados reais dele viram a "empresa 1" do sistema; o banco continua H2 por enquanto (troca pra Postgres fica pra depois, dentro da própria Fase 1). Ainda em aberto: modelo de cobrança, e futuro do app desktop JavaFX (mantém só pra ele, reescreve pra falar com API autenticada, ou aposenta em favor só do PWA) — perguntar antes de decidir isso.
+**Decisões já confirmadas pelo Miguel** (2026-07-31):
+- Os dados reais dele viram a "empresa 1" do sistema.
+- O banco continua H2 por enquanto (troca pra Postgres fica pra depois).
+- **Cobrança**: ainda não fechado, mas tendência é mensalidade (assinatura por oficina/mês) — não é definitivo, só a direção mais provável até agora.
+- **Futuro do desktop JavaFX**: deixa de ser a ferramenta operacional (pedidos, cadastros — isso fica só no PWA daqui pra frente) e vira uma ferramenta focada em **informações financeiras/relatórios**. Precisa de um frontend mais robusto e bem acabado do que o JavaFX atual — não necessariamente um projeto/repo separado, mas outro nível de acabamento. Ainda não tem escopo nem stack definidos, só a direção.
 
 ### Fase 1a — Fundação: login (implementado em 2026-07-31)
 
