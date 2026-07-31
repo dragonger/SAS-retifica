@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<BorderPane xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.controller.ServicoCatalogoController">
+    <top>
+        <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Cadastro de serviços" BorderPane.alignment="CENTER_LEFT">
+            <font>
+                <Font size="20.0"/>
+            </font>
+            <BorderPane.margin>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="15.0"/>
+            </BorderPane.margin>
+        </Text>
+    </top>
+    <center>
+        <VBox spacing="10.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="0.0"/>
+            </padding>
+            <children>
+                <HBox spacing="10.0">
+                    <children>
+                        <ComboBox fx:id="cmbCategoria" prefWidth="140.0" promptText="Categoria"/>
+                        <TextField fx:id="fldNome" promptText="Nome do serviço" HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="fldValor" prefWidth="120.0" promptText="Valor (R$)"/>
+                        <Button mnemonicParsing="false" onAction="#salvar" text="Salvar"/>
+                        <Button mnemonicParsing="false" onAction="#limpar" text="Limpar"/>
+                    </children>
+                </HBox>
+                <TableView fx:id="tblServicos" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colCategoria" prefWidth="120.0" text="Categoria"/>
+                        <TableColumn fx:id="colNome" prefWidth="300.0" text="Serviço"/>
+                        <TableColumn fx:id="colValor" prefWidth="140.0" text="Valor (R$)"/>
+                    </columns>
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                    </columnResizePolicy>
+                </TableView>
+                <Button mnemonicParsing="false" onAction="#remover" text="Remover selecionado"/>
+            </children>
+        </VBox>
+    </center>
+</BorderPane>

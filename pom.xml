@@ -5,50 +5,50 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>retificasDeskt</artifactId>
+    <artifactId>retificas-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-entitymanager -->
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-entitymanager</artifactId>
-            <version>5.6.11.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>19</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>19</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+    <!--
+        Projeto multi-módulo:
+          - core:    entidades JPA, persistência e regras de negócio (sem UI),
+                     reaproveitado tanto pelo desktop quanto pelo backend.
+          - desktop: aplicação JavaFX (app de mesa já existente).
+          - backend: API REST + PWA (versão mobile/web), acessa o MESMO banco
+                     que o desktop (H2 em modo AUTO_SERVER), então os dados
+                     ficam sempre sincronizados entre desktop e celular.
+    -->
+    <modules>
+        <module>core</module>
+        <module>desktop</module>
+        <module>backend</module>
+    </modules>
 
     <properties>
-        <maven.compiler.source>18</maven.compiler.source>
-        <maven.compiler.target>18</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+        <!-- Necessário pro Spring MVC resolver nomes de @PathVariable/@RequestParam
+             sem nome explícito via reflexão (Spring 7 não tem mais o fallback via
+             tabela de debug do bytecode que versões antigas usavam). -->
+        <maven.compiler.parameters>true</maven.compiler.parameters>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-boot.version>4.1.0</spring-boot.version>
+        <openpdf.version>1.3.30</openpdf.version>
     </properties>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
-                <configuration>
-                    <mainClass>org.example.MainFx</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <!--
+        BOM do Spring Boot importado aqui na raiz (não só no backend) pra que o
+        core também herde versões gerenciadas (Hibernate, H2) consistentes com
+        o Spring Boot, mesmo sem depender do Spring em si.
+    -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

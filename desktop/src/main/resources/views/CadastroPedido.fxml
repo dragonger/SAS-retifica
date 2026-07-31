@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="480.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/18"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.controller.CadastroPedidoController">
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+            <tabs>
+                <Tab text="Pedido">
+                    <content>
+                        <GridPane hgap="10.0" vgap="10.0">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="140.0" prefWidth="140.0"/>
+                                <ColumnConstraints hgrow="ALWAYS" prefWidth="400.0"/>
+                            </columnConstraints>
+                            <children>
+                                <Label text="Cabeçote"/>
+                                <HBox spacing="8.0" GridPane.columnIndex="1">
+                                    <children>
+                                        <ComboBox fx:id="cmbCabecote" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                        <Button mnemonicParsing="false" onAction="#novoCabecote" text="Novo"/>
+                                    </children>
+                                </HBox>
+                                <Label text="Descrição" GridPane.rowIndex="1"/>
+                                <TextField fx:id="fldPedido" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                <Label text="Entrega estimada" GridPane.rowIndex="2"/>
+                                <DatePicker fx:id="dtpEntregaEstimada" maxWidth="Infinity"
+                                            GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                <Label text="Observação" GridPane.rowIndex="3"/>
+                                <TextArea fx:id="fldObservacao" prefRowCount="5" wrapText="true"
+                                          GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="Cliente">
+                    <content>
+                        <GridPane hgap="10.0" vgap="10.0">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="120.0" prefWidth="120.0"/>
+                                <ColumnConstraints hgrow="ALWAYS" prefWidth="420.0"/>
+                            </columnConstraints>
+                            <children>
+                                <Label text="Nome"/>
+                                <TextField fx:id="fldNome" GridPane.columnIndex="1"/>
+                                <Label text="Telefone" GridPane.rowIndex="1"/>
+                                <TextField fx:id="fldTelefone" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                <Label text="Rua" GridPane.rowIndex="2"/>
+                                <TextField fx:id="fldRua" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                <Label text="Número" GridPane.rowIndex="3"/>
+                                <TextField fx:id="fldNumero" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                <Label text="Bairro" GridPane.rowIndex="4"/>
+                                <TextField fx:id="fldBairro" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                <Label text="CEP" GridPane.rowIndex="5"/>
+                                <TextField fx:id="fldCep" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                <Label text="Município" GridPane.rowIndex="6"/>
+                                <TextField fx:id="fldMunicipio" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                                <Label text="UF" GridPane.rowIndex="7"/>
+                                <TextField fx:id="fldUf" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                            </children>
+                        </GridPane>
+                    </content>
+                </Tab>
+                <Tab text="Serviço">
+                    <content>
+                        <VBox spacing="10.0">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                            </padding>
+                            <children>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <ComboBox fx:id="cmbServico" promptText="Serviço" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                        <TextField fx:id="fldServQtd" prefWidth="70.0" promptText="Qtd"/>
+                                        <Button mnemonicParsing="false" onAction="#adicionarServico" text="Adicionar"/>
+                                        <Button mnemonicParsing="false" onAction="#novoServico" text="Novo"/>
+                                    </children>
+                                </HBox>
+                                <TableView fx:id="tblServicos" editable="true" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="colServDescricao" prefWidth="240.0" text="Serviço"/>
+                                        <TableColumn fx:id="colServQtd" prefWidth="90.0" text="Qtd"/>
+                                        <TableColumn fx:id="colServValor" prefWidth="120.0" text="Valor unit."/>
+                                        <TableColumn fx:id="colServTotal" prefWidth="120.0" text="Total"/>
+                                    </columns>
+                                </TableView>
+                                <Button mnemonicParsing="false" onAction="#removerServico" text="Remover selecionado"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Peça">
+                    <content>
+                        <VBox spacing="10.0">
+                            <padding>
+                                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                            </padding>
+                            <children>
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <ComboBox fx:id="cmbPeca" promptText="Peça" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                        <TextField fx:id="fldPecaQtd" prefWidth="70.0" promptText="Qtd"/>
+                                        <Button mnemonicParsing="false" onAction="#adicionarPeca" text="Adicionar"/>
+                                        <Button mnemonicParsing="false" onAction="#novoPeca" text="Novo"/>
+                                    </children>
+                                </HBox>
+                                <TableView fx:id="tblPecas" editable="true" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="colPecaDescricao" prefWidth="240.0" text="Peça"/>
+                                        <TableColumn fx:id="colPecaQtd" prefWidth="90.0" text="Qtd"/>
+                                        <TableColumn fx:id="colPecaValor" prefWidth="120.0" text="Valor unit."/>
+                                        <TableColumn fx:id="colPecaTotal" prefWidth="120.0" text="Total"/>
+                                    </columns>
+                                </TableView>
+                                <Button mnemonicParsing="false" onAction="#removerPeca" text="Remover selecionado"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+    <bottom>
+        <ButtonBar BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
+            </padding>
+            <buttons>
+                <Button cancelButton="true" mnemonicParsing="false" onAction="#cancelar" text="Cancelar"/>
+                <Button defaultButton="true" mnemonicParsing="false" onAction="#salvar" text="Salvar"/>
+            </buttons>
+        </ButtonBar>
+    </bottom>
+</BorderPane>

@@ -36,3 +36,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Certificado local (autoassinado, gerado por keytool) ###
+backend/src/main/resources/keystore.p12

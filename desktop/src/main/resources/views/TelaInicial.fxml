@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.fxml.FXMLLoader?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+            <tabs>
+                <Tab text="Pedidos">
+                    <content>
+                        <fx:include source="PedidosView.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="Cabeçotes">
+                    <content>
+                        <fx:include source="CabecotesView.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="Serviços">
+                    <content>
+                        <fx:include source="ServicosView.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="Peças">
+                    <content>
+                        <fx:include source="PecasView.fxml"/>
+                    </content>
+                </Tab>
+                <Tab text="Encerrados">
+                    <content>
+                        <fx:include source="EncerradosView.fxml"/>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+</BorderPane>

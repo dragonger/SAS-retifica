@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="484.0" prefWidth="560.0" xmlns="http://javafx.com/javafx/18"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.example.controller.VisualizarPedidoController">
+    <top>
+        <VBox spacing="6.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="15.0"/>
+            </padding>
+            <children>
+                <Label fx:id="lblTitulo" text="Pedido">
+                    <font>
+                        <Font size="24.0"/>
+                    </font>
+                </Label>
+                <Label fx:id="lblCliente" text="Cliente:"/>
+                <Label fx:id="lblCabecote" text="Cabeçote:"/>
+                <Label fx:id="lblData" text="Criado em:"/>
+                <Label fx:id="lblEntregaEstimada" text="Entrega estimada:"/>
+                <Label fx:id="lblEntrega" text="Situação:"/>
+            </children>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="6.0" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="0.0"/>
+            </padding>
+            <children>
+                <Label text="Serviços"/>
+                <TableView fx:id="tblServicos" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colDescricao" prefWidth="220.0" text="Serviço"/>
+                        <TableColumn fx:id="colQuantidade" prefWidth="90.0" text="Qtd"/>
+                        <TableColumn fx:id="colValor" prefWidth="110.0" text="Valor unit."/>
+                        <TableColumn fx:id="colTotal" prefWidth="110.0" text="Total"/>
+                    </columns>
+                </TableView>
+                <Label text="Peças"/>
+                <TableView fx:id="tblPecas" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colPecaDescricao" prefWidth="220.0" text="Peça"/>
+                        <TableColumn fx:id="colPecaQuantidade" prefWidth="90.0" text="Qtd"/>
+                        <TableColumn fx:id="colPecaValor" prefWidth="110.0" text="Valor unit."/>
+                        <TableColumn fx:id="colPecaTotal" prefWidth="110.0" text="Total"/>
+                    </columns>
+                </TableView>
+                <Label fx:id="lblTotal" text="Total: R$ 0,00" alignment="CENTER_RIGHT" maxWidth="Infinity">
+                    <font>
+                        <Font size="16.0"/>
+                    </font>
+                </Label>
+            </children>
+        </VBox>
+    </center>
+    <bottom>
+        <ButtonBar BorderPane.alignment="CENTER">
+            <padding>
+                <Insets bottom="10.0" left="15.0" right="15.0" top="10.0"/>
+            </padding>
+            <buttons>
+                <Button fx:id="btnFinalizar" mnemonicParsing="false" onAction="#finalizar" text="Finalizar pedido"/>
+                <Button mnemonicParsing="false" onAction="#gerarPdf" text="Gerar PDF"/>
+                <Button mnemonicParsing="false" onAction="#editar" text="Editar"/>
+                <Button mnemonicParsing="false" onAction="#deletar" text="Deletar"/>
+                <Button mnemonicParsing="false" onAction="#fechar" text="Fechar"/>
+            </buttons>
+        </ButtonBar>
+    </bottom>
+</BorderPane>

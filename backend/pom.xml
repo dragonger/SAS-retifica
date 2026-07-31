@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.example</groupId>
+        <artifactId>retificas-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>retificas-backend</artifactId>
+    <packaging>jar</packaging>
+
+    <!--
+        API REST (consumida pela página web/PWA mobile) que reaproveita as
+        mesmas entidades e repositórios JPA do core — sem Spring Data, para
+        não duplicar a configuração de persistência já existente.
+
+        spring-boot.version e o import do BOM spring-boot-dependencies ficam
+        no pom.xml raiz (retificas-parent), pra que o core também herde
+        versões gerenciadas consistentes com o Spring Boot.
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>retificas-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>retificas-backend</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <configuration>
+                    <mainClass>org.example.backend.BackendApplication</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
