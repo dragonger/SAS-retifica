@@ -42,6 +42,10 @@ public class PedidoModel {
     @JoinColumn(name = "vendedor_id")
     private VendedorModel vendedor;
 
+    /** Empresa (tenant) dona deste pedido. */
+    @ManyToOne
+    private EmpresaModel empresa;
+
     /** Componentes técnicos envolvidos (cabeçote, bloco, biela, virabrequim) — um pedido pode ter mais de um. */
     @ManyToMany
     @JoinTable(name = "PEDIDO_COMPONENTE",
@@ -183,6 +187,14 @@ public class PedidoModel {
 
     public void setVendedor(VendedorModel vendedor) {
         this.vendedor = vendedor;
+    }
+
+    public EmpresaModel getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(EmpresaModel empresa) {
+        this.empresa = empresa;
     }
 
     public List<CabecoteModel> getComponentes() {

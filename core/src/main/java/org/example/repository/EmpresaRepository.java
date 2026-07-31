@@ -5,6 +5,7 @@ import org.example.persistence.JPAUtil;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.NoResultException;
 
 /**
  * Acesso a dados de {@link EmpresaModel} (tenant do sistema multiempresa).
@@ -33,6 +34,20 @@ public class EmpresaRepository {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             return em.find(EmpresaModel.class, id);
+        } finally {
+            em.close();
+        }
+    }
+
+    /** Primeira empresa cadastrada (mundo ainda de uma empresa só, pré Fase 2). */
+    public EmpresaModel buscarPrimeira() {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            return em.createQuery("SELECT e FROM EmpresaModel e ORDER BY e.id", EmpresaModel.class)
+                    .setMaxResults(1)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
         } finally {
             em.close();
         }

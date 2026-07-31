@@ -2,12 +2,15 @@ package org.example.backend;
 
 import org.example.model.EmpresaModel;
 import org.example.model.UsuarioModel;
+import org.example.persistence.JPAUtil;
 import org.example.repository.EmpresaRepository;
 import org.example.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,10 +20,13 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 
 /**
- * Cria a primeira empresa + usuário no primeiro startup (banco de usuários
- * ainda vazio). A senha é gerada aleatoriamente e gravada em
- * ~/.retificasDesktop/bootstrap-credentials.txt — nunca fica hardcoded em
- * arquivo versionado (o repositório é público).
+ * No startup: garante que existe pelo menos uma empresa + usuário (cria no
+ * primeiro boot, com senha aleatória gravada em
+ * ~/.retificasDesktop/bootstrap-credentials.txt — nunca hardcoded em arquivo
+ * versionado, já que o repositório é público) e vincula à empresa qualquer
+ * registro de negócio ainda sem dono (backfill da Fase 1b, roda em todo
+ * startup mas é inofensivo depois da primeira vez — só mexe em linhas com
+ * empresa nula).
  */
 @Component
 public class BootstrapUsuario implements CommandLineRunner {
@@ -37,8 +43,16 @@ public class BootstrapUsuario implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws IOException {
+        EmpresaModel empresa = obterOuCriarEmpresa();
+        backfillEmpresaId(empresa);
+    }
+
+    private EmpresaModel obterOuCriarEmpresa() throws IOException {
         if (usuarioRepository.contar() > 0) {
-            return;
+            EmpresaModel existente = empresaRepository.buscarPrimeira();
+            if (existente != null) {
+                return existente;
+            }
         }
 
         EmpresaModel empresa = new EmpresaModel();
@@ -57,6 +71,38 @@ public class BootstrapUsuario implements CommandLineRunner {
         usuarioRepository.salvar(usuario);
 
         gravarCredenciais(senha);
+        return empresa;
+    }
+
+    /**
+     * Vincula à empresa qualquer linha das 5 tabelas de negócio que ainda
+     * esteja sem dono (dados criados antes da Fase 1b). Idempotente — WHERE
+     * empresa IS NULL não acha nada depois que já rodou uma vez.
+     */
+    private void backfillEmpresaId(EmpresaModel empresa) {
+        EntityManager em = JPAUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.createQuery("UPDATE PedidoModel p SET p.empresa = :empresa WHERE p.empresa IS NULL")
+                    .setParameter("empresa", empresa).executeUpdate();
+            em.createQuery("UPDATE ClienteModel c SET c.empresa = :empresa WHERE c.empresa IS NULL")
+                    .setParameter("empresa", empresa).executeUpdate();
+            em.createQuery("UPDATE CabecoteModel c SET c.empresa = :empresa WHERE c.empresa IS NULL")
+                    .setParameter("empresa", empresa).executeUpdate();
+            em.createQuery("UPDATE ServicoCatalogoModel s SET s.empresa = :empresa WHERE s.empresa IS NULL")
+                    .setParameter("empresa", empresa).executeUpdate();
+            em.createQuery("UPDATE PecaCatalogoModel p SET p.empresa = :empresa WHERE p.empresa IS NULL")
+                    .setParameter("empresa", empresa).executeUpdate();
+            tx.commit();
+        } catch (RuntimeException e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 
     private String gerarSenhaAleatoria() {

@@ -2,8 +2,11 @@ package org.example.backend.web;
 
 import org.example.backend.dto.CatalogoItemDTO;
 import org.example.backend.dto.CatalogoRequestDTO;
+import org.example.backend.security.SecurityUtils;
 import org.example.model.CategoriaProduto;
+import org.example.model.EmpresaModel;
 import org.example.model.PecaCatalogoModel;
+import org.example.repository.EmpresaRepository;
 import org.example.repository.PecaCatalogoRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +20,12 @@ import java.util.List;
 public class PecaCatalogoController {
 
     private final PecaCatalogoRepository repository = new PecaCatalogoRepository();
+    private final EmpresaRepository empresaRepository = new EmpresaRepository();
 
     @GetMapping
     public List<CatalogoItemDTO> listar() {
         List<CatalogoItemDTO> resultado = new ArrayList<>();
-        for (PecaCatalogoModel p : repository.listarTodos()) {
+        for (PecaCatalogoModel p : repository.listarTodos(SecurityUtils.empresaAtual())) {
             resultado.add(toDTO(p));
         }
         return resultado;
@@ -29,12 +33,15 @@ public class PecaCatalogoController {
 
     @PostMapping
     public ResponseEntity<CatalogoItemDTO> criar(@RequestBody CatalogoRequestDTO request) {
-        return salvar(new PecaCatalogoModel(), request);
+        PecaCatalogoModel peca = new PecaCatalogoModel();
+        EmpresaModel empresa = empresaRepository.buscarPorId(SecurityUtils.empresaAtual());
+        peca.setEmpresa(empresa);
+        return salvar(peca, request);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CatalogoItemDTO> atualizar(@PathVariable Long id, @RequestBody CatalogoRequestDTO request) {
-        PecaCatalogoModel existente = repository.buscarPorId(id);
+        PecaCatalogoModel existente = repository.buscarPorId(id, SecurityUtils.empresaAtual());
         if (existente == null) {
             return ResponseEntity.notFound().build();
         }
@@ -43,7 +50,7 @@ public class PecaCatalogoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        repository.deletar(id);
+        repository.deletar(id, SecurityUtils.empresaAtual());
         return ResponseEntity.noContent().build();
     }
 
