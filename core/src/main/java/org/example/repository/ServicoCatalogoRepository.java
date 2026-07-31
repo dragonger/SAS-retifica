@@ -5,10 +5,12 @@ import org.example.persistence.JPAUtil;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.NoResultException;
 import java.util.List;
 
 /**
  * Acesso a dados de {@link ServicoCatalogoModel} (catálogo de serviços).
+ * Toda leitura/exclusão é escopada pela empresa (tenant) do usuário logado.
  */
 public class ServicoCatalogoRepository {
 
@@ -30,32 +32,46 @@ public class ServicoCatalogoRepository {
         }
     }
 
-    public ServicoCatalogoModel buscarPorId(Long id) {
+    public ServicoCatalogoModel buscarPorId(Long id, Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
-            return em.find(ServicoCatalogoModel.class, id);
+            return em.createQuery(
+                    "SELECT s FROM ServicoCatalogoModel s WHERE s.id = :id AND s.empresa.id = :empresaId",
+                    ServicoCatalogoModel.class)
+                    .setParameter("id", id)
+                    .setParameter("empresaId", empresaId)
+                    .getSingleResult();
+        } catch (NoResultException e) {
+            return null;
         } finally {
             em.close();
         }
     }
 
-    public List<ServicoCatalogoModel> listarTodos() {
+    public List<ServicoCatalogoModel> listarTodos(Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             return em.createQuery(
-                    "SELECT s FROM ServicoCatalogoModel s ORDER BY s.categoria, s.nome", ServicoCatalogoModel.class)
+                    "SELECT s FROM ServicoCatalogoModel s WHERE s.empresa.id = :empresaId ORDER BY s.categoria, s.nome",
+                    ServicoCatalogoModel.class)
+                    .setParameter("empresaId", empresaId)
                     .getResultList();
         } finally {
             em.close();
         }
     }
 
-    public void deletar(Long id) {
+    public void deletar(Long id, Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            ServicoCatalogoModel servico = em.find(ServicoCatalogoModel.class, id);
+            ServicoCatalogoModel servico = em.createQuery(
+                    "SELECT s FROM ServicoCatalogoModel s WHERE s.id = :id AND s.empresa.id = :empresaId",
+                    ServicoCatalogoModel.class)
+                    .setParameter("id", id)
+                    .setParameter("empresaId", empresaId)
+                    .getResultStream().findFirst().orElse(null);
             if (servico != null) {
                 em.remove(servico);
             }

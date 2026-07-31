@@ -1,8 +1,11 @@
 package org.example.backend.web;
 
 import org.example.backend.dto.ClienteDTO;
+import org.example.backend.security.SecurityUtils;
 import org.example.model.ClienteModel;
+import org.example.model.EmpresaModel;
 import org.example.repository.ClienteRepository;
+import org.example.repository.EmpresaRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,11 +21,12 @@ import java.util.List;
 public class ClienteController {
 
     private final ClienteRepository repository = new ClienteRepository();
+    private final EmpresaRepository empresaRepository = new EmpresaRepository();
 
     @GetMapping
     public List<ClienteDTO> listar() {
         List<ClienteDTO> resultado = new ArrayList<>();
-        for (ClienteModel c : repository.listarTodos()) {
+        for (ClienteModel c : repository.listarTodos(SecurityUtils.empresaAtual())) {
             resultado.add(toDTO(c));
         }
         return resultado;
@@ -30,7 +34,7 @@ public class ClienteController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ClienteDTO> buscar(@PathVariable Long id) {
-        ClienteModel cliente = repository.buscarPorId(id);
+        ClienteModel cliente = repository.buscarPorId(id, SecurityUtils.empresaAtual());
         if (cliente == null) {
             return ResponseEntity.notFound().build();
         }
@@ -39,12 +43,15 @@ public class ClienteController {
 
     @PostMapping
     public ResponseEntity<ClienteDTO> criar(@RequestBody ClienteDTO request) {
-        return salvar(new ClienteModel(), request);
+        ClienteModel cliente = new ClienteModel();
+        EmpresaModel empresa = empresaRepository.buscarPorId(SecurityUtils.empresaAtual());
+        cliente.setEmpresa(empresa);
+        return salvar(cliente, request);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ClienteDTO> atualizar(@PathVariable Long id, @RequestBody ClienteDTO request) {
-        ClienteModel existente = repository.buscarPorId(id);
+        ClienteModel existente = repository.buscarPorId(id, SecurityUtils.empresaAtual());
         if (existente == null) {
             return ResponseEntity.notFound().build();
         }
@@ -54,7 +61,7 @@ public class ClienteController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         try {
-            repository.deletar(id);
+            repository.deletar(id, SecurityUtils.empresaAtual());
         } catch (RuntimeException e) {
             // Cliente ainda referenciado por algum pedido (FK) — não deixa remover.
             return ResponseEntity.status(409).build();

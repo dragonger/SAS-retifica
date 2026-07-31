@@ -19,6 +19,10 @@ public class ClienteModel {
     private String uf;
     private String telefone;
 
+    /** Empresa (tenant) dona deste cliente. */
+    @ManyToOne
+    private EmpresaModel empresa;
+
     public ClienteModel() {
     }
 
@@ -92,6 +96,14 @@ public class ClienteModel {
 
     public void setTelefone(String telefone) {
         this.telefone = telefone;
+    }
+
+    public EmpresaModel getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(EmpresaModel empresa) {
+        this.empresa = empresa;
     }
 
     @Override

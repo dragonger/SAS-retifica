@@ -11,7 +11,8 @@ import java.util.List;
 /**
  * Acesso a dados de {@link PedidoModel}.
  * Cada método abre e fecha seu próprio {@link EntityManager}, mantendo as
- * transações curtas e independentes.
+ * transações curtas e independentes. Toda leitura/exclusão é escopada pela
+ * empresa (tenant) do usuário logado.
  */
 public class PedidoRepository {
 
@@ -36,10 +37,14 @@ public class PedidoRepository {
         }
     }
 
-    public PedidoModel buscarPorId(Long id) {
+    public PedidoModel buscarPorId(Long id, Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
-            return em.find(PedidoModel.class, id);
+            return em.createQuery(
+                    "SELECT p FROM PedidoModel p WHERE p.id = :id AND p.empresa.id = :empresaId", PedidoModel.class)
+                    .setParameter("id", id)
+                    .setParameter("empresaId", empresaId)
+                    .getResultStream().findFirst().orElse(null);
         } finally {
             em.close();
         }
@@ -52,15 +57,16 @@ public class PedidoRepository {
      * MultipleBagFetchException — o Hibernate não permite fazer JOIN FETCH de
      * duas coleções ao mesmo tempo na mesma query).
      */
-    public PedidoModel buscarComItens(Long id) {
+    public PedidoModel buscarComItens(Long id, Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             List<PedidoModel> resultado = em.createQuery(
                     "SELECT p FROM PedidoModel p " +
                             "LEFT JOIN FETCH p.cliente " +
                             "LEFT JOIN FETCH p.servicoList " +
-                            "WHERE p.id = :id", PedidoModel.class)
+                            "WHERE p.id = :id AND p.empresa.id = :empresaId", PedidoModel.class)
                     .setParameter("id", id)
+                    .setParameter("empresaId", empresaId)
                     .getResultList();
             if (resultado.isEmpty()) {
                 return null;
@@ -80,14 +86,17 @@ public class PedidoRepository {
      * LazyInitializationException ao acessar fora da transação, como na
      * tabela da tela inicial).
      */
-    public List<PedidoModel> listarTodos() {
+    public List<PedidoModel> listarTodos(Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             return em.createQuery(
                     "SELECT DISTINCT p FROM PedidoModel p " +
                             "LEFT JOIN FETCH p.cliente " +
-                            "LEFT JOIN FETCH p.componentes",
-                    PedidoModel.class).getResultList();
+                            "LEFT JOIN FETCH p.componentes " +
+                            "WHERE p.empresa.id = :empresaId",
+                    PedidoModel.class)
+                    .setParameter("empresaId", empresaId)
+                    .getResultList();
         } finally {
             em.close();
         }
@@ -97,15 +106,16 @@ public class PedidoRepository {
      * Lista os pedidos encerrados (com data de entrega registrada), mais recentes
      * primeiro, com cliente e componentes carregados para exibição.
      */
-    public List<PedidoModel> listarEncerrados() {
+    public List<PedidoModel> listarEncerrados(Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             return em.createQuery(
                     "SELECT DISTINCT p FROM PedidoModel p " +
                             "LEFT JOIN FETCH p.cliente " +
                             "LEFT JOIN FETCH p.componentes " +
-                            "WHERE p.datEntrega IS NOT NULL " +
+                            "WHERE p.datEntrega IS NOT NULL AND p.empresa.id = :empresaId " +
                             "ORDER BY p.datEntrega DESC", PedidoModel.class)
+                    .setParameter("empresaId", empresaId)
                     .getResultList();
         } finally {
             em.close();
@@ -116,27 +126,33 @@ public class PedidoRepository {
      * Itens de serviço de todos os pedidos encerrados, com o pedido já
      * carregado (relação ManyToOne, sem risco de MultipleBagFetchException),
      * para agregar valores por serviço sem tocar na coleção lazy
-     * {@code PedidoModel.servicoList} fora da sessão.
+     * {@code PedidoModel.servicoList} fora da sessão. Escopado por empresa via
+     * o pedido pai — ServicoModel não tem coluna própria de empresa.
      */
-    public List<ServicoModel> listarItensServicoEncerrados() {
+    public List<ServicoModel> listarItensServicoEncerrados(Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         try {
             return em.createQuery(
                     "SELECT s FROM ServicoModel s " +
                             "LEFT JOIN FETCH s.pedido p " +
-                            "WHERE p.datEntrega IS NOT NULL", ServicoModel.class)
+                            "WHERE p.datEntrega IS NOT NULL AND p.empresa.id = :empresaId", ServicoModel.class)
+                    .setParameter("empresaId", empresaId)
                     .getResultList();
         } finally {
             em.close();
         }
     }
 
-    public void deletar(Long id) {
+    public void deletar(Long id, Long empresaId) {
         EntityManager em = JPAUtil.getEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            PedidoModel pedido = em.find(PedidoModel.class, id);
+            PedidoModel pedido = em.createQuery(
+                    "SELECT p FROM PedidoModel p WHERE p.id = :id AND p.empresa.id = :empresaId", PedidoModel.class)
+                    .setParameter("id", id)
+                    .setParameter("empresaId", empresaId)
+                    .getResultStream().findFirst().orElse(null);
             if (pedido != null) {
                 em.remove(pedido);
             }
