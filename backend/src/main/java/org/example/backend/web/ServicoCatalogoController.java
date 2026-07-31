@@ -2,8 +2,11 @@ package org.example.backend.web;
 
 import org.example.backend.dto.CatalogoItemDTO;
 import org.example.backend.dto.CatalogoRequestDTO;
+import org.example.backend.security.SecurityUtils;
 import org.example.model.CategoriaProduto;
+import org.example.model.EmpresaModel;
 import org.example.model.ServicoCatalogoModel;
+import org.example.repository.EmpresaRepository;
 import org.example.repository.ServicoCatalogoRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +20,12 @@ import java.util.List;
 public class ServicoCatalogoController {
 
     private final ServicoCatalogoRepository repository = new ServicoCatalogoRepository();
+    private final EmpresaRepository empresaRepository = new EmpresaRepository();
 
     @GetMapping
     public List<CatalogoItemDTO> listar() {
         List<CatalogoItemDTO> resultado = new ArrayList<>();
-        for (ServicoCatalogoModel s : repository.listarTodos()) {
+        for (ServicoCatalogoModel s : repository.listarTodos(SecurityUtils.empresaAtual())) {
             resultado.add(toDTO(s));
         }
         return resultado;
@@ -29,12 +33,15 @@ public class ServicoCatalogoController {
 
     @PostMapping
     public ResponseEntity<CatalogoItemDTO> criar(@RequestBody CatalogoRequestDTO request) {
-        return salvar(new ServicoCatalogoModel(), request);
+        ServicoCatalogoModel servico = new ServicoCatalogoModel();
+        EmpresaModel empresa = empresaRepository.buscarPorId(SecurityUtils.empresaAtual());
+        servico.setEmpresa(empresa);
+        return salvar(servico, request);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CatalogoItemDTO> atualizar(@PathVariable Long id, @RequestBody CatalogoRequestDTO request) {
-        ServicoCatalogoModel existente = repository.buscarPorId(id);
+        ServicoCatalogoModel existente = repository.buscarPorId(id, SecurityUtils.empresaAtual());
         if (existente == null) {
             return ResponseEntity.notFound().build();
         }
@@ -43,7 +50,7 @@ public class ServicoCatalogoController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        repository.deletar(id);
+        repository.deletar(id, SecurityUtils.empresaAtual());
         return ResponseEntity.noContent().build();
     }
 

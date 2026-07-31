@@ -23,6 +23,10 @@ public class ServicoCatalogoModel {
     @Column(precision = 19, scale = 2)
     private BigDecimal valor;
 
+    /** Empresa (tenant) dona deste item de catálogo. */
+    @ManyToOne
+    private EmpresaModel empresa;
+
     public ServicoCatalogoModel() {
     }
 
@@ -56,6 +60,14 @@ public class ServicoCatalogoModel {
 
     public void setValor(BigDecimal valor) {
         this.valor = valor;
+    }
+
+    public EmpresaModel getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(EmpresaModel empresa) {
+        this.empresa = empresa;
     }
 
     @Override

@@ -2,9 +2,12 @@ package org.example.backend.web;
 
 import org.example.backend.dto.CabecoteDTO;
 import org.example.backend.dto.CabecoteRequestDTO;
+import org.example.backend.security.SecurityUtils;
 import org.example.model.CabecoteModel;
 import org.example.model.CategoriaProduto;
+import org.example.model.EmpresaModel;
 import org.example.repository.CabecoteRepository;
+import org.example.repository.EmpresaRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,11 +23,12 @@ import java.util.List;
 public class CabecoteController {
 
     private final CabecoteRepository repository = new CabecoteRepository();
+    private final EmpresaRepository empresaRepository = new EmpresaRepository();
 
     @GetMapping
     public List<CabecoteDTO> listar() {
         List<CabecoteDTO> resultado = new ArrayList<>();
-        for (CabecoteModel c : repository.listarTodos()) {
+        for (CabecoteModel c : repository.listarTodos(SecurityUtils.empresaAtual())) {
             resultado.add(toDTO(c));
         }
         return resultado;
@@ -32,12 +36,15 @@ public class CabecoteController {
 
     @PostMapping
     public ResponseEntity<CabecoteDTO> criar(@RequestBody CabecoteRequestDTO request) {
-        return salvar(new CabecoteModel(), request);
+        CabecoteModel cabecote = new CabecoteModel();
+        EmpresaModel empresa = empresaRepository.buscarPorId(SecurityUtils.empresaAtual());
+        cabecote.setEmpresa(empresa);
+        return salvar(cabecote, request);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CabecoteDTO> atualizar(@PathVariable Long id, @RequestBody CabecoteRequestDTO request) {
-        CabecoteModel existente = repository.buscarPorId(id);
+        CabecoteModel existente = repository.buscarPorId(id, SecurityUtils.empresaAtual());
         if (existente == null) {
             return ResponseEntity.notFound().build();
         }
@@ -46,7 +53,7 @@ public class CabecoteController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        repository.deletar(id);
+        repository.deletar(id, SecurityUtils.empresaAtual());
         return ResponseEntity.noContent().build();
     }
 

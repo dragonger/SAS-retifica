@@ -32,6 +32,10 @@ public class CabecoteModel {
     @Column(precision = 10, scale = 3)
     private BigDecimal fixoMax;
 
+    /** Empresa (tenant) dona deste item de catálogo. */
+    @ManyToOne
+    private EmpresaModel empresa;
+
     public CabecoteModel() {
     }
 
@@ -92,6 +96,14 @@ public class CabecoteModel {
 
     public void setFixoMax(BigDecimal fixoMax) {
         this.fixoMax = fixoMax;
+    }
+
+    public EmpresaModel getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(EmpresaModel empresa) {
+        this.empresa = empresa;
     }
 
     /**

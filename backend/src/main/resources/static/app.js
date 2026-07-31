@@ -10,8 +10,9 @@
   const toastEl = document.getElementById('toast');
   const tabs = document.querySelectorAll('.tab');
   const btnSair = document.getElementById('btnSair');
+  const btnSenha = document.getElementById('btnSenha');
   const tabBarEl = document.querySelector('.tab-bar');
-  const ROOTS = ['#/inicio', '#/pedidos', '#/cabecotes', '#/encerrados', '#/dashboard', '#/login'];
+  const ROOTS = ['#/inicio', '#/pedidos', '#/cabecotes', '#/encerrados', '#/dashboard', '#/login', '#/trocar-senha'];
 
   let catalogoCache = { cabecotes: [], servicos: [], pecas: [], categorias: [], clientes: [] };
 
@@ -179,6 +180,7 @@
     { re: /^#\/encerrados$/, fn: () => telaEncerrados() },
     { re: /^#\/dashboard$/, fn: () => telaDashboardEncerrados() },
     { re: /^#\/login$/, fn: () => telaLogin() },
+    { re: /^#\/trocar-senha$/, fn: () => telaTrocarSenha() },
   ];
 
   function rotear() {
@@ -191,6 +193,7 @@
     tabBarEl.hidden = !logado;
     btnCatalogo.hidden = !logado;
     btnSair.hidden = !logado;
+    btnSenha.hidden = !logado;
 
     const raiz = '#/' + (hash.split('/')[1] || 'inicio');
     tabs.forEach(t => t.classList.toggle('active', ('#/' + t.dataset.tab) === raiz));
@@ -210,6 +213,7 @@
   });
   btnCatalogo.addEventListener('click', () => { location.hash = '#/catalogo'; });
   btnSair.addEventListener('click', () => { limparAuth(); location.hash = '#/login'; });
+  btnSenha.addEventListener('click', () => { location.hash = '#/trocar-senha'; });
   tabs.forEach(t => t.addEventListener('click', () => { location.hash = '#/' + t.dataset.tab; }));
   window.addEventListener('hashchange', rotear);
 
@@ -1244,6 +1248,38 @@
       btnBlueprint('Entrar', 'btn-primary btn-block', { onclick: entrar })
     );
     conteudo.appendChild(form);
+  }
+
+  // ---------- Trocar senha ----------
+
+  function telaTrocarSenha() {
+    tituloTopo.textContent = 'Trocar senha';
+    conteudo.innerHTML = '';
+
+    const fldAtual = el('input', { class: 'input', type: 'password', placeholder: 'Senha atual', autocomplete: 'current-password' });
+    const fldNova = el('input', { class: 'input', type: 'password', placeholder: 'Nova senha (mín. 6 caracteres)', autocomplete: 'new-password' });
+    const fldConfirma = el('input', { class: 'input', type: 'password', placeholder: 'Confirmar nova senha', autocomplete: 'new-password' });
+
+    conteudo.appendChild(el('h2', { class: 'titulo' }, 'Trocar senha'));
+    conteudo.appendChild(campo('Senha atual', fldAtual));
+    conteudo.appendChild(campo('Nova senha', fldNova));
+    conteudo.appendChild(campo('Confirmar nova senha', fldConfirma));
+    conteudo.appendChild(btnBlueprint('Salvar', 'btn-primary btn-block', {
+      onclick: async () => {
+        if (fldNova.value.length < 6) { toast('A nova senha precisa ter pelo menos 6 caracteres.', true); return; }
+        if (fldNova.value !== fldConfirma.value) { toast('As senhas não coincidem.', true); return; }
+        const auth = getAuth();
+        const resp = await fetch('/api/usuario/senha', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (auth && auth.token) },
+          body: JSON.stringify({ senhaAtual: fldAtual.value, novaSenha: fldNova.value })
+        });
+        if (resp.status === 401) { toast('Senha atual incorreta.', true); return; }
+        if (!resp.ok) { toast('Não foi possível trocar a senha.', true); return; }
+        toast('Senha alterada.');
+        location.hash = '#/inicio';
+      }
+    }));
   }
 
   // ---------- boot ----------

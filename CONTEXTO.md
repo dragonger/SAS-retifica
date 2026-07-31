@@ -110,10 +110,26 @@ Feito: `EmpresaModel`/`UsuarioModel` (novas entidades em `core/model`, registrad
 
 **Bootstrap do primeiro usuário**: no primeiro startup com banco de usuários vazio, `BootstrapUsuario` (`CommandLineRunner`) cria a empresa "Retífica" (empresa 1) e um usuário com o e-mail do Miguel e uma **senha gerada aleatoriamente**, gravada em `~/.retificasDesktop/bootstrap-credentials.txt` (fora do git — o repo é público, nada de segredo commitado). A chave de assinatura JWT também é gerada e guardada em `~/.retificasDesktop/jwt-secret.key` na primeira vez. **Se apagar/perder esses arquivos, tokens antigos ficam inválidos e um novo usuário bootstrap é criado no próximo restart** (só se `UsuarioRepository.contar()==0` — como já existe usuário, isso não vai re-rodar sozinho; pra recriar do zero precisaria apagar a linha de `USUARIO` no banco também).
 
-**Ainda não feito (Fase 1b, próximo passo)**: nenhuma das 8 entidades de negócio (Pedido, Cliente, etc.) tem `empresa_id` ainda — um usuário autenticado vê todos os dados, não há isolamento por empresa de verdade. Também não tem: troca de senha, cadastro de novos usuários (self-serve fica pra Fase 2), e o app desktop continua sem login (acessa o banco direto via `JPAUtil`, nunca passa pela API/Spring Security — decisão deliberada, não pendência).
+### Fase 1b — Isolamento de dados por empresa + troca de senha (implementado em 2026-07-31)
+
+Branch `feature/fase1b-tenant-isolation` (a partir de `feature/fase1a-auth-login`, PR próprio com base nessa branch — Fase 1a ainda não mergeada).
+
+**Escopo revisado do "empresa_id nas 8 entidades"**: só 5 ganharam coluna `empresa` de verdade — `PedidoModel`, `ClienteModel`, `CabecoteModel`, `ServicoCatalogoModel`, `PecaCatalogoModel` (as que têm endpoint REST próprio). `ServicoModel`/`PecaModel` (itens de pedido, sempre criados/removidos junto com o pai) são isolados via join no `pedido.empresa`, sem coluna redundante. `VendedorModel` ficou de fora — não tem `VendedorController` nem `VendedorRepository` em lugar nenhum, zero exposição via API, nada pra isolar de verdade.
+
+**Padrão aplicado**: toda entidade com CRUD ganhou `@ManyToOne EmpresaModel empresa`; os repositórios (`listarTodos`, `buscarPorId`, `deletar`) passaram a receber `Long empresaId` e filtrar via `WHERE x.empresa.id = :empresaId`; os controllers usam o novo `org.example.backend.security.SecurityUtils.empresaAtual()` (lê `RetificaPrincipal` do `SecurityContextHolder`) pra passar o filtro e, no `criar`, setar a empresa do novo registro. Isso fecha um IDOR real: antes, um id sequencial de outro tenant seria acessível só adivinhando o número — agora `buscarPorId` com empresa errada devolve `null` (404), igual a "não existe".
+
+**Migração dos dados existentes**: `BootstrapUsuario` foi expandido — além de criar empresa+usuário no primeiro boot, agora **sempre** roda um backfill (`UPDATE ... WHERE empresa IS NULL`) nas 5 tabelas, vinculando qualquer linha órfã à primeira empresa cadastrada. Idempotente, seguro rodar em todo startup.
+
+**Testado**: isolamento verificado criando uma segunda empresa/usuário de teste direto via SQL (senha com hash BCrypt gerado à parte) — confirmado que cada usuário só vê os próprios dados nos dois sentidos, e que acessar um id de outro tenant dá 404. Dados de teste apagados depois.
+
+**Troca de senha** (pedido do usuário, incluído nesta mesma etapa): `PUT /api/usuario/senha` (`UsuarioController`, fora de `/api/auth/**` — exige token; confere a senha atual via `PasswordEncoder.matches` antes de trocar), tela `#/trocar-senha` no PWA (`telaTrocarSenha()`), novo ícone no app-bar (`#btnSenha`).
+
+**Ainda não feito**: cadastro de novos usuários/empresas (self-serve, Fase 2), recuperação de senha esquecida, e o app desktop continua sem login (acessa o banco direto via `JPAUtil`, nunca passa pela API/Spring Security — decisão deliberada, não pendência).
+
+**Cuidado observado nesta sessão**: durante os testes de ponta a ponta (Fase 1a e 1b), o pedido real #129 acabou sendo finalizado por engano mais de uma vez (provavelmente por algum teste de API tocando o id errado) — sempre revertido na hora via SQL direto (`UPDATE PEDIDO SET DATENTREGA=NULL WHERE ID=129`) e conferido no fim de cada rodada de testes. **Ao testar contra este banco (que tem dados reais), sempre usar empresas/usuários/pedidos de teste à parte quando possível, e conferir o estado do pedido #129 no final de qualquer sessão de testes.**
 
 ## Pendências / próximos passos possíveis
-- **A avaliação de SaaS acima** é a maior pendência em aberto — aguardando as 3 decisões do usuário pra detalhar a Fase 1.
+- **Fases 1a e 1b do SaaS implementadas** (login + isolamento por empresa) — próximo passo é decidir a Fase 2 (onboarding self-serve) ou trocar H2 por Postgres. Duas das 3 decisões originais já foram tomadas (dados do Miguel = empresa 1; H2 mantido por ora); ainda faltam: modelo de cobrança e futuro do app desktop.
 - **APK**: usuário quer eventualmente empacotar como APK Android, acessado de **fora da rede local** — caminho recomendado: Capacitor ou Trusted Web Activity apontando pra uma URL pública estável (não a do túnel temporário). Ainda não iniciado.
 - **Envio automático de orçamento via WhatsApp** (API) pros clientes cadastrados — mencionado como objetivo futuro, é por isso que o cadastro de cliente foi refeito pra ser reutilizável com telefone. Não implementado ainda.
 - **Túnel permanente**: hoje é um "quick tunnel" do Cloudflare (sem conta, URL aleatória e temporária). Pra produção de verdade, criar um túnel nomeado com conta Cloudflare (grátis) ou domínio próprio + certificado real — isso também vira obrigatório se a Fase 2 do SaaS avançar (deploy hospedado).

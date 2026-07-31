@@ -1,9 +1,11 @@
 package org.example.backend.web;
 
 import org.example.backend.dto.*;
+import org.example.backend.security.SecurityUtils;
 import org.example.model.*;
 import org.example.repository.CabecoteRepository;
 import org.example.repository.ClienteRepository;
+import org.example.repository.EmpresaRepository;
 import org.example.repository.PedidoRepository;
 import org.example.service.PedidoPdfService;
 import org.springframework.http.HttpHeaders;
@@ -36,12 +38,13 @@ public class PedidoController {
     private final PedidoRepository pedidoRepository = new PedidoRepository();
     private final CabecoteRepository cabecoteRepository = new CabecoteRepository();
     private final ClienteRepository clienteRepository = new ClienteRepository();
+    private final EmpresaRepository empresaRepository = new EmpresaRepository();
     private final PedidoPdfService pdfService = new PedidoPdfService();
 
     @GetMapping
     public List<PedidoResumoDTO> listar() {
         List<PedidoResumoDTO> resultado = new ArrayList<>();
-        for (PedidoModel pedido : pedidoRepository.listarTodos()) {
+        for (PedidoModel pedido : pedidoRepository.listarTodos(SecurityUtils.empresaAtual())) {
             resultado.add(toResumo(pedido));
         }
         return resultado;
@@ -53,7 +56,7 @@ public class PedidoController {
         DashboardDTO dto = new DashboardDTO();
         dto.entregasHoje = new ArrayList<>();
 
-        for (PedidoModel pedido : pedidoRepository.listarTodos()) {
+        for (PedidoModel pedido : pedidoRepository.listarTodos(SecurityUtils.empresaAtual())) {
             if (pedido.isFinalizado()) {
                 continue;
             }
@@ -75,11 +78,12 @@ public class PedidoController {
 
     @GetMapping("/encerrados")
     public List<MesEncerradosDTO> encerrados() {
-        Map<Long, List<ServicoModel>> servicosPorPedido = pedidoRepository.listarItensServicoEncerrados().stream()
+        Long empresaId = SecurityUtils.empresaAtual();
+        Map<Long, List<ServicoModel>> servicosPorPedido = pedidoRepository.listarItensServicoEncerrados(empresaId).stream()
                 .collect(Collectors.groupingBy(s -> s.getPedido().getId()));
 
         Map<YearMonth, List<PedidoModel>> porMes = new LinkedHashMap<>();
-        for (PedidoModel pedido : pedidoRepository.listarEncerrados()) {
+        for (PedidoModel pedido : pedidoRepository.listarEncerrados(empresaId)) {
             YearMonth mes = YearMonth.from(pedido.getDatEntrega());
             porMes.computeIfAbsent(mes, k -> new ArrayList<>()).add(pedido);
         }
@@ -127,7 +131,7 @@ public class PedidoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PedidoDetalheDTO> buscar(@PathVariable Long id) {
-        PedidoModel pedido = pedidoRepository.buscarComItens(id);
+        PedidoModel pedido = pedidoRepository.buscarComItens(id, SecurityUtils.empresaAtual());
         if (pedido == null) {
             return ResponseEntity.notFound().build();
         }
@@ -139,11 +143,13 @@ public class PedidoController {
         if (request.clienteId == null) {
             return ResponseEntity.badRequest().build();
         }
+        Long empresaId = SecurityUtils.empresaAtual();
         PedidoModel pedido = new PedidoModel();
+        pedido.setEmpresa(empresaRepository.buscarPorId(empresaId));
         pedido.setDatCriacao(LocalDateTime.now());
-        aplicarRequest(pedido, request);
+        aplicarRequest(pedido, request, empresaId);
         PedidoModel salvo = pedidoRepository.salvar(pedido);
-        return ResponseEntity.ok(toDetalhe(pedidoRepository.buscarComItens(salvo.getId())));
+        return ResponseEntity.ok(toDetalhe(pedidoRepository.buscarComItens(salvo.getId(), empresaId)));
     }
 
     @PutMapping("/{id}")
@@ -151,18 +157,20 @@ public class PedidoController {
         if (request.clienteId == null) {
             return ResponseEntity.badRequest().build();
         }
-        PedidoModel pedido = pedidoRepository.buscarComItens(id);
+        Long empresaId = SecurityUtils.empresaAtual();
+        PedidoModel pedido = pedidoRepository.buscarComItens(id, empresaId);
         if (pedido == null) {
             return ResponseEntity.notFound().build();
         }
-        aplicarRequest(pedido, request);
+        aplicarRequest(pedido, request, empresaId);
         PedidoModel salvo = pedidoRepository.salvar(pedido);
-        return ResponseEntity.ok(toDetalhe(pedidoRepository.buscarComItens(salvo.getId())));
+        return ResponseEntity.ok(toDetalhe(pedidoRepository.buscarComItens(salvo.getId(), empresaId)));
     }
 
     @PostMapping("/{id}/finalizar")
     public ResponseEntity<PedidoDetalheDTO> finalizar(@PathVariable Long id) {
-        PedidoModel pedido = pedidoRepository.buscarComItens(id);
+        Long empresaId = SecurityUtils.empresaAtual();
+        PedidoModel pedido = pedidoRepository.buscarComItens(id, empresaId);
         if (pedido == null) {
             return ResponseEntity.notFound().build();
         }
@@ -170,18 +178,18 @@ public class PedidoController {
             pedido.setDatEntrega(LocalDateTime.now());
             pedidoRepository.salvar(pedido);
         }
-        return ResponseEntity.ok(toDetalhe(pedidoRepository.buscarComItens(id)));
+        return ResponseEntity.ok(toDetalhe(pedidoRepository.buscarComItens(id, empresaId)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        pedidoRepository.deletar(id);
+        pedidoRepository.deletar(id, SecurityUtils.empresaAtual());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> pdf(@PathVariable Long id) {
-        PedidoModel pedido = pedidoRepository.buscarComItens(id);
+        PedidoModel pedido = pedidoRepository.buscarComItens(id, SecurityUtils.empresaAtual());
         if (pedido == null) {
             return ResponseEntity.notFound().build();
         }
@@ -194,7 +202,7 @@ public class PedidoController {
         return ResponseEntity.ok().headers(headers).body(saida.toByteArray());
     }
 
-    private void aplicarRequest(PedidoModel pedido, PedidoRequestDTO request) {
+    private void aplicarRequest(PedidoModel pedido, PedidoRequestDTO request, Long empresaId) {
         pedido.setPedido(request.pedidoDescricao);
         pedido.setObservacao(request.observacao);
         pedido.setStatus(parseStatus(request.status));
@@ -205,14 +213,14 @@ public class PedidoController {
         List<CabecoteModel> componentes = new ArrayList<>();
         if (request.componenteIds != null) {
             for (Long componenteId : request.componenteIds) {
-                CabecoteModel componente = cabecoteRepository.buscarPorId(componenteId);
+                CabecoteModel componente = cabecoteRepository.buscarPorId(componenteId, empresaId);
                 if (componente != null) {
                     componentes.add(componente);
                 }
             }
         }
         pedido.setComponentes(componentes);
-        pedido.setCliente(clienteRepository.buscarPorId(request.clienteId));
+        pedido.setCliente(clienteRepository.buscarPorId(request.clienteId, empresaId));
         pedido.setCategorias(parseCategorias(request.categorias));
 
         pedido.getServicoList().clear();
