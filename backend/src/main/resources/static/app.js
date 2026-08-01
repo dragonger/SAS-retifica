@@ -91,8 +91,10 @@
   }
 
   // Compartilha o PDF já pré-carregado pelo menu nativo do celular (WhatsApp,
-  // e-mail, etc.); sem suporte, abre o PDF numa aba.
-  async function compartilharOrcamento(pdfPromise, nomeArquivo, novaAba) {
+  // e-mail, etc.); sem suporte, abre o PDF numa aba. `foto`, se informada, vai
+  // junto como um segundo arquivo — não é salva em lugar nenhum, só passa
+  // direto pelo compartilhamento (o cliente recebe, o servidor nunca guarda).
+  async function compartilharOrcamento(pdfPromise, nomeArquivo, novaAba, foto) {
     let blob;
     try {
       blob = await pdfPromise;
@@ -104,10 +106,14 @@
 
     if (navigator.canShare && navigator.share) {
       const file = new File([blob], nomeArquivo, { type: 'application/pdf' });
-      if (navigator.canShare({ files: [file] })) {
+      let arquivos = foto ? [file, foto] : [file];
+      if (foto && !navigator.canShare({ files: arquivos })) {
+        arquivos = [file]; // aparelho não suporta compartilhar vários arquivos — manda só o PDF
+      }
+      if (navigator.canShare({ files: arquivos })) {
         if (novaAba) novaAba.close();
         try {
-          await navigator.share({ files: [file], title: 'Orçamento', text: 'Orçamento da retífica' });
+          await navigator.share({ files: arquivos, title: 'Orçamento', text: 'Orçamento da retífica' });
           return;
         } catch (e) {
           if (e && e.name === 'AbortError') return; // usuário cancelou o menu — tudo bem
@@ -401,6 +407,27 @@
       conteudo.appendChild(el('div', { style: 'font-size:12px;opacity:.75;background:var(--color-surface);padding:10px;margin-top:16px' }, p.observacao));
     }
 
+    // — foto do componente pra ir junto no orçamento: nunca é enviada pro
+    // servidor nem salva em lugar nenhum, só passa direto no compartilhamento —
+    let fotoSelecionada = null;
+    const fotoInput = el('input', {
+      type: 'file', accept: 'image/*', capture: 'environment', hidden: true,
+      onchange: (ev) => { fotoSelecionada = (ev.target.files && ev.target.files[0]) || null; atualizarFotoUI(); }
+    });
+    const fotoPreview = el('div', {});
+    const btnFoto = btnBlueprint('Anexar foto do componente', 'btn-secondary btn-block', { onclick: () => fotoInput.click() });
+    function atualizarFotoUI() {
+      btnFoto.lastChild.textContent = fotoSelecionada ? 'Trocar foto' : 'Anexar foto do componente';
+      fotoPreview.innerHTML = '';
+      if (fotoSelecionada) {
+        fotoPreview.appendChild(el('div', { class: 'item-linha' },
+          el('span', null, '📷 ' + fotoSelecionada.name),
+          el('button', { onclick: () => { fotoSelecionada = null; fotoInput.value = ''; atualizarFotoUI(); } }, '✕')
+        ));
+      }
+    }
+    conteudo.appendChild(el('div', { style: 'margin-top:16px' }, fotoInput, btnFoto, fotoPreview));
+
     // — menu "⋮" no topo: Editar (só se não finalizado) e Excluir —
     btnMenuPedido.onclick = () => { menuPedidoPopover.hidden = !menuPedidoPopover.hidden; };
     menuPedidoPopover.innerHTML = '';
@@ -434,7 +461,7 @@
             // Reserva a aba já no clique (síncrono) — evita bloqueio de pop-up
             // se o compartilhamento por arquivo não estiver disponível.
             const novaAba = window.open('', '_blank');
-            compartilharOrcamento(pdfPromise, 'orcamento-' + id + '.pdf', novaAba);
+            compartilharOrcamento(pdfPromise, 'orcamento-' + id + '.pdf', novaAba, fotoSelecionada);
           }
         }),
         p.finalizado ? null : btnBlueprint('Finalizar', 'btn-secondary', {
