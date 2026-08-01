@@ -75,6 +75,7 @@ public class PedidoPdfService {
     private static final Font FONTE_TOTAL_LABEL;
     private static final Font FONTE_TOTAL_VALOR;
     private static final Font FONTE_RODAPE;
+    private static final byte[] LOGO_EMPRESA_BYTES;
 
     static {
         BaseFont barlow = carregarFonte("Barlow-Regular.ttf");
@@ -101,6 +102,7 @@ public class PedidoPdfService {
         FONTE_TOTAL_LABEL = new Font(barlowCondensedSemiBold, 11, Font.NORMAL, COR_TEXTO);
         FONTE_TOTAL_VALOR = new Font(barlowCondensedSemiBold, 21, Font.NORMAL, COR_ACCENT_700);
         FONTE_RODAPE = new Font(barlow, 8.5f, Font.NORMAL, COR_TEXTO_55);
+        LOGO_EMPRESA_BYTES = carregarImagem("logo-empresa.png");
     }
 
     private static BaseFont carregarFonte(String arquivo) {
@@ -112,6 +114,15 @@ public class PedidoPdfService {
             return BaseFont.createFont(arquivo, BaseFont.WINANSI, BaseFont.EMBEDDED, BaseFont.CACHED, bytes, null);
         } catch (IOException | DocumentException e) {
             throw new IllegalStateException("Falha ao carregar a fonte " + arquivo, e);
+        }
+    }
+
+    /** Diferente das fontes, a logo é opcional — sem ela, cai no placeholder em branco. */
+    private static byte[] carregarImagem(String arquivo) {
+        try (InputStream in = PedidoPdfService.class.getResourceAsStream("/images/" + arquivo)) {
+            return in != null ? in.readAllBytes() : null;
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -170,6 +181,27 @@ public class PedidoPdfService {
 
     // ---------- cabeçalho ----------
 
+    /** Logo da empresa (se o arquivo existir no classpath) ou um quadrado vazio como placeholder. */
+    private PdfPCell celulaLogo() {
+        if (LOGO_EMPRESA_BYTES != null) {
+            try {
+                Image logo = Image.getInstance(LOGO_EMPRESA_BYTES);
+                PdfPCell cell = new PdfPCell(logo, true);
+                cell.setFixedHeight(58f);
+                cell.setBorder(Rectangle.NO_BORDER);
+                cell.setPadding(0);
+                return cell;
+            } catch (IOException | BadElementException e) {
+                // cai no placeholder abaixo
+            }
+        }
+        PdfPCell cell = new PdfPCell(new Phrase(" "));
+        cell.setFixedHeight(58f);
+        cell.setBorderColor(COR_DIVIDER);
+        cell.setBorderWidth(0.75f);
+        return cell;
+    }
+
     private PdfPTable caixaCabecalho(PedidoModel pedido) {
         PdfPTable conteudo = new PdfPTable(new float[]{1f, 1f});
         conteudo.setWidthPercentage(100);
@@ -177,17 +209,12 @@ public class PedidoPdfService {
         PdfPCell logoMaisNome = new PdfPCell();
         logoMaisNome.setBorder(Rectangle.NO_BORDER);
         logoMaisNome.setPadding(0);
-        PdfPTable logoNome = new PdfPTable(new float[]{45f, 220f});
+        PdfPTable logoNome = new PdfPTable(new float[]{62f, 210f});
         logoNome.setWidthPercentage(100);
 
-        // Placeholder de logo: quadrado vazio com borda — nenhuma empresa cadastrou logo/asset ainda.
         PdfPTable logoQuadro = new PdfPTable(1);
         logoQuadro.setWidthPercentage(100);
-        PdfPCell logoCell = new PdfPCell(new Phrase(" "));
-        logoCell.setFixedHeight(45f);
-        logoCell.setBorderColor(COR_DIVIDER);
-        logoCell.setBorderWidth(0.75f);
-        logoQuadro.addCell(logoCell);
+        logoQuadro.addCell(celulaLogo());
         PdfPCell logoWrapper = new PdfPCell(logoQuadro);
         logoWrapper.setBorder(Rectangle.NO_BORDER);
         logoWrapper.setPadding(0);
