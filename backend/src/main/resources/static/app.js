@@ -93,6 +93,18 @@
     return promise;
   }
 
+  // Checagem síncrona (canShare() não é assíncrono) se dá pra tentar
+  // compartilhar arquivo — usa um File vazio só pra testar o tipo, não
+  // precisa do PDF de verdade ainda pra essa verificação de capacidade.
+  function temSuporteACompartilharArquivo() {
+    if (!navigator.share || !navigator.canShare) return false;
+    try {
+      return navigator.canShare({ files: [new File([], 'x.pdf', { type: 'application/pdf' })] });
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Compartilha o PDF já pré-carregado pelo menu nativo do celular (WhatsApp,
   // e-mail, etc.); sem suporte, abre o PDF numa aba. `foto`, se informada, vai
   // junto como um segundo arquivo — não é salva em lugar nenhum, só passa
@@ -499,9 +511,14 @@
       el('div', { class: 'btn-group', style: 'margin:0' },
         btnBlueprint('Gerar orçamento', 'btn-primary', {
           style: 'flex:2', onclick: () => {
-            // Reserva a aba já no clique (síncrono) — evita bloqueio de pop-up
-            // se o compartilhamento por arquivo não estiver disponível.
-            const novaAba = window.open('', '_blank');
+            // canShare() é síncrono — usa isso pra decidir ANTES de abrir
+            // qualquer aba. Se for tentar o Web Share, não abre aba nenhuma:
+            // window.open() consome a "permissão" do toque do usuário, e sem
+            // ela navigator.share() rejeita com NotAllowedError. Só reserva
+            // a aba (evita bloqueio de pop-up) quando o Web Share nem vai
+            // ser tentado.
+            const vaiTentarCompartilhar = temSuporteACompartilharArquivo();
+            const novaAba = vaiTentarCompartilhar ? null : window.open('', '_blank');
             compartilharOrcamento(pdfPromise, 'orcamento-' + id + '.pdf', novaAba, fotoSelecionada);
           }
         }),
