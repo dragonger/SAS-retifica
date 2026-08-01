@@ -98,6 +98,8 @@ h2.titulo { font-size: 22px; margin-bottom: 2px; }
 /* — stat cards (Início) — */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-bottom: var(--space-6); }
 .stat-card { padding: var(--space-3); }
+.stat-card-clicavel { cursor: pointer; }
+.stat-card-clicavel:active { opacity: .7; }
 .stat-kicker { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 6px; }
 .stat-value { font-family: var(--font-heading); font-size: 28px; font-weight: 600; line-height: 1; }
 .stat-sub { font-size: 11px; opacity: .7; margin-top: 2px; }
