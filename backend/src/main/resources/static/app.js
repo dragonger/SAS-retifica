@@ -175,7 +175,7 @@
 
   const rotas = [
     { re: /^#\/inicio$/, fn: () => telaInicio() },
-    { re: /^#\/pedidos$/, fn: () => telaPedidos() },
+    { re: /^#\/pedidos(?:\?filtro=(\w+))?$/, fn: (m) => telaPedidos(m[1]) },
     { re: /^#\/pedidos\/novo$/, fn: () => telaFormPedido(null) },
     { re: /^#\/pedidos\/(\d+)\/editar$/, fn: (m) => telaFormPedido(m[1]) },
     { re: /^#\/pedidos\/(\d+)$/, fn: (m) => telaVisualizarPedido(m[1]) },
@@ -202,9 +202,10 @@
     btnSair.hidden = !logado;
     btnSenha.hidden = !logado;
 
-    const raiz = '#/' + (hash.split('/')[1] || 'inicio');
+    const caminhoBase = hash.split('?')[0];
+    const raiz = '#/' + (caminhoBase.split('/')[1] || 'inicio');
     tabs.forEach(t => t.classList.toggle('active', ('#/' + t.dataset.tab) === raiz));
-    btnVoltar.hidden = ROOTS.includes(hash);
+    btnVoltar.hidden = ROOTS.includes(caminhoBase);
     conteudo.scrollTop = 0;
 
     for (const r of rotas) {
@@ -237,10 +238,10 @@
     conteudo.appendChild(el('div', { class: 'subtitulo' }, hoje.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })));
 
     conteudo.appendChild(el('div', { class: 'stat-grid' },
-      statCard('Em aberto', dash.abertos, 'pedidos'),
-      statCard('Entregas hoje', dash.hoje, 'pedidos'),
-      statCard('Prontos', dash.prontos, 'p/ retirada'),
-      statCard('Atrasados', dash.atrasados, 'pedidos'),
+      statCard('Em aberto', dash.abertos, 'pedidos', () => { location.hash = '#/pedidos?filtro=abertos'; }),
+      statCard('Entregas hoje', dash.hoje, 'pedidos', () => { location.hash = '#/pedidos?filtro=hoje'; }),
+      statCard('Prontos', dash.prontos, 'p/ retirada', () => { location.hash = '#/pedidos?filtro=prontos'; }),
+      statCard('Atrasados', dash.atrasados, 'pedidos', () => { location.hash = '#/pedidos?filtro=atrasados'; }),
     ));
 
     conteudo.appendChild(el('div', { class: 'btn-group', style: 'margin-top:0;margin-bottom:24px' },
@@ -256,8 +257,8 @@
     }
   }
 
-  function statCard(kicker, valor, sub) {
-    return blueprintBox('div', { class: 'stat-card' },
+  function statCard(kicker, valor, sub, onclick) {
+    return blueprintBox('div', { class: 'stat-card' + (onclick ? ' stat-card-clicavel' : ''), onclick },
       el('div', { class: 'stat-kicker' }, kicker),
       el('div', { class: 'stat-value' }, String(valor)),
       el('div', { class: 'stat-sub' }, sub),
@@ -266,19 +267,40 @@
 
   // ---------- Pedidos: lista ----------
 
-  async function telaPedidos() {
+  const FILTROS_PEDIDOS = {
+    abertos: { rotulo: 'Em aberto', fn: p => !p.finalizado },
+    hoje: { rotulo: 'Entregas hoje', fn: p => !p.finalizado && p.dataEntrega === dataHojeBr() },
+    prontos: { rotulo: 'Prontos', fn: p => !p.finalizado && p.status === 'PRONTO' },
+    atrasados: { rotulo: 'Atrasados', fn: p => p.atrasado },
+  };
+
+  function dataHojeBr() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+  }
+
+  async function telaPedidos(filtroChave) {
     tituloTopo.textContent = 'Pedidos';
     conteudo.innerHTML = '';
     conteudo.appendChild(el('div', { class: 'empty' }, 'Carregando...'));
 
-    const pedidos = await api('GET', '/api/pedidos');
+    const todos = await api('GET', '/api/pedidos');
+    const filtro = FILTROS_PEDIDOS[filtroChave];
+    const pedidos = filtro ? todos.filter(filtro.fn) : todos;
     conteudo.innerHTML = '';
 
     conteudo.appendChild(el('h2', { class: 'titulo' }, 'Pedidos'));
-    conteudo.appendChild(el('div', { class: 'subtitulo' }, pedidos.filter(p => !p.finalizado).length + ' em aberto'));
+    conteudo.appendChild(el('div', { class: 'subtitulo' },
+      filtro ? filtro.rotulo + ' — ' + pedidos.length : pedidos.filter(p => !p.finalizado).length + ' em aberto'));
+
+    if (filtro) {
+      conteudo.appendChild(btnBlueprint('Ver todos os pedidos', 'btn-secondary btn-block', {
+        style: 'margin-bottom:16px', onclick: () => { location.hash = '#/pedidos'; }
+      }));
+    }
 
     if (!pedidos.length) {
-      conteudo.appendChild(el('div', { class: 'empty' }, 'Nenhum pedido cadastrado ainda.'));
+      conteudo.appendChild(el('div', { class: 'empty' }, filtro ? 'Nenhum pedido nessa situação.' : 'Nenhum pedido cadastrado ainda.'));
     } else {
       pedidos.forEach(p => conteudo.appendChild(linhaPedido(p)));
     }
