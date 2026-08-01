@@ -29,6 +29,7 @@ import java.util.Date;
 public class JwtUtil {
 
     private static final long EXPIRACAO_DIAS = 30;
+    private static final long RENOVAR_SE_FALTAM_DIAS = 7;
 
     private final SecretKey chave;
 
@@ -37,11 +38,21 @@ public class JwtUtil {
     }
 
     public String gerar(UsuarioModel usuario) {
+        return gerar(usuario.getEmail(), usuario.getId(),
+                usuario.getEmpresa() != null ? usuario.getEmpresa().getId() : null);
+    }
+
+    /** Renova um token válido (mesmo usuário/empresa, nova expiração) — mantém a sessão ativa sem exigir login de novo. */
+    public String renovar(Claims claims) {
+        return gerar(claims.getSubject(), claims.get("usuarioId", Long.class), claims.get("empresaId", Long.class));
+    }
+
+    private String gerar(String email, Long usuarioId, Long empresaId) {
         Instant agora = Instant.now();
         return Jwts.builder()
-                .subject(usuario.getEmail())
-                .claim("usuarioId", usuario.getId())
-                .claim("empresaId", usuario.getEmpresa() != null ? usuario.getEmpresa().getId() : null)
+                .subject(email)
+                .claim("usuarioId", usuarioId)
+                .claim("empresaId", empresaId)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(EXPIRACAO_DIAS, ChronoUnit.DAYS)))
                 .signWith(chave)
@@ -56,6 +67,12 @@ public class JwtUtil {
         } catch (RuntimeException e) {
             return null;
         }
+    }
+
+    /** True quando falta pouco pra expirar — sinal pro filtro renovar o token silenciosamente. */
+    public boolean precisaRenovar(Claims claims) {
+        Instant limiteRenovacao = claims.getExpiration().toInstant().minus(RENOVAR_SE_FALTAM_DIAS, ChronoUnit.DAYS);
+        return Instant.now().isAfter(limiteRenovacao);
     }
 
     private byte[] carregarOuGerarChave() {
