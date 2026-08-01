@@ -2,6 +2,7 @@ package org.example.model;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,6 +26,14 @@ public class PedidoModel {
 
     @Column(precision = 19, scale = 2)
     private BigDecimal totalGeral;
+
+    /** Tipo do desconto aplicado (valor fixo em R$ ou percentual) — null quando não há desconto. */
+    @Enumerated(EnumType.STRING)
+    private TipoDesconto descontoTipo;
+
+    /** Valor do desconto: R$ quando descontoTipo=VALOR, ou percentual (0-100) quando PERCENTUAL. */
+    @Column(precision = 19, scale = 2)
+    private BigDecimal descontoValor;
 
     /** Data/hora em que o pedido foi criado (preenchida automaticamente). */
     private LocalDateTime datCriacao;
@@ -133,6 +142,54 @@ public class PedidoModel {
 
     public void setTotalGeral(BigDecimal totalGeral) {
         this.totalGeral = totalGeral;
+    }
+
+    public TipoDesconto getDescontoTipo() {
+        return descontoTipo;
+    }
+
+    public void setDescontoTipo(TipoDesconto descontoTipo) {
+        this.descontoTipo = descontoTipo;
+    }
+
+    public BigDecimal getDescontoValor() {
+        return descontoValor;
+    }
+
+    public void setDescontoValor(BigDecimal descontoValor) {
+        this.descontoValor = descontoValor;
+    }
+
+    /** Soma dos serviços e peças, antes do desconto. */
+    @Transient
+    public BigDecimal getSubtotal() {
+        BigDecimal total = BigDecimal.ZERO;
+        for (ServicoModel s : servicoList) {
+            total = total.add(s.getValorTotal());
+        }
+        for (PecaModel p : pecaList) {
+            total = total.add(p.getValorTotal());
+        }
+        return total;
+    }
+
+    /** Valor efetivo do desconto em R$, já resolvido a partir de descontoTipo/descontoValor. Nunca maior que o subtotal. */
+    @Transient
+    public BigDecimal getValorDesconto() {
+        BigDecimal subtotal = getSubtotal();
+        if (descontoTipo == null || descontoValor == null || descontoValor.signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal desconto = descontoTipo == TipoDesconto.PERCENTUAL
+                ? subtotal.multiply(descontoValor.min(BigDecimal.valueOf(100)))
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                : descontoValor;
+        return desconto.min(subtotal);
+    }
+
+    /** Recalcula e grava totalGeral a partir dos itens e do desconto atuais. */
+    public void recalcularTotal() {
+        this.totalGeral = getSubtotal().subtract(getValorDesconto());
     }
 
     public LocalDateTime getDatCriacao() {

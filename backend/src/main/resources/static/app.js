@@ -345,6 +345,13 @@
     conteudo.appendChild(el('h2', { class: 'secao' }, 'Peças'));
     conteudo.appendChild(tabelaItens(p.pecas, 'Nenhuma peça utilizada.'));
 
+    if (p.descontoTipo && p.descontoValor) {
+      const rotuloDesconto = p.descontoTipo === 'PERCENTUAL' ? 'Desconto (' + p.descontoValor + '%)' : 'Desconto';
+      conteudo.appendChild(el('div', { style: 'display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:8px' },
+        linhaChave('Subtotal', moeda(p.subtotal)),
+        linhaChave(rotuloDesconto, '- ' + moeda(p.subtotal - p.totalGeral)),
+      ));
+    }
     conteudo.appendChild(el('div', { class: 'total-box' },
       el('span', null, 'Total'), el('span', { class: 'valor' }, moeda(p.totalGeral))
     ));
@@ -521,6 +528,17 @@
     const fldEntrega = el('input', { class: 'input', type: 'date', value: pedido ? (pedido.datEntregaEstimada || '') : '' });
     const fldObservacao = el('textarea', { class: 'input', rows: '4', placeholder: 'Detalhes adicionais do serviço' }, pedido ? (pedido.observacao || '') : '');
 
+    const fldDescontoTipo = el('select', { class: 'input', style: 'width:150px' },
+      el('option', { value: '' }, 'Sem desconto'),
+      el('option', { value: 'VALOR' }, 'Valor (R$)'),
+      el('option', { value: 'PERCENTUAL' }, 'Percentual (%)'),
+    );
+    const fldDescontoValor = el('input', { class: 'input', type: 'number', min: '0', step: '0.01', placeholder: '0,00' });
+    if (pedido && pedido.descontoTipo) {
+      fldDescontoTipo.value = pedido.descontoTipo;
+      fldDescontoValor.value = pedido.descontoValor != null ? pedido.descontoValor : '';
+    }
+
     // — chips de categoria: filtram os serviços/peças disponíveis abaixo —
     const chipsCategoria = catalogoCache.categorias.filter(cat => CATEGORIAS_COMPONENTE.includes(cat.nome)).map(cat => {
       const btn = el('button', {
@@ -663,16 +681,24 @@
     function seletorAdicionar(catalogo, lista, redesenhar) {
       const sel = el('select', { class: 'input' });
       construirOpcoes(sel, catalogo);
-      const qtd = el('input', { class: 'input', type: 'number', min: '1', step: '1', value: '1', placeholder: 'Qtd', style: 'width:66px' });
+      const qtd = el('input', { class: 'input', type: 'number', min: '1', step: '1', value: '1', placeholder: 'Qtd', style: 'width:56px' });
+      // Preço vem sugerido do catálogo ao escolher o item, mas sempre editável
+      // aqui — o valor real do pedido é definido na hora, não travado no catálogo.
+      const preco = el('input', { class: 'input', type: 'number', min: '0', step: '0.01', placeholder: 'Valor (R$)', style: 'width:100px' });
+      sel.addEventListener('change', () => {
+        const item = catalogo.find(c => String(c.id) === sel.value);
+        preco.value = item ? item.valor : '';
+      });
       const elemento = el('div', { style: 'display:flex;flex-direction:column;gap:12px' },
-        el('div', { style: 'display:flex;gap:8px' }, sel, qtd),
+        el('div', { style: 'display:flex;gap:8px' }, sel, qtd, preco),
         btnBlueprint('Adicionar', 'btn-secondary btn-block', {
           onclick: () => {
             const item = catalogo.find(c => String(c.id) === sel.value);
             if (!item) { toast('Selecione um item.', true); return; }
             const quantidade = Math.max(1, parseInt(qtd.value || '1', 10));
-            lista.push({ descricao: item.nome, valorUnitario: item.valor, quantidade });
-            sel.value = ''; qtd.value = '1';
+            const valorUnitario = preco.value !== '' ? Number(preco.value) : item.valor;
+            lista.push({ descricao: item.nome, valorUnitario, quantidade });
+            sel.value = ''; qtd.value = '1'; preco.value = '';
             redesenhar();
           }
         })
@@ -695,6 +721,7 @@
       campoComponente,
       campo('Situação', fldStatus),
       campo('Descrição', fldDescricao),
+      campo('Desconto', el('div', { style: 'display:flex;gap:8px' }, fldDescontoTipo, fldDescontoValor)),
       campo('Entrega estimada', fldEntrega), campo('Observação', fldObservacao));
     const painelCliente = el('div', { style: 'display:flex;flex-direction:column;gap:0' },
       clienteBoxSelecionado, buscaClienteBox, btnNovoCliente, novoClienteBox);
@@ -739,6 +766,8 @@
           datEntregaEstimada: fldEntrega.value || null,
           servicos: linhasServicos,
           pecas: linhasPecas,
+          descontoTipo: fldDescontoTipo.value || null,
+          descontoValor: fldDescontoValor.value !== '' ? Number(fldDescontoValor.value) : null,
         };
 
         const salvo = id
