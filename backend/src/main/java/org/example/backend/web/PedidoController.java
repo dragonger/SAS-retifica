@@ -251,14 +251,20 @@ public class PedidoController {
             }
         }
 
-        BigDecimal total = BigDecimal.ZERO;
-        for (ServicoModel s : pedido.getServicoList()) {
-            total = total.add(s.getValorTotal());
+        pedido.setDescontoTipo(parseTipoDesconto(request.descontoTipo));
+        pedido.setDescontoValor(pedido.getDescontoTipo() != null ? request.descontoValor : null);
+        pedido.recalcularTotal();
+    }
+
+    private TipoDesconto parseTipoDesconto(String nome) {
+        if (nome == null || nome.isBlank()) {
+            return null;
         }
-        for (PecaModel p : pedido.getPecaList()) {
-            total = total.add(p.getValorTotal());
+        try {
+            return TipoDesconto.valueOf(nome);
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        pedido.setTotalGeral(total);
     }
 
     private Set<CategoriaProduto> parseCategorias(List<String> nomes) {
@@ -344,6 +350,9 @@ public class PedidoController {
         dto.atrasado = situacaoAtrasado(pedido);
         dto.status = pedido.getStatus().name();
         dto.situacao = situacaoLabel(pedido, dto.atrasado);
+        dto.subtotal = pedido.getSubtotal();
+        dto.descontoTipo = pedido.getDescontoTipo() != null ? pedido.getDescontoTipo().name() : null;
+        dto.descontoValor = pedido.getDescontoValor();
         dto.totalGeral = pedido.getTotalGeral();
 
         dto.componentes = new ArrayList<>();

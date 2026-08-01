@@ -14,7 +14,10 @@ public class PedidoDetalheDTO {
     public boolean atrasado;
     public String status;             // "ABERTO" | "EM_ANDAMENTO" | "PRONTO"
     public String situacao;           // "Aberto" | "Em andamento" | "Pronto" | "Atrasado" | "Finalizado"
-    public BigDecimal totalGeral;
+    public BigDecimal subtotal;       // soma de serviços+peças, antes do desconto
+    public String descontoTipo;       // "VALOR" | "PERCENTUAL" | null
+    public BigDecimal descontoValor;  // valor digitado (R$ ou %, conforme descontoTipo) — null quando não há desconto
+    public BigDecimal totalGeral;     // subtotal - desconto
 
     public List<CabecoteDTO> componentes; // cabeçote(s)/bloco(s)/biela(s)/virabrequim(ns) vinculados
     public List<String> categorias;   // nomes do enum CategoriaProduto

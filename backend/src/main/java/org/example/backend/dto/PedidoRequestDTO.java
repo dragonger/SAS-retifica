@@ -1,5 +1,6 @@
 package org.example.backend.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /** Corpo de criação/edição de pedido, enviado pela página web. */
@@ -13,4 +14,6 @@ public class PedidoRequestDTO {
     public String datEntregaEstimada; // yyyy-MM-dd
     public List<ItemRequestDTO> servicos;
     public List<ItemRequestDTO> pecas;
+    public String descontoTipo;       // "VALOR" | "PERCENTUAL" — null/ausente quando não há desconto
+    public BigDecimal descontoValor;
 }
