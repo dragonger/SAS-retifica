@@ -60,17 +60,23 @@ mvn -pl desktop -am javafx:run
 ```
 Desde a troca pra Postgres, o desktop também precisa do `docker compose up -d` rodando (ou apontar pra um Postgres real via env vars) — não lê mais um arquivo local sozinho.
 
-## Produção (Railway + Neon) — em andamento, 2026-07-31
+## Produção (Railway + Neon) — **no ar desde 2026-07-31**
 
-Branch `feature/producao-postgres-hosting`. Escolhas: hospedagem **Railway** (deploy via `Dockerfile` já criado na raiz), banco **Neon** (Postgres gerenciado). Decisão de projeto: **sem H2 daqui pra frente, nem em dev** — só Postgres (local via Docker, produção via Neon) pra não ter dois dialetos pra manter sincronizados.
+**URL pública**: https://retifica-backend-production.up.railway.app (domínio gerado pelo Railway, HTTPS de verdade — sem certificado autoassinado).
 
-**Variáveis de ambiente que a produção precisa** (configurar no painel do Railway, nunca commitar):
+PR #4 (`feature/producao-postgres-hosting`) mergeado no `main`. Escolhas: hospedagem **Railway**, banco **Neon** (Postgres gerenciado). Decisão de projeto: **sem H2 daqui pra frente, nem em dev** — só Postgres (local via Docker, produção via Neon).
+
+**Projeto/serviço no Railway**: projeto `daring-benevolence`, serviço `retifica-backend` (builder = Dockerfile, não o auto-detect do Railway — o Dockerfile já existente na raiz é usado). **Atenção**: já rolou uma vez de existir um serviço duplicado (`SAS-retifica`, criado quando o repo foi conectado direto pelo dashboard, usando auto-detect/Railpack, sem variáveis — ficou crashado) — foi apagado. Se for mexer de novo, confirmar com `railway service list --json` que só existe UM serviço antes de criar outro.
+
+**Variáveis de ambiente configuradas no Railway** (nunca commitar os valores):
 - `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` — do Neon.
-- `JWT_SECRET` — gerar um valor novo (base64, 32 bytes) só pra produção; **não reaproveitar** o `~/.retificasDesktop/jwt-secret.key` local.
+- `JWT_SECRET` — valor próprio de produção, gerado à parte (não é o mesmo do `~/.retificasDesktop/jwt-secret.key` local).
 - `SSL_ENABLED=false` — o Railway termina HTTPS de verdade na borda; o app escuta HTTP puro por dentro.
-- `PORT` — o próprio Railway injeta essa automaticamente, não precisa setar.
+- `PORT` — o próprio Railway injeta automaticamente.
 
-**Status**: código pronto e testado localmente contra Postgres via Docker (login, pedidos, dashboard, encerrados, PDF — tudo funcionando). Faltam as partes que só o Miguel pode fazer: criar conta/projeto no Neon, criar conta no Railway e conectar o repositório `SAS-retifica`, migrar os dados reais do H2 antigo pro Neon (procedimento documentado no plano de implementação da sessão), configurar as variáveis acima no Railway.
+**Railway CLI**: instalado via `npm install -g @railway/cli` (Node.js instalado em 2026-07-31 pra isso). Não fica no PATH da sessão por padrão — usar `$env:Path = "C:\Program Files\nodejs;$env:APPDATA\npm;" + $env:Path` (PowerShell) antes de rodar `railway`. Login já feito (`railway login`, autenticado como Miguel). Projeto já linkado nesta pasta (`railway link`/`railway service link retifica-backend`).
+
+**Migração dos dados reais**: feita com sucesso — export do H2 antigo via `org.h2.tools.Script`, ajustado (nomes de tabela/coluna em minúsculo pro Postgres, `EMPRESA`/`USUARIO` viraram `UPDATE` em vez de `INSERT` porque o bootstrap já cria a linha 1) e aplicado via `docker run postgres:16-alpine psql "<connection-string-do-neon>" -f script.sql`. **Gotcha**: a tabela `PEDIDO` do H2 tinha uma coluna legada `cabecote_id` que não existe no schema novo do Postgres (Hibernate só cria o que a entidade atual mapeia) — teve que tirar essa coluna do INSERT. Tudo conferido via API depois: login, pedido #129, cliente, catálogo completo, PDF, dashboard — tudo certo, acentuação preservada.
 
 ## Dados reais no banco (não apagar)
 - 1 cliente real: "MIGUEL BELIZARIO SANTOS"
@@ -152,10 +158,10 @@ Branch `feature/fase1b-tenant-isolation` (a partir de `feature/fase1a-auth-login
 **Cuidado observado nesta sessão**: durante os testes de ponta a ponta (Fase 1a e 1b), o pedido real #129 acabou sendo finalizado por engano mais de uma vez (provavelmente por algum teste de API tocando o id errado) — sempre revertido na hora via SQL direto (`UPDATE PEDIDO SET DATENTREGA=NULL WHERE ID=129`) e conferido no fim de cada rodada de testes. **Ao testar contra este banco (que tem dados reais), sempre usar empresas/usuários/pedidos de teste à parte quando possível, e conferir o estado do pedido #129 no final de qualquer sessão de testes.**
 
 ## Pendências / próximos passos possíveis
-- **Fases 1a e 1b do SaaS implementadas** (login + isolamento por empresa) — próximo passo é decidir a Fase 2 (onboarding self-serve) ou trocar H2 por Postgres. Duas das 3 decisões originais já foram tomadas (dados do Miguel = empresa 1; H2 mantido por ora); ainda faltam: modelo de cobrança e futuro do app desktop.
-- **APK**: usuário quer eventualmente empacotar como APK Android, acessado de **fora da rede local** — caminho recomendado: Capacitor ou Trusted Web Activity apontando pra uma URL pública estável (não a do túnel temporário). Ainda não iniciado.
+- **Fases 1a, 1b e a hospedagem em produção estão prontas e no ar** (login + isolamento por empresa + Railway/Neon). Próximo passo natural: Fase 2 (onboarding self-serve de outras oficinas) — mas ainda faltam duas decisões antes: modelo de cobrança e futuro do app desktop (ver seção "Avaliação de SaaS").
+- **APK**: usuário quer eventualmente empacotar como APK Android — agora já existe uma URL pública estável (`https://retifica-backend-production.up.railway.app`), então essa pendência do CONTEXTO.md original (precisar de URL estável primeiro) **está resolvida**. Caminho recomendado: Capacitor ou Trusted Web Activity apontando pra essa URL. Ainda não iniciado.
 - **Envio automático de orçamento via WhatsApp** (API) pros clientes cadastrados — mencionado como objetivo futuro, é por isso que o cadastro de cliente foi refeito pra ser reutilizável com telefone. Não implementado ainda.
-- **Túnel permanente**: hoje é um "quick tunnel" do Cloudflare (sem conta, URL aleatória e temporária). Pra produção de verdade, criar um túnel nomeado com conta Cloudflare (grátis) ou domínio próprio + certificado real — isso também vira obrigatório se a Fase 2 do SaaS avançar (deploy hospedado).
+- **Túnel Cloudflare**: com a produção no Railway, o túnel local deixa de ser a forma principal de acesso externo — continua útil só pra testar mudanças antes de fazer deploy.
 - Desktop não foi atualizado pra multi-componente (ainda seleciona só 1 por vez), pra escolher categoria no cadastro de cabeçote (sempre cria como CABECOTE), nem recebeu nenhuma das mudanças de UI do PWA desta sessão (categorias envolvidas, dashboard, fix do cadastro de cliente). Ninguém pediu essa paridade ainda — e se a Fase 3 do SaaS decidir aposentar o desktop, pode nunca precisar.
 - Regra de firewall pro Windows: se algum dia voltar a acessar via IP local (LAN) em vez do túnel, a porta 8443 pode precisar de:
   ```powershell
