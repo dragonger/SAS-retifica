@@ -135,7 +135,11 @@
         if (navigator.canShare({ files: arquivos })) {
           if (novaAba) novaAba.close();
           try {
-            await navigator.share({ files: arquivos, title: 'Orçamento', text: 'Orçamento da retífica' });
+            // Sem "text"/"title" aqui de propósito: alguns apps (WhatsApp no
+            // Android, principalmente) priorizam o texto e descartam o
+            // arquivo quando os dois vêm juntos no share() — só o arquivo
+            // evita esse problema. O nome do arquivo já diz o que é.
+            await navigator.share({ files: arquivos });
             return;
           } catch (e) {
             if (e && e.name === 'AbortError') return; // usuário cancelou o menu — tudo bem
