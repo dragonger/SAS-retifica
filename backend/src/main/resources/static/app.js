@@ -134,6 +134,7 @@
         }
         if (navigator.canShare({ files: arquivos })) {
           if (novaAba) novaAba.close();
+          const inicioShare = Date.now();
           try {
             // Sem "text"/"title" aqui de propósito: alguns apps (WhatsApp no
             // Android, principalmente) priorizam o texto e descartam o
@@ -142,8 +143,16 @@
             await navigator.share({ files: arquivos });
             return;
           } catch (e) {
-            if (e && e.name === 'AbortError') return; // usuário cancelou o menu — tudo bem
-            motivoFallback = 'Falha ao abrir o menu de compartilhar (' + (e && e.name) + ').';
+            const duracaoMs = Date.now() - inicioShare;
+            // AbortError pode ser o usuário cancelando o menu de verdade
+            // (demora - viu o menu, decidiu, fechou) ou o navegador recusando
+            // o compartilhamento antes de sequer mostrar o menu (instantâneo
+            // - sinal de problema de "gesto"/timing, não de escolha do
+            // usuário). Só trata como cancelamento de verdade se demorou.
+            if (e && e.name === 'AbortError' && duracaoMs > 400) return;
+            motivoFallback = (e && e.name === 'AbortError')
+              ? 'O navegador recusou compartilhar antes de abrir o menu (' + duracaoMs + 'ms).'
+              : 'Falha ao abrir o menu de compartilhar (' + (e && e.name) + ').';
           }
         } else {
           motivoFallback = 'Este navegador não aceita compartilhar arquivo PDF.';
