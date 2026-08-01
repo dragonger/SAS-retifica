@@ -11,6 +11,8 @@
   const tabs = document.querySelectorAll('.tab');
   const btnSair = document.getElementById('btnSair');
   const btnSenha = document.getElementById('btnSenha');
+  const btnMenuPedido = document.getElementById('btnMenuPedido');
+  const menuPedidoPopover = document.getElementById('menuPedidoPopover');
   const tabBarEl = document.querySelector('.tab-bar');
   const ROOTS = ['#/inicio', '#/pedidos', '#/cabecotes', '#/encerrados', '#/dashboard', '#/login', '#/trocar-senha'];
 
@@ -156,8 +158,26 @@
   const STATUS_OPCOES = [['ABERTO', 'Aberto'], ['EM_ANDAMENTO', 'Em andamento'], ['PRONTO', 'Pronto']];
 
   function tagSituacao(situacao) {
-    const map = { 'Aberto': 'tag-neutral', 'Em andamento': 'tag-outline', 'Pronto': 'tag-accent', 'Atrasado': 'tag-accent-2', 'Finalizado': 'tag-neutral' };
-    return el('span', { class: 'tag ' + (map[situacao] || 'tag-neutral') }, situacao);
+    const map = { 'Aberto': 'tag-neutral', 'Em andamento': 'tag-outline', 'Pronto': 'tag-accent', 'Atrasado': 'tag-accent-2', 'Finalizado': 'tag-finalizado' };
+    const filhos = [];
+    if (situacao === 'Atrasado') filhos.push(svgAlerta());
+    if (situacao === 'Finalizado') filhos.push(svgCheck());
+    filhos.push(situacao);
+    return el('span', { class: 'tag ' + (map[situacao] || 'tag-neutral') }, ...filhos);
+  }
+  function svgAlerta() {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('width', '11'); s.setAttribute('height', '11'); s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '1.5');
+    s.innerHTML = '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
+    return s;
+  }
+  function svgCheck() {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('width', '9'); s.setAttribute('height', '9'); s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '3');
+    s.innerHTML = '<path d="M20 6 9 17l-5-5"/>';
+    return s;
   }
 
   async function carregarCatalogos() {
@@ -208,6 +228,9 @@
     btnVoltar.hidden = ROOTS.includes(caminhoBase);
     conteudo.scrollTop = 0;
 
+    btnMenuPedido.hidden = !/^#\/pedidos\/\d+$/.test(caminhoBase);
+    menuPedidoPopover.hidden = true;
+
     for (const r of rotas) {
       const m = hash.match(r.re);
       if (m) { r.fn(m); return; }
@@ -224,6 +247,11 @@
   btnSenha.addEventListener('click', () => { location.hash = '#/trocar-senha'; });
   tabs.forEach(t => t.addEventListener('click', () => { location.hash = '#/' + t.dataset.tab; }));
   window.addEventListener('hashchange', rotear);
+  document.addEventListener('click', (ev) => {
+    if (!menuPedidoPopover.hidden && ev.target !== btnMenuPedido && !btnMenuPedido.contains(ev.target) && !menuPedidoPopover.contains(ev.target)) {
+      menuPedidoPopover.hidden = true;
+    }
+  });
 
   // ---------- Início (dashboard) ----------
 
@@ -354,8 +382,10 @@
       ) : null,
     ));
 
+    const linhasComponente = componentesPorCategoria(p);
     conteudo.appendChild(el('div', { style: 'display:flex;flex-direction:column;gap:8px;font-size:13px;margin-bottom:16px' },
-      linhaChave('Componentes', (p.componentes && p.componentes.length ? p.componentes.map(c => c.nome).join(', ') : p.pedidoDescricao) || '-'),
+      ...(linhasComponente.length ? linhasComponente.map(([rotulo, nomes]) => linhaChave(rotulo, nomes))
+        : [linhaChave('Descrição', p.pedidoDescricao || '-')]),
       linhaChave('Criado em', p.datCriacao || '-'),
       linhaChave('Entrega estimada', p.datEntregaEstimada ? formatarDataBr(p.datEntregaEstimada) : '-'),
       linhaChaveTag('Situação', p.situacao),
@@ -367,58 +397,67 @@
     conteudo.appendChild(el('h2', { class: 'secao' }, 'Peças'));
     conteudo.appendChild(tabelaItens(p.pecas, 'Nenhuma peça utilizada.'));
 
-    if (p.descontoTipo && p.descontoValor) {
-      const rotuloDesconto = p.descontoTipo === 'PERCENTUAL' ? 'Desconto (' + p.descontoValor + '%)' : 'Desconto';
-      conteudo.appendChild(el('div', { style: 'display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:8px' },
-        linhaChave('Subtotal', moeda(p.subtotal)),
-        linhaChave(rotuloDesconto, '- ' + moeda(p.subtotal - p.totalGeral)),
-      ));
-    }
-    conteudo.appendChild(el('div', { class: 'total-box' },
-      el('span', null, 'Total'), el('span', { class: 'valor' }, moeda(p.totalGeral))
-    ));
-
     if (p.observacao) {
       conteudo.appendChild(el('div', { style: 'font-size:12px;opacity:.75;background:var(--color-surface);padding:10px;margin-top:16px' }, p.observacao));
     }
 
-    const acoes = el('div', { class: 'btn-group' });
+    // — menu "⋮" no topo: Editar (só se não finalizado) e Excluir —
+    btnMenuPedido.onclick = () => { menuPedidoPopover.hidden = !menuPedidoPopover.hidden; };
+    menuPedidoPopover.innerHTML = '';
     if (!p.finalizado) {
-      acoes.appendChild(btnBlueprint('Finalizar pedido', 'btn-primary', {
-        onclick: async () => {
-          if (!confirm('Finalizar o pedido #' + id + '? A data de entrega será registrada agora.')) return;
-          await api('POST', '/api/pedidos/' + id + '/finalizar');
-          toast('Pedido finalizado.');
-          telaVisualizarPedido(id);
-        }
-      }));
+      menuPedidoPopover.appendChild(el('button', {
+        type: 'button', onclick: () => { menuPedidoPopover.hidden = true; location.hash = '#/pedidos/' + id + '/editar'; }
+      }, 'Editar'));
     }
-    conteudo.appendChild(acoes);
-
-    const acoes2 = el('div', { class: 'btn-group' });
-    acoes2.appendChild(btnBlueprint('Gerar orçamento', 'btn-secondary', {
-      onclick: () => {
-        // Reserva a aba já no clique (síncrono) — evita bloqueio de pop-up
-        // se o compartilhamento por arquivo não estiver disponível.
-        const novaAba = window.open('', '_blank');
-        compartilharOrcamento(pdfPromise, 'orcamento-' + id + '.pdf', novaAba);
-      }
-    }));
-    if (!p.finalizado) {
-      acoes2.appendChild(btnBlueprint('Editar', 'btn-secondary', {
-        onclick: () => { location.hash = '#/pedidos/' + id + '/editar'; }
-      }));
-    }
-    conteudo.appendChild(acoes2);
-
-    conteudo.appendChild(el('button', {
-      class: 'btn btn-ghost btn-block', style: 'margin-top:8px', type: 'button', onclick: async () => {
+    menuPedidoPopover.appendChild(el('button', {
+      type: 'button', class: 'danger', onclick: async () => {
+        menuPedidoPopover.hidden = true;
         if (!confirm('Deletar o pedido #' + id + '? Essa ação não pode ser desfeita.')) return;
         await api('DELETE', '/api/pedidos/' + id);
         toast('Pedido deletado.');
         location.hash = '#/pedidos';
       }
     }, 'Excluir pedido'));
+
+    // — barra fixa embaixo: total + ação primária (Gerar orçamento) —
+    const rotuloDesconto = p.descontoTipo === 'PERCENTUAL' ? 'Desconto (' + p.descontoValor + '%)' : 'Desconto';
+    const barraTotal = el('div', { class: 'total-box', style: 'position:sticky;bottom:0;flex-direction:column;align-items:stretch;gap:10px;background:var(--color-surface);padding:var(--space-3);margin-top:16px' },
+      ...(p.descontoTipo && p.descontoValor ? [
+        el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;opacity:.7' }, el('span', null, 'Subtotal'), el('span', null, moeda(p.subtotal))),
+        el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;opacity:.7' }, el('span', null, rotuloDesconto), el('span', null, '- ' + moeda(p.subtotal - p.totalGeral))),
+      ] : []),
+      el('div', { style: 'display:flex;justify-content:space-between;align-items:baseline' },
+        el('span', null, 'Total'), el('span', { class: 'valor' }, moeda(p.totalGeral))),
+      el('div', { class: 'btn-group', style: 'margin:0' },
+        btnBlueprint('Gerar orçamento', 'btn-primary', {
+          style: 'flex:2', onclick: () => {
+            // Reserva a aba já no clique (síncrono) — evita bloqueio de pop-up
+            // se o compartilhamento por arquivo não estiver disponível.
+            const novaAba = window.open('', '_blank');
+            compartilharOrcamento(pdfPromise, 'orcamento-' + id + '.pdf', novaAba);
+          }
+        }),
+        p.finalizado ? null : btnBlueprint('Finalizar', 'btn-secondary', {
+          style: 'flex:1', onclick: async () => {
+            if (!confirm('Finalizar o pedido #' + id + '? A data de entrega será registrada agora.')) return;
+            await api('POST', '/api/pedidos/' + id + '/finalizar');
+            toast('Pedido finalizado.');
+            telaVisualizarPedido(id);
+          }
+        }),
+      ));
+    conteudo.appendChild(barraTotal);
+  }
+
+  function componentesPorCategoria(p) {
+    if (!p.componentes || !p.componentes.length) return [];
+    const porCategoria = new Map();
+    p.componentes.forEach(c => {
+      const rotulo = c.categoriaRotulo || 'Componente';
+      if (!porCategoria.has(rotulo)) porCategoria.set(rotulo, []);
+      porCategoria.get(rotulo).push(c.nome);
+    });
+    return Array.from(porCategoria.entries()).map(([rotulo, nomes]) => [rotulo, nomes.join(', ')]);
   }
 
   function linhaChave(rotulo, valor) {
@@ -503,9 +542,10 @@
       });
     }
 
-    const campoComponente = el('div', { hidden: true },
+    const msgSemCategoriaComponente = el('div', { class: 'empty', style: 'padding:16px 0' }, 'Marque uma categoria acima pra ver os componentes disponíveis.');
+    const camposComponenteAtivos = el('div', {},
       el('div', { class: 'field' },
-        el('label', null, 'Componentes (cabeçote / bloco / biela / virabrequim)'),
+        el('label', null, 'Adicionar componente'),
         el('div', { style: 'display:flex;gap:8px' }, selComponente)
       ),
       btnBlueprint('Adicionar componente', 'btn-secondary btn-block', {
@@ -520,15 +560,15 @@
       }),
       listaComponentesEl
     );
+    const campoComponente = el('div', {}, msgSemCategoriaComponente, camposComponenteAtivos);
 
     function atualizarOpcoesComponente() {
       const relevantes = CATEGORIAS_COMPONENTE.filter(cat => categoriasSelecionadas.has(cat));
       selComponente.innerHTML = '';
-      if (!relevantes.length) {
-        campoComponente.hidden = true;
-        return;
-      }
-      campoComponente.hidden = false;
+      const temCategoria = relevantes.length > 0;
+      msgSemCategoriaComponente.hidden = temCategoria;
+      camposComponenteAtivos.hidden = !temCategoria;
+      if (!temCategoria) return;
       selComponente.appendChild(el('option', { value: '' }, 'Selecione'));
       const filtrado = catalogoCache.cabecotes.filter(c => relevantes.includes(c.categoria));
       agruparPorCategoria(filtrado).forEach(grupo => {
@@ -676,10 +716,8 @@
         ));
       });
     }
-    const redesenharServicos = () => redesenharItens(listaServicosEl, linhasServicos, redesenharServicos);
-    const redesenharPecas = () => redesenharItens(listaPecasEl, linhasPecas, redesenharPecas);
-    redesenharServicos();
-    redesenharPecas();
+    const redesenharServicos = () => { redesenharItens(listaServicosEl, linhasServicos, redesenharServicos); recalcularResumo(); };
+    const redesenharPecas = () => { redesenharItens(listaPecasEl, linhasPecas, redesenharPecas); recalcularResumo(); };
 
     function catalogoFiltrado(catalogo) {
       if (categoriasSelecionadas.size === 0) return catalogo;
@@ -737,27 +775,86 @@
     // opções do componente já filtradas antes de exibir o formulário.
     atualizarOpcoesComponente();
 
+    // — barra de total fixa (aba Itens): subtotal/desconto/total recalculados
+    // ao vivo, espelhando a mesma fórmula do backend (PedidoModel.getSubtotal/
+    // getValorDesconto/recalcularTotal) pra nunca mostrar um número que o
+    // servidor depois recalcula diferente —
+    const totalSubtotalEl = el('span', null, moeda(0));
+    const totalDescontoValorEl = el('span', null, moeda(0));
+    const totalFinalEl = el('span', { class: 'valor' }, moeda(0));
+
+    function recalcularResumo() {
+      const subtotal = [...linhasServicos, ...linhasPecas].reduce((s, i) => s + i.valorUnitario * i.quantidade, 0);
+      const tipo = fldDescontoTipo.value;
+      const valorDigitado = fldDescontoValor.value !== '' ? Number(fldDescontoValor.value) : 0;
+      let desconto = 0;
+      if (tipo === 'VALOR') desconto = valorDigitado;
+      else if (tipo === 'PERCENTUAL') desconto = subtotal * valorDigitado / 100;
+      desconto = Math.min(Math.max(desconto, 0), subtotal);
+      totalSubtotalEl.textContent = moeda(subtotal);
+      totalDescontoValorEl.textContent = (desconto > 0 ? '- ' : '') + moeda(desconto);
+      totalFinalEl.textContent = moeda(subtotal - desconto);
+    }
+    fldDescontoTipo.addEventListener('change', recalcularResumo);
+    fldDescontoValor.addEventListener('input', recalcularResumo);
+    redesenharServicos();
+    redesenharPecas();
+
+    const barraTotal = el('div', { class: 'total-box', style: 'position:sticky;bottom:0;flex-direction:column;align-items:stretch;gap:8px;background:var(--color-surface);padding:var(--space-3);margin-top:8px' },
+      el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;opacity:.7' },
+        el('span', null, 'Subtotal'), totalSubtotalEl),
+      el('div', { style: 'display:flex;gap:8px;align-items:center' },
+        fldDescontoTipo, fldDescontoValor, totalDescontoValorEl),
+      el('div', { style: 'display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--color-divider);padding-top:8px' },
+        el('span', null, 'Total'), totalFinalEl));
+
+    // — sub-alternador Serviços/Peças dentro da aba Itens —
+    let tipoItemAtual = 'servico';
+    const itemConteudoBox = el('div', { style: 'display:flex;flex-direction:column;gap:12px' });
+    function redesenharItemConteudo() {
+      itemConteudoBox.innerHTML = '';
+      if (tipoItemAtual === 'servico') {
+        itemConteudoBox.appendChild(seletorServico.elemento);
+        itemConteudoBox.appendChild(listaServicosEl);
+      } else {
+        itemConteudoBox.appendChild(seletorPeca.elemento);
+        itemConteudoBox.appendChild(listaPecasEl);
+      }
+    }
+    const subSegButtons = {};
+    const subSeg = el('div', { class: 'seg' },
+      ...[['servico', 'Serviços'], ['peca', 'Peças']].map(([k, rotulo]) => {
+        const b = el('button', { type: 'button', onclick: () => selecionarTipoItem(k) }, rotulo);
+        subSegButtons[k] = b;
+        return b;
+      })
+    );
+    function selecionarTipoItem(k) {
+      tipoItemAtual = k;
+      Object.keys(subSegButtons).forEach(key => subSegButtons[key].classList.toggle('active', key === k));
+      redesenharItemConteudo();
+    }
+    selecionarTipoItem('servico');
+
     // — segmented control de abas —
     const painelPedido = el('div', { style: 'display:flex;flex-direction:column;gap:14px' },
-      el('div', { class: 'field' }, el('label', null, 'Categorias envolvidas'), painelCategorias),
-      campoComponente,
       campo('Situação', fldStatus),
       campo('Descrição', fldDescricao),
-      campo('Desconto', el('div', { style: 'display:flex;gap:8px' }, fldDescontoTipo, fldDescontoValor)),
       campo('Entrega estimada', fldEntrega), campo('Observação', fldObservacao));
     const painelCliente = el('div', { style: 'display:flex;flex-direction:column;gap:0' },
       clienteBoxSelecionado, buscaClienteBox, btnNovoCliente, novoClienteBox);
-    const painelServico = el('div', { style: 'display:flex;flex-direction:column;gap:12px' },
-      seletorServico.elemento, listaServicosEl);
-    const painelPeca = el('div', { style: 'display:flex;flex-direction:column;gap:12px' },
-      seletorPeca.elemento, listaPecasEl);
+    const painelComponentes = el('div', { style: 'display:flex;flex-direction:column;gap:14px' },
+      el('div', { class: 'field' }, el('label', null, 'Categorias envolvidas'), painelCategorias),
+      campoComponente);
+    const painelItens = el('div', { style: 'display:flex;flex-direction:column;gap:14px' },
+      subSeg, itemConteudoBox, barraTotal);
 
-    const paineis = { pedido: painelPedido, cliente: painelCliente, servico: painelServico, peca: painelPeca };
-    const painelBox = el('div', { style: 'padding-top:16px' }, painelPedido);
+    const paineis = { cliente: painelCliente, pedido: painelPedido, componentes: painelComponentes, itens: painelItens };
+    const painelBox = el('div', { style: 'padding-top:16px' }, painelCliente);
 
     const segButtons = {};
     const seg = el('div', { class: 'seg' },
-      ...[['pedido', 'Pedido'], ['cliente', 'Cliente'], ['servico', 'Serviço'], ['peca', 'Peça']].map(([k, rotulo]) => {
+      ...[['cliente', 'Cliente'], ['pedido', 'Pedido'], ['componentes', 'Componentes'], ['itens', 'Itens']].map(([k, rotulo]) => {
         const b = el('button', {
           type: 'button', onclick: () => selecionarAba(k)
         }, rotulo);
@@ -771,7 +868,7 @@
       painelBox.innerHTML = '';
       painelBox.appendChild(paineis[k]);
     }
-    selecionarAba('pedido');
+    selecionarAba('cliente');
 
     const form = el('form', {
       onsubmit: async (ev) => {
@@ -1210,6 +1307,8 @@
     const corpo = el('div', {});
     conteudo.appendChild(corpo);
 
+    let tipoAgregado = 'cliente';
+
     function redesenhar() {
       const grupo = grupos.find(g => g.mes === mesSelecionado);
       corpo.innerHTML = '';
@@ -1223,8 +1322,20 @@
       corpo.appendChild(el('h2', { class: 'secao' }, 'Pedidos do mês'));
       grupo.pedidos.forEach(p => corpo.appendChild(linhaPedido(p)));
 
-      corpo.appendChild(blocoAgregado('Valor por cliente', grupo.porCliente, grupo.total));
-      corpo.appendChild(blocoAgregado('Valor por serviço', grupo.porServico, grupo.total));
+      const segButtons = {};
+      const segAgregado = el('div', { class: 'seg', style: 'margin-top:8px' },
+        ...[['cliente', 'Por cliente'], ['servico', 'Por serviço']].map(([k, rotulo]) => {
+          const b = el('button', { type: 'button', onclick: () => { tipoAgregado = k; redesenhar(); } }, rotulo);
+          segButtons[k] = b;
+          return b;
+        })
+      );
+      Object.keys(segButtons).forEach(k => segButtons[k].classList.toggle('active', k === tipoAgregado));
+      corpo.appendChild(segAgregado);
+
+      const itens = tipoAgregado === 'cliente' ? grupo.porCliente : grupo.porServico;
+      const tituloTotal = tipoAgregado === 'cliente' ? 'Total (cliente)' : 'Total (serviço)';
+      corpo.appendChild(blocoAgregado(itens, grupo.total, tituloTotal));
     }
 
     redesenhar();
@@ -1232,9 +1343,8 @@
 
   // Bloco reaproveitado pra "valor por cliente" e "valor por serviço": gráfico
   // de barras horizontais + tabela + subtotal — mesma lógica pros dois.
-  function blocoAgregado(titulo, itens, totalGeral) {
-    const wrap = el('div', { style: 'margin-top:4px' });
-    wrap.appendChild(el('h2', { class: 'secao' }, titulo));
+  function blocoAgregado(itens, totalGeral, tituloTotal) {
+    const wrap = el('div', { style: 'margin-top:12px' });
     if (!itens || !itens.length) {
       wrap.appendChild(el('div', { class: 'empty' }, 'Sem dados.'));
       return wrap;
@@ -1252,7 +1362,7 @@
       ))
     ));
     wrap.appendChild(el('div', { class: 'total-box' },
-      el('span', null, 'Total (' + titulo.replace('Valor por ', '') + ')'),
+      el('span', null, tituloTotal),
       el('span', { class: 'valor' }, moeda(totalGeral)),
     ));
     return wrap;

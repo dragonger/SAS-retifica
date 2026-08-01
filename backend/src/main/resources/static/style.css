@@ -65,6 +65,18 @@ h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 600; margin: 0; 
   font-size: 18px; padding: 6px 8px; cursor: pointer; border-radius: 0; line-height: 1;
 }
 .icon-btn:active { background: color-mix(in srgb, var(--color-text) 8%, transparent); }
+.popover {
+  position: absolute; top: 100%; right: var(--space-4); margin-top: 4px;
+  background: var(--color-surface); border: 1px solid var(--color-divider);
+  min-width: 160px; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+.popover button {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  padding: 12px 16px; font-family: var(--font-body); font-size: 14px; color: var(--color-text); cursor: pointer;
+}
+.popover button:active { background: var(--color-bg); }
+.popover button.danger { color: #a4453f; }
+.popover button + button { border-top: 1px solid var(--color-divider); }
 
 main { flex: 1; overflow-y: auto; padding: var(--space-4) var(--space-4) 96px; max-width: 720px; width: 100%; margin: 0 auto; }
 
@@ -115,11 +127,12 @@ h2.titulo { font-size: 22px; margin-bottom: 2px; }
 .linha-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 
 /* — tags de situação — */
-.tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: .02em; padding: 3px 10px; white-space: nowrap; }
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; letter-spacing: .02em; padding: 3px 10px; white-space: nowrap; }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
 .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+.tag-finalizado { background: var(--color-accent-800); color: var(--color-bg); }
 
 /* — botões — */
 .btn {
