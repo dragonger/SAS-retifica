@@ -17,6 +17,9 @@
   const ROOTS = ['#/inicio', '#/pedidos', '#/cabecotes', '#/encerrados', '#/dashboard', '#/login', '#/trocar-senha'];
 
   let catalogoCache = { cabecotes: [], servicos: [], pecas: [], categorias: [], clientes: [] };
+  // navigator.share() rejeita com InvalidStateError se for chamado de novo
+  // antes do anterior terminar (ex.: duplo toque no botão) — trava evita isso.
+  let compartilhamentoEmAndamento = false;
 
   // ---------- autenticação ----------
 
@@ -95,6 +98,19 @@
   // junto como um segundo arquivo — não é salva em lugar nenhum, só passa
   // direto pelo compartilhamento (o cliente recebe, o servidor nunca guarda).
   async function compartilharOrcamento(pdfPromise, nomeArquivo, novaAba, foto) {
+    if (compartilhamentoEmAndamento) {
+      if (novaAba) novaAba.close();
+      return; // já tem um compartilhamento em andamento (ex.: duplo toque) — ignora
+    }
+    compartilhamentoEmAndamento = true;
+    try {
+      await compartilharOrcamentoInterno(pdfPromise, nomeArquivo, novaAba, foto);
+    } finally {
+      compartilhamentoEmAndamento = false;
+    }
+  }
+
+  async function compartilharOrcamentoInterno(pdfPromise, nomeArquivo, novaAba, foto) {
     let blob;
     try {
       blob = await pdfPromise;
