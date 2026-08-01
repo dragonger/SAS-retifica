@@ -43,6 +43,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(principal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
+                if (jwtUtil.precisaRenovar(claims)) {
+                    response.setHeader("X-Auth-Refresh", jwtUtil.renovar(claims));
+                }
             }
         }
         chain.doFilter(request, response);

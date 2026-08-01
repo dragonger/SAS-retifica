@@ -61,6 +61,10 @@
       location.hash = '#/login';
       throw new Error('HTTP 401');
     }
+    const tokenRenovado = resp.headers.get('X-Auth-Refresh');
+    if (tokenRenovado && auth) {
+      localStorage.setItem('retifica_auth', JSON.stringify({ ...auth, token: tokenRenovado }));
+    }
     if (resp.status === 204) return null;
     if (!resp.ok) {
       toast('Erro ao acessar ' + path + ' (' + resp.status + ')', true);
