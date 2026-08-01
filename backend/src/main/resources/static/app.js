@@ -104,26 +104,38 @@
       return;
     }
 
-    if (navigator.canShare && navigator.share) {
+    let motivoFallback = null;
+    if (!navigator.share) {
+      motivoFallback = 'Este navegador não tem a opção de compartilhar arquivos.';
+    } else if (!navigator.canShare) {
+      motivoFallback = 'Este navegador não sabe verificar se pode compartilhar arquivos.';
+    } else {
       const file = new File([blob], nomeArquivo, { type: 'application/pdf' });
       let arquivos = foto ? [file, foto] : [file];
-      if (foto && !navigator.canShare({ files: arquivos })) {
-        arquivos = [file]; // aparelho não suporta compartilhar vários arquivos — manda só o PDF
-      }
-      if (navigator.canShare({ files: arquivos })) {
-        if (novaAba) novaAba.close();
-        try {
-          await navigator.share({ files: arquivos, title: 'Orçamento', text: 'Orçamento da retífica' });
-          return;
-        } catch (e) {
-          if (e && e.name === 'AbortError') return; // usuário cancelou o menu — tudo bem
-          window.open(URL.createObjectURL(blob), '_blank'); // ex.: gesto expirado no iOS
-          return;
+      try {
+        if (foto && !navigator.canShare({ files: arquivos })) {
+          arquivos = [file]; // aparelho não suporta compartilhar vários arquivos — manda só o PDF
         }
+        if (navigator.canShare({ files: arquivos })) {
+          if (novaAba) novaAba.close();
+          try {
+            await navigator.share({ files: arquivos, title: 'Orçamento', text: 'Orçamento da retífica' });
+            return;
+          } catch (e) {
+            if (e && e.name === 'AbortError') return; // usuário cancelou o menu — tudo bem
+            motivoFallback = 'Falha ao abrir o menu de compartilhar (' + (e && e.name) + ').';
+          }
+        } else {
+          motivoFallback = 'Este navegador não aceita compartilhar arquivo PDF.';
+        }
+      } catch (e) {
+        motivoFallback = 'Erro ao verificar compartilhamento (' + (e && e.message) + ').';
       }
     }
 
-    // Fallback (desktop / navegadores sem Web Share de arquivos): abre o PDF na aba já criada.
+    // Fallback (desktop / navegadores sem Web Share de arquivos, ou que recusaram o PDF):
+    // abre o PDF na aba já criada, e avisa o motivo pra dar pra reportar.
+    if (motivoFallback) toast(motivoFallback + ' Abrindo o PDF direto.', true);
     const url = URL.createObjectURL(blob);
     if (novaAba) novaAba.location.href = url;
     else window.open(url, '_blank');
