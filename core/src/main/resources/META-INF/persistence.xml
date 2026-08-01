@@ -34,6 +34,21 @@
             <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
+
+            <!-- HikariCP em vez do pool interno do Hibernate: o Neon (Postgres gerenciado
+                 de produção) suspende o compute quando fica ocioso e derruba as conexões
+                 abertas nesse meio-tempo. O pool interno do Hibernate não valida conexões
+                 antes de reusá-las, então a primeira requisição após um período ocioso
+                 falhava com "FATAL: terminating connection due to administrator command".
+                 O HikariCP valida a conexão (isValid) antes de entregá-la, e maxLifetime/
+                 idleTimeout abaixo do timeout de suspensão do Neon evita reusar conexões
+                 já mortas. -->
+            <property name="hibernate.connection.provider_class"
+                      value="org.hibernate.hikaricp.internal.HikariCPConnectionProvider"/>
+            <property name="hibernate.hikari.minimumIdle" value="1"/>
+            <property name="hibernate.hikari.maximumPoolSize" value="10"/>
+            <property name="hibernate.hikari.idleTimeout" value="180000"/>
+            <property name="hibernate.hikari.maxLifetime" value="240000"/>
         </properties>
     </persistence-unit>
 </persistence>
