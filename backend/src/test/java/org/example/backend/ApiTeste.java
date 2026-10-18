@@ -15,7 +15,11 @@ final class ApiTeste {
 
     static final JsonMapper JSON = JsonMapper.builder().build();
 
-    record Resposta(int status, String corpo, byte[] bytes) {
+    record Resposta(int status, String corpo, byte[] bytes, java.net.http.HttpHeaders headers) {
+        String cabecalho(String nome) {
+            return headers.firstValue(nome).orElse(null);
+        }
+
         JsonNode json() {
             return JSON.readTree(corpo);
         }
@@ -85,7 +89,7 @@ final class ApiTeste {
     private Resposta enviar(HttpRequest req) {
         try {
             HttpResponse<byte[]> r = http.send(req, HttpResponse.BodyHandlers.ofByteArray());
-            return new Resposta(r.statusCode(), new String(r.body(), StandardCharsets.UTF_8), r.body());
+            return new Resposta(r.statusCode(), new String(r.body(), StandardCharsets.UTF_8), r.body(), r.headers());
         } catch (Exception e) {
             throw new IllegalStateException("Falha na chamada " + req.method() + " " + req.uri(), e);
         }
