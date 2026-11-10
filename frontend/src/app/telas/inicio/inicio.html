@@ -1,0 +1,52 @@
+@if (dash(); as d) {
+  <div class="data-hoje">{{ hoje }}</div>
+
+  <!-- TODO fase 3: seção de rascunhos do pedido ("Pedido incompleto"), secaoRascunhos() do app.js. -->
+  <!-- TODO fase 1: cartão do Daniel (cartaoDaniel() do app.js), escondido até carregar. -->
+
+  <div class="stat-grid">
+    @for (c of cards(d); track c.filtro) {
+      <div
+        [class]="'stat-card elev-md blueprint stat-card-clicavel stat-card-' + c.variante"
+        (click)="irParaPedidos(c.filtro)"
+      >
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="stat-card-topo">
+          <div class="stat-kicker">{{ c.kicker }}</div>
+          @switch (c.variante) {
+            @case ('accent') {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path></svg>
+            }
+            @case ('neutral') {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+            }
+            @case ('accent-2') {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-2-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            }
+            @case ('danger') {
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+            }
+          }
+        </div>
+        <div class="stat-value">{{ c.valor }}</div>
+        <div class="stat-sub">{{ c.sub }}</div>
+      </div>
+    }
+  </div>
+
+  <div class="btn-group" style="margin-top:0;margin-bottom:30px">
+    <button type="button" class="btn btn-primary" (click)="novoPedido()">Novo pedido</button>
+    <button type="button" class="btn btn-secondary" (click)="irParaPedidos()">Ver pedidos</button>
+  </div>
+
+  <h2 class="secao">Entregas de hoje</h2>
+  @if (!d.entregasHoje.length) {
+    <div class="empty">Nenhuma entrega prevista para hoje.</div>
+  } @else {
+    @for (p of d.entregasHoje; track p.id) {
+      <app-linha-pedido [pedido]="p" />
+    }
+  }
+} @else {
+  <div class="empty">Carregando...</div>
+}

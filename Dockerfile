@@ -1,6 +1,17 @@
 # Build multi-stage: compila core+backend com Maven, roda só o jar do backend
 # numa JRE enxuta. O desktop (JavaFX) não entra na imagem — é só o servidor.
 
+# Front novo (Angular, servido em /novo/): gera o build do frontend/. O style.css, as
+# fontes e os icones vem do app atual (backend/src/main/resources/static), por isso
+# essa pasta entra no estagio junto com o frontend.
+FROM node:22-alpine AS front
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+COPY backend/src/main/resources/static /app/backend/src/main/resources/static
+RUN npm run build
+
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY pom.xml .
@@ -9,6 +20,7 @@ COPY backend/pom.xml backend/pom.xml
 COPY desktop/pom.xml desktop/pom.xml
 COPY core/src core/src
 COPY backend/src backend/src
+COPY --from=front /app/frontend/dist/frontend/browser backend/src/main/resources/static/novo
 RUN mvn -pl core,backend -am -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine

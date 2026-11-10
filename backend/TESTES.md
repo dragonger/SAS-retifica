@@ -82,6 +82,10 @@ empresa ou usuario, folga de 1 no limite por empresa, falha sem devolver o uso, 
 perguntas, aceitar data no passado e carregar clientes de outra empresa derrubam pelo menos um teste cada. A tela foi percorrida no Chrome
 contra um servidor falso: perguntas, escolha, resposta aberta, conferencia, preenchimento, rascunho e conflito com o formulario.
 
+### Front em Angular (`frontend/`)
+
+45 testes unitarios (vitest) dos servicos de base: sessao compativel com o `localStorage` do app atual, interceptor (token, `X-Auth-Refresh`, 401 com nova tentativa unica, avisos), cache (mostra o guardado e revalida, descarta resposta atrasada), dialogos e guarda de saida, e a tela Inicio. Rodar com `npm test -- --watch=false` dentro de `frontend/`. Ainda nao ha ponta a ponta (Playwright entra nas proximas fases).
+
 ## Comportamento atual registrado (nao e aprovacao)
 
 - `autoLoginPublicoEstaAtivoHoje`: `POST /api/auth/auto-login` responde 200 sem senha. Foi um risco aceito pelo dono

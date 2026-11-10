@@ -9,11 +9,12 @@
 // Nunca cacheia /api/* (dados sempre frescos) nem requisições de outras
 // origens (Google Fonts etc. ficam com o cache HTTP do próprio navegador).
 // v8: a logo vem da empresa logada (/api/empresa/logo), nao mais de um arquivo fixo.
+// v10: o front novo (Angular) fica em /novo/; este SW não responde nada ali.
 // v9: ditado.js (ditar o pedido por voz) entra no shell.
 // v7: fontes Barlow passam a ser servidas pelo app (fonts/), sem Google Fonts.
 // v6: a v5 tinha o bug de nunca atualizar o cache (ver comentário no fetch);
 // trocar o nome força instalar do zero e resgata quem ficou preso nela.
-const CACHE = 'retifica-shell-v9';
+const CACHE = 'retifica-shell-v10';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'ditado.js', 'manifest.json', 'icon.svg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'fonts/fonts.css', 'fonts/barlow-latin-400-normal.woff2', 'fonts/barlow-latin-ext-400-normal.woff2', 'fonts/barlow-latin-500-normal.woff2', 'fonts/barlow-latin-ext-500-normal.woff2', 'fonts/barlow-latin-700-normal.woff2', 'fonts/barlow-latin-ext-700-normal.woff2', 'fonts/barlow-condensed-latin-400-normal.woff2', 'fonts/barlow-condensed-latin-ext-400-normal.woff2', 'fonts/barlow-condensed-latin-600-normal.woff2', 'fonts/barlow-condensed-latin-ext-600-normal.woff2'];
 
 self.addEventListener('install', (event) => {
@@ -65,6 +66,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
+  // front novo (Angular) em /novo/: nunca responder com o index.html antigo
+  if (url.pathname === '/novo' || url.pathname.startsWith('/novo/')) return;
 
   event.respondWith((async () => {
     let emCache = await caches.match(request, { ignoreSearch: true });

@@ -45,3 +45,9 @@ backend/src/main/resources/keystore.p12
 ### todo mundo pra publicar qualquer atualizacao futura. Guardada so
 ### localmente/backup manual, nunca no git. ###
 android-signing/
+### Front em Angular (frontend/): saida do build servida em /novo/ ###
+backend/src/main/resources/static/novo/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/src/legado/
