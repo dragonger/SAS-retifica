@@ -41,7 +41,7 @@ Cada empresa tem logo e dados de cabeçalho próprios, editados em **Catálogo �
 - **Logo**: `PUT /api/empresa/logo` (multipart `logo`) aceita só PNG ou JPEG de verdade (conferido pelo conteúdo), até 5 MB e 8000 px de lado, e regrava como PNG de no máximo 400 px (`LogoNormalizador`). `DELETE` deixa a empresa "sem logo de propósito" (linha com `imagem = null`), o que impede a semeadura de devolver a logo removida.
 - **Semeadura**: na primeira subida com o recurso, a primeira empresa (a Dih) recebe a logo embutida em `core/.../images/logo-empresa.png` e os contatos que o PDF já mostrava; só roda com a tabela vazia ou campos nulos.
 - **Dados**: `EMPRESA.telefone`, `instagram` e `slogan` (nulo = nunca preenchido; vazio = em branco de propósito, e o PDF omite). `GET/PUT /api/empresa`.
-- **No app**: a barra do topo mostra a logo da empresa logada, guardada no `localStorage` com a versão do servidor (a cada abertura só confere a versão); o título do Início é o nome da empresa. Trocar logo ou dados invalida o cache de orçamentos preparados. O service worker está na versão `retifica-shell-v9`.
+- **No app**: a barra do topo mostra a logo da empresa logada, guardada no `localStorage` com a versão do servidor (a cada abertura só confere a versão); o título do Início é o nome da empresa. Trocar logo ou dados invalida o cache de orçamentos preparados. O service worker está na versão `retifica-shell-v10`.
 - **Continuam da plataforma**: o ícone do PWA/APK e as condições do orçamento (pagamento, prazo, garantia), constantes em `PedidoPdfService`.
 
 ## Aviso de dados não salvos e rascunho do pedido
@@ -58,5 +58,7 @@ Tudo em `app.js` (sem mudança de API nem de banco).
 
 - O token e o nome ficam em `localStorage` (`retifica_auth`) e vão em toda chamada por `api()`. Um 401 limpa a sessão. A renovação chega no header `X-Auth-Refresh`.
 - **Login automático**: hoje `garantirAutoLogin()` obtém o token sozinho em `POST /api/auth/auto-login`, e a tela de login e os botões Sair e Trocar senha ficam escondidos (ver [SAAS.md](SAAS.md#login-automático)).
-- O service worker cacheia o shell do app; ao testar mudanças no navegador, desregistre-o e limpe os caches (`navigator.serviceWorker.getRegistrations()` e `caches.delete`), senão o teste roda em cima de JS antigo. O `sw.js` usa *stale-while-revalidate*: compara o texto novo com o do cache, atualiza sozinho e avisa as abas com o evento `retifica:nova-versao`. Subir a versão do cache (`retifica-shell-v9`) só é preciso para forçar uma reinstalação do zero, por exemplo ao mudar a lista de arquivos do shell.
+- O service worker cacheia o shell do app; ao testar mudanças no navegador, desregistre-o e limpe os caches (`navigator.serviceWorker.getRegistrations()` e `caches.delete`), senão o teste roda em cima de JS antigo. O `sw.js` usa *stale-while-revalidate*: compara o texto novo com o do cache, atualiza sozinho e avisa as abas com o evento `retifica:nova-versao`. Subir a versão do cache (`retifica-shell-v10`) só é preciso para forçar uma reinstalação do zero, por exemplo ao mudar a lista de arquivos do shell.
 - Leituras usam `comCache`/`carregarComCache`, e `cacheInvalidar` limpa as chaves afetadas depois de uma escrita.
+
+- **Front novo em `/novo/`** (Angular, em migração; ver `frontend/README.md`): o `sw.js` ignora qualquer requisição sob `/novo/`, para nunca responder com o `index.html` antigo.

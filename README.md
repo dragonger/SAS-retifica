@@ -52,6 +52,7 @@ Os testes rodam só contra esse banco descartável e abortam se o ambiente apont
 | [docs/LICOES.md](docs/LICOES.md) | Armadilhas já encontradas e cuidados com os dados reais. |
 | [backend/ALTO-MEDIDAS.md](backend/ALTO-MEDIDAS.md) | Integração com o Alto Medidas: configuração e operação. |
 | [android-app/LEIA-ME.md](android-app/LEIA-ME.md) | App Android (Capacitor) com voz nativa para o ditado: como gerar o APK, assinar e instalar. |
+| [frontend/README.md](frontend/README.md) | Front novo em Angular (em migração, servido em `/novo/`): como rodar, compilar e testar. |
 | [backend/DITADO.md](backend/DITADO.md) | Ditar o pedido por voz, com IA que faz perguntas de esclarecimento (pronto e desligado). |
 | [backend/WHATSAPP-API.md](backend/WHATSAPP-API.md) | Envio do orçamento pela API do WhatsApp (pronto e desligado). |
 | [backend/SCHEMA-STARTUP.md](backend/SCHEMA-STARTUP.md) | Custo do `hbm2ddl=update` na subida e alternativas. |

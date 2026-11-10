@@ -2,3 +2,9 @@
 .git
 .idea
 *.md
+
+frontend/node_modules
+frontend/dist
+frontend/.angular
+frontend/src/legado
+backend/src/main/resources/static/novo
