@@ -17,6 +17,14 @@ if (!existsSync(join(saida, 'index.html'))) {
   process.exit(1);
 }
 
+// service worker do Angular: sem estes arquivos o app não instala/atualiza offline
+for (const arquivo of ['ngsw-worker.js', 'ngsw.json', 'safety-worker.js']) {
+  if (!existsSync(join(saida, arquivo))) {
+    console.error('Build sem ' + arquivo + ' em ' + saida + ' (conferir "serviceWorker" em angular.json)');
+    process.exit(1);
+  }
+}
+
 rmSync(destino, { recursive: true, force: true });
 mkdirSync(destino, { recursive: true });
 cpSync(saida, destino, { recursive: true });

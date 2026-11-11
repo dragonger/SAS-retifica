@@ -8,6 +8,7 @@ import { GuardaSaidaService } from './core/guarda-saida.service';
 import { IdentidadeService } from './core/identidade.service';
 import { MenuPedidoService } from './core/menu-pedido.service';
 import { TopoService } from './core/topo.service';
+import { AvisoNovaVersao } from './shared/aviso-nova-versao';
 import { Foco } from './shared/foco';
 
 /** Telas raiz: sem botão voltar e com o ícone do catálogo. */
@@ -15,7 +16,7 @@ const RAIZES = ['/inicio', '/pedidos', '/cabecotes', '/encerrados', '/dashboard'
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Foco],
+  imports: [RouterOutlet, Foco, AvisoNovaVersao],
   templateUrl: './app.html',
   host: {
     style: 'display: contents', // body continua sendo o flex: topo, main, abas e toast são filhos diretos
