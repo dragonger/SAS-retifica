@@ -2,7 +2,11 @@
   <div class="data-hoje">{{ hoje }}</div>
 
   <!-- TODO fase 3: seção de rascunhos do pedido ("Pedido incompleto"), secaoRascunhos() do app.js. -->
-  <!-- TODO fase 1: cartão do Daniel (cartaoDaniel() do app.js), escondido até carregar. -->
+  @if (daniel(); as r) {
+    <div style="margin-bottom:22px">
+      <app-cartao-devido-ao-daniel [valor]="r.devidoAoDaniel" [quantidade]="r.quantidadeDevida" [tocavel]="true" (tocar)="abrirAltoMedidas()" />
+    </div>
+  }
 
   <div class="stat-grid">
     @for (c of cards(d); track c.filtro) {

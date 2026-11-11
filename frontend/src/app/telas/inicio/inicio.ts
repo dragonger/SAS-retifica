@@ -1,8 +1,10 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { AltoMedidasService, ResumoAltoMedidas } from '../../core/alto-medidas.service';
 import { AuthService } from '../../core/auth.service';
 import { CacheService } from '../../core/cache.service';
 import { TopoService } from '../../core/topo.service';
+import { CartaoDevidoAoDaniel } from '../../shared/cartao-devido-ao-daniel';
 import { LinhaPedido, PedidoResumo } from '../../shared/linha-pedido';
 
 /** Resposta de GET /api/pedidos/dashboard. */
@@ -27,21 +29,28 @@ interface CardInicio {
 @Component({
   selector: 'app-inicio',
   templateUrl: './inicio.html',
-  imports: [LinhaPedido],
+  imports: [LinhaPedido, CartaoDevidoAoDaniel],
 })
 export class Inicio {
   private readonly cache = inject(CacheService);
   private readonly auth = inject(AuthService);
   private readonly topo = inject(TopoService);
   private readonly router = inject(Router);
+  private readonly altoMedidas = inject(AltoMedidasService);
 
   protected readonly dash = signal<Dashboard | null>(null);
+  /** Cartão do Daniel: só quando a integração está ligada e há algo a repassar. */
+  protected readonly daniel = signal<ResumoAltoMedidas | null>(null);
   protected readonly hoje = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   constructor() {
     effect(() => this.topo.definirTitulo(this.auth.sessao()?.empresaNome || 'Retífica'));
     this.cache.comCache<Dashboard>('/api/pedidos/dashboard', d => this.dash.set(d))
       .catch(() => { /* o interceptor já avisou (sem conexão / erro) */ });
+    // falha silenciosa (sem integração ou sem conexão): o Início segue normal
+    this.altoMedidas.resumo()
+      .then(r => { if (r && Number(r.quantidadeDevida) > 0) this.daniel.set(r); })
+      .catch(() => { /* sem integração */ });
   }
 
   protected cards(d: Dashboard): CardInicio[] {
@@ -55,6 +64,10 @@ export class Inicio {
 
   protected irParaPedidos(filtro?: string): void {
     void this.router.navigate(['/pedidos'], filtro ? { queryParams: { filtro } } : {});
+  }
+
+  protected abrirAltoMedidas(): void {
+    void this.router.navigateByUrl('/alto-medidas');
   }
 
   protected novoPedido(): void {

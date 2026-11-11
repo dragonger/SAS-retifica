@@ -3,6 +3,8 @@ import { ApiService } from './api.service';
 
 /** Caminho da lista de pedidos abertos (invalidado junto com dashboard e encerrados). */
 export const PEDIDOS_ABERTOS = '/api/pedidos?abertos=true';
+export const PATH_DASHBOARD_PEDIDOS = '/api/pedidos/dashboard';
+export const PATH_ENCERRADOS_PEDIDOS = '/api/pedidos/encerrados';
 
 /**
  * Cache leve das telas (Início/Pedidos/Encerrados/Dashboard). Guarda a última
@@ -40,6 +42,11 @@ export class CacheService {
       this.respostas.delete(p);
       this.versoes.set(p, (this.versoes.get(p) || 0) + 1);
     }
+  }
+
+  /** Depois de criar/editar/finalizar/excluir um pedido: abertos, dashboard e encerrados ficam velhos. */
+  invalidarPedidos(): void {
+    this.invalidar(PEDIDOS_ABERTOS, PATH_DASHBOARD_PEDIDOS, PATH_ENCERRADOS_PEDIDOS);
   }
 
   /**

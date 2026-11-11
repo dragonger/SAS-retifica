@@ -6,6 +6,7 @@ import { CacheService } from './core/cache.service';
 import { DialogoAberto, DialogoService } from './core/dialogo.service';
 import { GuardaSaidaService } from './core/guarda-saida.service';
 import { IdentidadeService } from './core/identidade.service';
+import { MenuPedidoService } from './core/menu-pedido.service';
 import { TopoService } from './core/topo.service';
 import { Foco } from './shared/foco';
 
@@ -16,7 +17,10 @@ const RAIZES = ['/inicio', '/pedidos', '/cabecotes', '/encerrados', '/dashboard'
   selector: 'app-root',
   imports: [RouterOutlet, Foco],
   templateUrl: './app.html',
-  host: { style: 'display: contents' }, // body continua sendo o flex: topo, main, abas e toast são filhos diretos
+  host: {
+    style: 'display: contents', // body continua sendo o flex: topo, main, abas e toast são filhos diretos
+    '(document:click)': 'cliqueNoDocumento($event)',
+  },
 })
 export class App {
   private readonly router = inject(Router);
@@ -25,6 +29,7 @@ export class App {
   protected readonly dialogo = inject(DialogoService);
   protected readonly topo = inject(TopoService);
   protected readonly identidade = inject(IdentidadeService);
+  protected readonly menuPedido = inject(MenuPedidoService);
 
   private readonly conteudo = viewChild<ElementRef<HTMLElement>>('conteudo');
 
@@ -42,10 +47,24 @@ export class App {
     this.router.events.subscribe(e => {
       // invalida revalidações de cache pendentes de uma tela anterior (renderGen++ do app.js)
       if (e instanceof GuardsCheckEnd && e.shouldActivate) this.cache.novaGeracao();
-      if (e instanceof NavigationEnd) this.rolarAoTopo();
+      if (e instanceof NavigationEnd) {
+        this.rolarAoTopo();
+        this.menuPedido.fechar(); // o popover do pedido fecha a cada troca de tela
+      }
     });
   }
 
+  /** Botão "Mais opções" só em #/pedidos/<id> (não em novo nem editar). */
+  protected menuPedidoVisivel(): boolean {
+    return /^\/pedidos\/\d+$/.test(this.caminho());
+  }
+
+  /** Toque fora do botão e do popover fecha o popover. */
+  protected cliqueNoDocumento(ev: Event): void {
+    if (!this.menuPedido.aberto()) return;
+    const alvo = ev.target as Element | null;
+    if (!alvo?.closest('#btnMenuPedido, #menuPedidoPopover')) this.menuPedido.fechar();
+  }
 
   private rolarAoTopo(): void {
     const el = this.conteudo()?.nativeElement;

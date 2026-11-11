@@ -1,0 +1,68 @@
+@if (carregado()) {
+  <h2 class="titulo">Clientes</h2>
+  <div class="subtitulo">{{ subtitulo() }}</div>
+
+  <app-formulario-recolhivel
+    #cadastro
+    rotuloNovo="Novo cliente"
+    tituloNovo="Novo cliente"
+    tituloEditar="Editar cliente"
+    [fotografia]="fotografia"
+    (preencher)="preencher($any($event))"
+    (limpar)="limpar()"
+  >
+    <form (submit)="salvar($event)">
+      <app-campo rotulo="Nome">
+        <input class="input" type="text" placeholder="Nome completo" [value]="nome()" (input)="nome.set(valorDe($event))">
+      </app-campo>
+      <app-campo rotulo="Telefone">
+        <input class="input" type="tel" inputmode="tel" placeholder="(31) 90000-0000" [value]="telefone()"
+               (input)="telefone.set(mascararAoDigitar($event))" (blur)="telefone.set(exibirAoSair($event))">
+      </app-campo>
+      <app-campo rotulo="Rua">
+        <input class="input" type="text" [value]="rua()" (input)="rua.set(valorDe($event))">
+      </app-campo>
+      <div class="row">
+        <app-campo rotulo="Número">
+          <input class="input" type="text" [value]="numero()" (input)="numero.set(valorDe($event))">
+        </app-campo>
+        <app-campo rotulo="Bairro">
+          <input class="input" type="text" [value]="bairro()" (input)="bairro.set(valorDe($event))">
+        </app-campo>
+      </div>
+      <div class="row">
+        <app-campo rotulo="CEP">
+          <input class="input" type="text" [value]="cep()" (input)="cep.set(valorDe($event))">
+        </app-campo>
+        <app-campo rotulo="UF">
+          <input class="input" type="text" maxlength="2" [value]="uf()" (input)="uf.set(valorDe($event))">
+        </app-campo>
+      </div>
+      <app-campo rotulo="Município">
+        <input class="input" type="text" [value]="municipio()" (input)="municipio.set(valorDe($event))">
+      </app-campo>
+      <button type="button" class="btn btn-ghost btn-block" [hidden]="emEdicaoId() === null" (click)="verPedidos()">Ver pedidos deste cliente</button>
+      <app-botoes-cadastro [salvando]="salvando()" [removendo]="removendo()" [editando]="emEdicaoId() !== null"
+                           (cancelar)="cadastro.cancelar()" (remover)="remover()" />
+    </form>
+  </app-formulario-recolhivel>
+
+  <h2 class="secao">Cadastrados</h2>
+  <app-campo rotulo="Buscar">
+    <input class="input" type="search" placeholder="Buscar por nome ou telefone..." (input)="busca.set(valorDe($event))">
+  </app-campo>
+  <div>
+    @if (!filtrados().length) {
+      <div class="empty">{{ busca().trim() ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.' }}</div>
+    } @else {
+      @for (c of filtrados(); track c.id) {
+        <div class="linha" (click)="cadastro.abrir(c)">
+          <div class="linha-titulo">{{ c.nome }}</div>
+          <div class="linha-sub">{{ telefoneExibicao(c.telefone) || '-' }}</div>
+        </div>
+      }
+    }
+  </div>
+} @else {
+  <div class="empty">Carregando...</div>
+}

@@ -1,0 +1,47 @@
+@if (abertos() !== null) {
+  <h2 class="titulo">Pedidos</h2>
+  <div class="subtitulo">{{ subtitulo() }}</div>
+
+  @if (filtro()) {
+    <button type="button" class="btn btn-secondary btn-block" style="margin-bottom:16px" (click)="verTodos()">Ver todos os pedidos</button>
+  }
+
+  <!-- TODO fase 3: seção de rascunhos do pedido ("Pedido incompleto"), secaoRascunhos() do app.js. -->
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px">
+    <input class="input" type="search" placeholder="Buscar por cliente, modelo ou nº do pedido..."
+           [value]="busca()" (input)="busca.set(valorDe($event))">
+    <select class="input" aria-label="Filtrar por cliente" (change)="escolherCliente($event)">
+      <option value="" [selected]="clienteSel() === ''">Todos os clientes</option>
+      @if (clienteCarregando()) {
+        <option [value]="clienteSel()" selected>Carregando...</option>
+      }
+      @for (c of clientesOrdenados(); track c.id) {
+        <option [value]="c.id" [selected]="clienteSel() === '' + c.id">{{ c.nome }}</option>
+      }
+    </select>
+  </div>
+
+  <div>
+    @if (!visiveis().length) {
+      <div class="empty">{{ vazio() }}</div>
+    } @else {
+      @for (p of visiveis(); track p.id) {
+        <app-linha-pedido [pedido]="p" />
+      }
+    }
+    @if (finalizados().length) {
+      <h2 class="secao" style="margin-top:24px">Finalizados</h2>
+      @for (p of finalizados(); track p.id) {
+        <app-linha-pedido [pedido]="p" />
+      }
+    }
+  </div>
+
+  @if (!filtro()) {
+    <button type="button" class="btn btn-secondary btn-block" style="margin-top:16px" (click)="verFinalizados()">Ver finalizados</button>
+  }
+
+  <button type="button" class="btn btn-primary btn-fab" aria-label="Novo pedido" (click)="novoPedido()">+</button>
+} @else {
+  <div class="empty">Carregando...</div>
+}

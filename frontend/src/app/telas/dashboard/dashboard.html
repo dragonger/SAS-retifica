@@ -1,0 +1,40 @@
+@if (grupos(); as lista) {
+  <h2 class="titulo">Dashboard</h2>
+  <div class="subtitulo">Pedidos encerrados, valores por cliente e por categoria</div>
+
+  @if (!lista.length) {
+    <div class="empty">Nenhum pedido encerrado ainda.</div>
+  } @else {
+    <div class="field">
+      <select class="input" (change)="escolherMes($event)">
+        @for (g of lista; track g.mes) {
+          <option [value]="g.mes" [selected]="g.mes === mes()">{{ g.mes }}</option>
+        }
+      </select>
+    </div>
+
+    @if (grupo(); as g) {
+      <div>
+        <div class="stat-grid">
+          <app-stat-card kicker="Total do mês" [valor]="moeda(g.total)" [sub]="g.quantidade + (g.quantidade === 1 ? ' pedido' : ' pedidos')" variante="accent" />
+          <app-stat-card kicker="Pedidos encerrados" [valor]="'' + g.quantidade" [sub]="g.mes" variante="neutral" />
+        </div>
+
+        <h2 class="secao">Pedidos do mês</h2>
+        @for (p of g.pedidos; track p.id) {
+          <app-linha-pedido [pedido]="p" />
+        }
+
+        <div class="seg" style="margin-top:20px">
+          @for (o of opcoes; track o[0]) {
+            <button type="button" [class.active]="tipoAgregado() === o[0]" (click)="tipoAgregado.set(o[0])">{{ o[1] }}</button>
+          }
+        </div>
+
+        <app-bloco-agregado [itens]="itens()" [totalGeral]="g.total" [tituloTotal]="tituloTotal()" />
+      </div>
+    }
+  }
+} @else {
+  <div class="empty">Carregando...</div>
+}
