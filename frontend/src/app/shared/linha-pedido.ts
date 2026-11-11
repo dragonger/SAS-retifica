@@ -13,7 +13,7 @@ export interface PedidoResumo {
   finalizado?: boolean;
 }
 
-const CLASSE_SITUACAO: Record<string, string> = {
+export const CLASSE_SITUACAO: Record<string, string> = {
   'Aberto': 'tag-neutral',
   'Em andamento': 'tag-outline',
   'Pronto': 'tag-accent',

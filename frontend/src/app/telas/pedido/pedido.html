@@ -1,0 +1,122 @@
+@if (pedido(); as p) {
+  <div class="card-destaque elev-md blueprint" style="padding:16px;margin-bottom:18px">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+      <div class="card-destaque-titulo" style="font-size:18px">{{ p.cliente ? p.cliente.nome : '-' }}</div>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+    </div>
+    @if (p.cliente && p.cliente.telefone) {
+      <div class="linha-sub">{{ telefoneExibicao(p.cliente.telefone) }}</div>
+    }
+    @if (enderecoCliente(); as endereco) {
+      <div class="linha-sub">{{ endereco }}</div>
+    }
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;margin-bottom:20px">
+    @for (l of linhasComponente(); track l[0]) {
+      <div style="display:flex;justify-content:space-between"><span style="opacity:.55">{{ l[0] }}</span><span style="font-weight:600">{{ l[1] }}</span></div>
+    } @empty {
+      <div style="display:flex;justify-content:space-between"><span style="opacity:.55">Descrição</span><span style="font-weight:600">{{ p.pedidoDescricao || '-' }}</span></div>
+    }
+    <div style="display:flex;justify-content:space-between"><span style="opacity:.55">Criado em</span><span style="font-weight:600">{{ p.datCriacao || '-' }}</span></div>
+    <div style="display:flex;justify-content:space-between"><span style="opacity:.55">Entrega estimada</span><span style="font-weight:600">{{ p.datEntregaEstimada ? formatarData(p.datEntregaEstimada) : '-' }}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><span style="opacity:.55">Situação</span><app-tag-situacao [situacao]="p.situacao" /></div>
+  </div>
+
+  <h2 class="secao">Serviços</h2>
+  @if (!p.servicos || !p.servicos.length) {
+    <div class="empty" style="padding:16px 0">Nenhum serviço.</div>
+  } @else {
+    <div>
+      @for (i of p.servicos; track $index) {
+        <div class="item-linha"><span>{{ rotuloItem(p.servicos, i, $index, false) }}</span></div>
+      }
+    </div>
+  }
+
+  <h2 class="secao">Peças</h2>
+  @if (!p.pecas || !p.pecas.length) {
+    <div class="empty" style="padding:16px 0">Nenhuma peça utilizada.</div>
+  } @else {
+    <div>
+      @for (i of p.pecas; track $index) {
+        <div class="item-linha"><span>{{ rotuloItem(p.pecas, i, $index, true) }}</span></div>
+      }
+    </div>
+  }
+
+  <h2 class="secao">Valores por categoria</h2>
+  @if (!p.categoriaValores || !p.categoriaValores.length) {
+    <div class="empty" style="padding:16px 0">Nenhuma categoria com valor definido.</div>
+  } @else {
+    <div>
+      @for (cv of p.categoriaValores; track $index) {
+        <div class="linha">
+          <div class="linha-topo">
+            <span class="linha-titulo">{{ cv.categoriaRotulo || '-' }}</span>
+            <span style="font-weight:600">{{ moeda(cv.valorTotal) }}</span>
+          </div>
+          <div style="display:flex;gap:18px;font-size:12px">
+            <div><span style="opacity:.55">Serviços </span><strong>{{ moeda(cv.valorServicos) }}</strong></div>
+            <div><span style="opacity:.55">Peças </span><strong>{{ moeda(cv.valorPecas) }}</strong></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (p.observacao) {
+    <div style="font-size:12px;opacity:.75;background:var(--color-surface);padding:11px;margin-top:16px">{{ p.observacao }}</div>
+  }
+
+  <!-- foto do componente pra ir junto no orçamento (nunca vai pro servidor) -->
+  <div style="margin-top:16px">
+    <input #fotoInput type="file" accept="image/*" capture="environment" hidden (change)="fotoEscolhida($event)">
+    <button type="button" class="btn btn-secondary btn-block" style="gap:8px" (click)="fotoInput.click()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>{{ fotoSelecionada() ? 'Trocar foto' : 'Anexar foto do componente' }}
+    </button>
+    <div #previaFoto>
+      @if (fotoSelecionada(); as foto) {
+        <div class="item-linha">
+          <span style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;text-overflow:ellipsis">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"></path></svg>{{ foto.name }}
+          </span>
+          <button (click)="removerFoto(fotoInput)">✕</button>
+        </div>
+        @if (pdfJaEnviado()) {
+          <button type="button" class="btn btn-primary btn-block" style="margin-top:8px" (click)="enviarFotoTambem()">Enviar a foto também</button>
+        } @else {
+          <div style="font-size:12px;opacity:.6;padding-top:6px">A foto vai junto, como última página do PDF do orçamento.</div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- WhatsApp do cliente: com a API ligada envia direto; senão salva o PDF no aparelho e abre a conversa -->
+  @if (temWhatsApp()) {
+    <button type="button" class="btn btn-secondary btn-block" style="gap:8px;margin-top:8px"
+            [disabled]="waOcupado() !== null" (click)="enviarNoWhatsApp()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.5-1.2A9 9 0 1 0 12 3z"></path><path d="M8.5 9.5c0-.5.5-1 1-1h.5c.3 0 .5.2.6.5l.5 1.3c.1.3 0 .6-.2.8l-.5.5c.4.9 1.1 1.6 2 2l.5-.5c.2-.2.5-.3.8-.2l1.3.5c.3.1.5.3.5.6v.5c0 .5-.5 1-1 1-3 0-6-3-6-6z"></path></svg>{{ waOcupado() ?? rotuloWhatsApp() }}
+    </button>
+  }
+
+  <!-- barra fixa embaixo: total + ação primária (Gerar orçamento) -->
+  <div class="barra-total barra-total-view">
+    @if (p.descontoTipo && p.descontoValor) {
+      <div style="display:flex;justify-content:space-between;font-size:13px;opacity:.7"><span>Subtotal</span><span>{{ moeda(p.subtotal) }}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;opacity:.7"><span>{{ rotuloDesconto(p) }}</span><span>- {{ moeda(descontoAplicado(p)) }}</span></div>
+    }
+    <div class="linha-total"><span>Total</span><span class="valor">{{ moeda(p.totalGeral) }}</span></div>
+    <div class="btn-group" style="margin:2px 0 0">
+      <button type="button" class="btn btn-primary" style="flex:2" (click)="gerarOrcamento()">Gerar orçamento</button>
+      @if (!p.finalizado) {
+        <button type="button" class="btn btn-secondary" style="flex:1" [disabled]="finalizando()" (click)="finalizar()">{{ finalizando() ? 'Finalizando…' : 'Finalizar' }}</button>
+      }
+    </div>
+  </div>
+} @else if (pedido() === null) {
+  <div class="empty">Pedido não encontrado.</div>
+} @else {
+  <div class="empty">Carregando...</div>
+}

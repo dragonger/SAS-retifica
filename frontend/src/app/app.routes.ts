@@ -10,6 +10,8 @@ import { Empresa } from './telas/empresa/empresa';
 import { Encerrados } from './telas/encerrados/encerrados';
 import { EmMigracao } from './telas/em-migracao/em-migracao';
 import { Inicio } from './telas/inicio/inicio';
+import { Pedido } from './telas/pedido/pedido';
+import { Pedidos } from './telas/pedidos/pedidos';
 
 /**
  * Rotas = `rotas` do app.js (mesmos hashes). As telas ainda não migradas usam
@@ -39,10 +41,10 @@ export const routes: Routes = [
     children: [
       { path: 'inicio', component: Inicio },
       // novo e editar antes de :id (que aceitaria "novo")
-      emMigracao('pedidos'), // ?filtro=... | ?cliente=...
+      { path: 'pedidos', component: Pedidos }, // ?filtro=... | ?cliente=...
       emMigracao('pedidos/novo'),
       { matcher: pedidoPorId('editar'), component: EmMigracao },
-      { matcher: pedidoPorId(), component: EmMigracao },
+      { matcher: pedidoPorId(), component: Pedido, canDeactivate: [guardaDeSaida] },
       { path: 'cabecotes', component: Cabecotes, canDeactivate: [guardaDeSaida] },
       { path: 'catalogo', component: Catalogo },
       { path: 'servicos', component: CatalogoItens, data: { tipo: 'servicos' }, canDeactivate: [guardaDeSaida] },

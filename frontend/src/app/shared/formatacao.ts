@@ -8,3 +8,9 @@ export function moeda(v: number | string | null | undefined): string {
 export function textoQuantidade(n: number): string {
   return n + (n === 1 ? ' virabrequim' : ' virabrequins');
 }
+
+/** "2026-10-31" -> "31/10/2026". */
+export function formatarDataBr(iso: string): string {
+  const [ano, mes, dia] = iso.split('-');
+  return dia + '/' + mes + '/' + ano;
+}
