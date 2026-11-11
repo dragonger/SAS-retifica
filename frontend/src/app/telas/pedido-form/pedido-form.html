@@ -1,0 +1,26 @@
+@if (naoEncontrado()) {
+  <div class="empty">Pedido não encontrado.</div>
+} @else if (!pronto()) {
+  <div class="empty">Carregando...</div>
+} @else {
+  <form #formulario novalidate (submit)="salvar($event)" (input)="agendarRascunho()" (change)="agendarRascunho()" (click)="agendarRascunho()">
+    <!-- TODO fase 4: barraDitado ("Ditar pedido"), antes da dica; ver a API obterAtual/aplicar/cadastrarCliente/irParaAba/ordemAbas no PedidoForm -->
+    <div style="font-size:12px;opacity:.6;padding:2px 2px 0">Só o cliente é obrigatório — dá pra completar o resto depois.</div>
+
+    <!-- as 4 etapas ficam montadas o tempo todo, só alternando "hidden": trocar de etapa destruindo e reconstruindo deixava a troca lenta -->
+    <div style="padding-top:16px">
+      <div data-aba="cliente" style="display:flex;flex-direction:column;gap:16px" [hidden]="estado.aba() !== 'cliente'"><app-aba-cliente /></div>
+      <div data-aba="pedido" style="display:flex;flex-direction:column;gap:14px" [hidden]="estado.aba() !== 'pedido'"><app-aba-pedido /></div>
+      <div data-aba="componentes" style="display:flex;flex-direction:column;gap:14px" [hidden]="estado.aba() !== 'componentes'"><app-aba-componentes /></div>
+      <div data-aba="itens" style="display:flex;flex-direction:column;gap:14px" [hidden]="estado.aba() !== 'itens'"><app-aba-itens /></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:var(--space-4)">
+      <div class="btn-group" style="margin:0">
+        <button type="button" class="btn btn-secondary" [hidden]="idxAba() === 0" (click)="voltarPasso()">Voltar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="salvando()" (click)="avancar($event)">{{ salvando() ? 'Salvando…' : (ultimaEtapa() ? 'Salvar' : 'Avançar') }}</button>
+      </div>
+      <button type="button" class="btn btn-ghost" (click)="cancelar()">Cancelar</button>
+    </div>
+  </form>
+}

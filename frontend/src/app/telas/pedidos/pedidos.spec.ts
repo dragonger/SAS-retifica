@@ -2,7 +2,10 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { digitar, esperar, provedoresDeTela } from '../../testing/ajuda';
+import { CHAVE_AUTH } from '../../core/auth.service';
+import { DialogoService } from '../../core/dialogo.service';
+import { digitar, esperar, provedoresDeTela, tokenDeTeste } from '../../testing/ajuda';
+import { gravarRascunhosDeTeste } from '../../testing/rascunhos';
 import { PedidoLista } from '../../shared/modelos';
 import { dataHojeBr, Pedidos } from './pedidos';
 
@@ -34,8 +37,9 @@ describe('Pedidos', () => {
   let query: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let navegar: ReturnType<typeof vi.fn>;
 
-  async function criar(params: Record<string, string> = {}) {
+  async function criar(params: Record<string, string> = {}, antes?: () => void) {
     localStorage.clear();
+    antes?.();
     query = new BehaviorSubject(convertToParamMap(params));
     TestBed.configureTestingModule({
       providers: [...provedoresDeTela(), { provide: ActivatedRoute, useValue: { queryParamMap: query } }],
@@ -235,5 +239,44 @@ describe('Pedidos', () => {
     expect(navegar).toHaveBeenCalledWith(['/encerrados']);
     (html.querySelector('.btn-fab') as HTMLElement).click();
     expect(navegar).toHaveBeenCalledWith(['/pedidos/novo']);
+  });
+
+  describe('rascunhos do pedido ("Pedido incompleto")', () => {
+    const comRascunhos = () => {
+      localStorage.setItem(CHAVE_AUTH, JSON.stringify({ token: tokenDeTeste({ usuarioId: 7, empresaId: 3 }) }));
+      gravarRascunhosDeTeste({
+        novo: { quando: Date.now() - 5 * 60_000, titulo: 'Maria · Retífica' },
+        'pedido:2': { quando: Date.now() - 30 * 60_000, titulo: 'Maria Souza' },
+      });
+    };
+
+    it('mostra os cartões depois do título e antes da busca', async () => {
+      const { html } = await criar({}, comRascunhos);
+      const cartoes = [...html.querySelectorAll('.card-destaque')];
+      expect(cartoes.map(c => c.querySelector('.card-destaque-titulo')!.textContent)).toEqual(['Pedido incompleto', 'Alterações não salvas · pedido #2']);
+      expect(html.querySelector('.subtitulo')!.compareDocumentPosition(cartoes[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(cartoes[0].compareDocumentPosition(busca(html)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('com filtro na URL os cartões continuam aparecendo (abaixo do "Ver todos os pedidos")', async () => {
+      const { html } = await criar({ filtro: 'prontos' }, comRascunhos);
+      expect(html.querySelectorAll('.card-destaque').length).toBe(2);
+      expect(botao(html, 'Ver todos os pedidos').compareDocumentPosition(html.querySelector('.card-destaque')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('sem rascunhos não aparece nada', async () => {
+      const { html } = await criar();
+      expect(html.querySelector('.card-destaque')).toBeNull();
+    });
+
+    it('Continuar leva ao formulário e Descartar pede confirmação', async () => {
+      const { fixture, html } = await criar({}, comRascunhos);
+      const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+      botao(html, 'Continuar').click();
+      expect(ir).toHaveBeenCalledWith('/pedidos/novo');
+      botao(html, 'Descartar').click();
+      await esperar(fixture);
+      expect(TestBed.inject(DialogoService).dialogos().at(-1)!.mensagem).toBe('Descartar este rascunho? O que foi digitado será perdido.');
+    });
   });
 });

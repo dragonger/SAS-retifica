@@ -7,6 +7,7 @@ import { TopoService } from '../../core/topo.service';
 import { valorDe } from '../../shared/evento';
 import { LinhaPedido } from '../../shared/linha-pedido';
 import { Cliente, PedidoLista } from '../../shared/modelos';
+import { SecaoRascunhos } from '../../shared/secao-rascunhos';
 import { semAcentoBusca } from '../../shared/texto';
 
 interface FiltroPedidos {
@@ -32,7 +33,7 @@ export const FILTROS_PEDIDOS: Record<string, FiltroPedidos> = {
 @Component({
   selector: 'app-pedidos',
   templateUrl: './pedidos.html',
-  imports: [LinhaPedido],
+  imports: [LinhaPedido, SecaoRascunhos],
 })
 export class Pedidos {
   private readonly api = inject(ApiService);

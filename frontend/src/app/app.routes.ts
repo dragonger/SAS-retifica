@@ -11,6 +11,7 @@ import { Encerrados } from './telas/encerrados/encerrados';
 import { EmMigracao } from './telas/em-migracao/em-migracao';
 import { Inicio } from './telas/inicio/inicio';
 import { Pedido } from './telas/pedido/pedido';
+import { PedidoForm } from './telas/pedido-form/pedido-form';
 import { Pedidos } from './telas/pedidos/pedidos';
 
 /**
@@ -42,8 +43,8 @@ export const routes: Routes = [
       { path: 'inicio', component: Inicio },
       // novo e editar antes de :id (que aceitaria "novo")
       { path: 'pedidos', component: Pedidos }, // ?filtro=... | ?cliente=...
-      emMigracao('pedidos/novo'),
-      { matcher: pedidoPorId('editar'), component: EmMigracao },
+      { path: 'pedidos/novo', component: PedidoForm, canDeactivate: [guardaDeSaida] },
+      { matcher: pedidoPorId('editar'), component: PedidoForm, canDeactivate: [guardaDeSaida] },
       { matcher: pedidoPorId(), component: Pedido, canDeactivate: [guardaDeSaida] },
       { path: 'cabecotes', component: Cabecotes, canDeactivate: [guardaDeSaida] },
       { path: 'catalogo', component: Catalogo },

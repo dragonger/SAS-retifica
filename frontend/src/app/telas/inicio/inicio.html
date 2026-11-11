@@ -1,7 +1,7 @@
 @if (dash(); as d) {
   <div class="data-hoje">{{ hoje }}</div>
 
-  <!-- TODO fase 3: seção de rascunhos do pedido ("Pedido incompleto"), secaoRascunhos() do app.js. -->
+  <app-secao-rascunhos />
   @if (daniel(); as r) {
     <div style="margin-bottom:22px">
       <app-cartao-devido-ao-daniel [valor]="r.devidoAoDaniel" [quantidade]="r.quantidadeDevida" [tocavel]="true" (tocar)="abrirAltoMedidas()" />

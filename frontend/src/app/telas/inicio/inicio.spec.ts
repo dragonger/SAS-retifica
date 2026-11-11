@@ -4,6 +4,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { AltoMedidasService, ResumoAltoMedidas } from '../../core/alto-medidas.service';
 import { CacheService } from '../../core/cache.service';
+import { CHAVE_AUTH } from '../../core/auth.service';
+import { tokenDeTeste } from '../../testing/ajuda';
+import { gravarRascunhosDeTeste } from '../../testing/rascunhos';
 import { Dashboard, Inicio } from './inicio';
 
 const DASH: Dashboard = {
@@ -76,5 +79,46 @@ describe('Inicio', () => {
     const fixture = criar({ ...DASH, entregasHoje: [] });
     await fixture.whenStable();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Nenhuma entrega prevista para hoje.');
+  });
+
+  describe('rascunhos do pedido ("Pedido incompleto")', () => {
+    const entrar = () => localStorage.setItem(CHAVE_AUTH, JSON.stringify({ token: tokenDeTeste({ usuarioId: 7, empresaId: 3 }) }));
+
+    it('sem rascunho guardado não mostra a seção', async () => {
+      localStorage.clear();
+      entrar();
+      const fixture = criar(DASH);
+      await fixture.whenStable();
+      expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Pedido incompleto');
+    });
+
+    it('com rascunhos mostra um cartão por rascunho, depois da data e antes dos cards de números', async () => {
+      localStorage.clear();
+      entrar();
+      gravarRascunhosDeTeste({
+        novo: { quando: Date.now() - 5 * 60_000, titulo: 'Maria · Retífica' },
+        'pedido:12': { quando: Date.now() - 10 * 60_000, titulo: 'Oficina Silva' },
+      });
+      const fixture = criar(DASH, { devidoAoDaniel: 100, quantidadeDevida: 1 });
+      await fixture.whenStable();
+      const html = fixture.nativeElement as HTMLElement;
+      const titulos = [...html.querySelectorAll('.card-destaque-titulo')].map(e => e.textContent);
+      // os dois do rascunho primeiro, depois o cartão do Daniel
+      expect(titulos).toEqual(['Pedido incompleto', 'Alterações não salvas · pedido #12', 'Você deve ao Daniel']);
+      const primeiro = html.querySelector('.card-destaque')!;
+      expect(html.querySelector('.data-hoje')!.compareDocumentPosition(primeiro) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(primeiro.compareDocumentPosition(html.querySelector('.stat-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('Continuar leva ao formulário do rascunho', async () => {
+      localStorage.clear();
+      entrar();
+      gravarRascunhosDeTeste({ novo: { quando: Date.now() - 60_000, titulo: 'T' } });
+      const fixture = criar(DASH);
+      await fixture.whenStable();
+      const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+      [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(b => b.textContent === 'Continuar')!.click();
+      expect(ir).toHaveBeenCalledWith('/pedidos/novo');
+    });
   });
 });

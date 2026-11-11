@@ -6,6 +6,7 @@ import { CacheService } from '../../core/cache.service';
 import { TopoService } from '../../core/topo.service';
 import { CartaoDevidoAoDaniel } from '../../shared/cartao-devido-ao-daniel';
 import { LinhaPedido, PedidoResumo } from '../../shared/linha-pedido';
+import { SecaoRascunhos } from '../../shared/secao-rascunhos';
 
 /** Resposta de GET /api/pedidos/dashboard. */
 export interface Dashboard {
@@ -29,7 +30,7 @@ interface CardInicio {
 @Component({
   selector: 'app-inicio',
   templateUrl: './inicio.html',
-  imports: [LinhaPedido, CartaoDevidoAoDaniel],
+  imports: [LinhaPedido, CartaoDevidoAoDaniel, SecaoRascunhos],
 })
 export class Inicio {
   private readonly cache = inject(CacheService);

@@ -6,7 +6,7 @@
     <button type="button" class="btn btn-secondary btn-block" style="margin-bottom:16px" (click)="verTodos()">Ver todos os pedidos</button>
   }
 
-  <!-- TODO fase 3: seção de rascunhos do pedido ("Pedido incompleto"), secaoRascunhos() do app.js. -->
+  <app-secao-rascunhos />
   <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px">
     <input class="input" type="search" placeholder="Buscar por cliente, modelo ou nº do pedido..."
            [value]="busca()" (input)="busca.set(valorDe($event))">
