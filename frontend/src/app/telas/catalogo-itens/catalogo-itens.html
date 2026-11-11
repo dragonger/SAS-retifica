@@ -1,0 +1,48 @@
+@if (carregado()) {
+  <h2 class="titulo">{{ titulo }}</h2>
+  <div class="subtitulo">{{ subtitulo() }}</div>
+
+  <app-formulario-recolhivel
+    #cadastro
+    [rotuloNovo]="ehServico ? 'Novo serviço' : 'Nova peça'"
+    [tituloNovo]="ehServico ? 'Novo serviço' : 'Nova peça'"
+    [tituloEditar]="ehServico ? 'Editar serviço' : 'Editar peça'"
+    [fotografia]="fotografia"
+    (preencher)="preencher($any($event))"
+    (limpar)="limpar()"
+  >
+    <form (submit)="salvar($event)">
+      <app-campo rotulo="Categoria">
+        <app-seletor-categoria [categorias]="categorias()" [(valor)]="categoria" />
+      </app-campo>
+      <app-campo rotulo="Nome">
+        <input class="input" type="text" [placeholder]="ehServico ? 'Nome do serviço' : 'Nome da peça'" [value]="nome()" (input)="nome.set(valorDe($event))">
+      </app-campo>
+      <app-campo rotulo="Valor (R$) — pode deixar 0 e ajustar depois">
+        <input class="input" type="number" step="0.01" min="0" placeholder="0.00" [value]="valor()" (input)="valor.set(valorDe($event))">
+      </app-campo>
+      <app-botoes-cadastro [salvando]="salvando()" [removendo]="removendo()" [editando]="emEdicaoId() !== null"
+                           (cancelar)="cadastro.cancelar()" (remover)="remover()" />
+    </form>
+  </app-formulario-recolhivel>
+
+  <h2 class="secao">Cadastrados</h2>
+  <div>
+    @if (!lista().length) {
+      <div class="empty">Nada cadastrado ainda.</div>
+    } @else {
+      <app-lista-agrupada [grupos]="grupos()">
+        <ng-template let-item>
+          <div class="linha" (click)="cadastro.abrir(item)">
+            <div class="linha-topo">
+              <span class="linha-titulo" style="font-size:15px">{{ item.nome }}</span>
+              <span style="font-weight:600">{{ moeda(item.valor) }}</span>
+            </div>
+          </div>
+        </ng-template>
+      </app-lista-agrupada>
+    }
+  </div>
+} @else {
+  <div class="empty">Carregando...</div>
+}

@@ -1,0 +1,29 @@
+@if (grupos(); as lista) {
+  <h2 class="titulo">Encerrados</h2>
+  <div class="subtitulo">{{ totalPedidos() }} pedidos concluídos</div>
+
+  @if (!lista.length) {
+    <div class="empty">Nenhum pedido encerrado ainda.</div>
+  }
+
+  @for (g of lista; track g.mes; let idx = $index) {
+    <div style="margin-bottom:12px">
+      <button type="button" class="accordion-cab blueprint" [attr.aria-expanded]="aberto(g, idx)" (click)="alternar(g, idx)">
+        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <span class="linha-titulo">{{ g.mes }}</span>
+        <span class="accordion-meta">{{ g.quantidade }} · {{ moeda(g.total) }}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none">
+            @if (aberto(g, idx)) { <path d="m18 15-6-6-6 6"></path> } @else { <path d="m6 9 6 6 6-6"></path> }
+          </svg>
+        </span>
+      </button>
+      <div class="accordion-body" [hidden]="!aberto(g, idx)">
+        @for (p of g.pedidos; track p.id) {
+          <app-linha-pedido [pedido]="p" />
+        }
+      </div>
+    </div>
+  }
+} @else {
+  <div class="empty">Carregando...</div>
+}

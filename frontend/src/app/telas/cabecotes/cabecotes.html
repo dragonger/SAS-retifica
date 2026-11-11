@@ -1,0 +1,62 @@
+@if (carregado()) {
+  <h2 class="titulo">Produtos</h2>
+  <div class="subtitulo">{{ subtitulo() }}</div>
+
+  <app-formulario-recolhivel
+    #cadastro
+    rotuloNovo="Novo produto"
+    tituloNovo="Novo produto"
+    tituloEditar="Editar produto"
+    [fotografia]="fotografia"
+    (preencher)="preencher($any($event))"
+    (limpar)="limpar()"
+  >
+    <form (submit)="salvar($event)">
+      <app-campo rotulo="Categoria">
+        <app-seletor-categoria [categorias]="categorias()" [(valor)]="categoria" />
+      </app-campo>
+      <app-campo rotulo="Nome / Motor">
+        <input class="input" type="text" placeholder="Nome / Motor" [value]="nome()" (input)="nome.set(valorDe($event))">
+      </app-campo>
+      <div class="row">
+        <app-campo rotulo="Móvel">
+          <input class="input" type="text" placeholder="Móvel (ex.: 25,045-27,070)" [value]="movel()" (input)="movel.set(valorDe($event))">
+        </app-campo>
+        <app-campo rotulo="Fixo">
+          <input class="input" type="text" placeholder="Fixo (ex.: 29,990-30,015)" [value]="fixo()" (input)="fixo.set(valorDe($event))">
+        </app-campo>
+      </div>
+      <app-botoes-cadastro [salvando]="salvando()" [removendo]="removendo()" [editando]="emEdicaoId() !== null"
+                           (cancelar)="cadastro.cancelar()" (remover)="remover()" />
+    </form>
+  </app-formulario-recolhivel>
+
+  <h2 class="secao">Cadastrados</h2>
+  <div class="field" style="margin-bottom:6px">
+    <input class="input" type="search" placeholder="Buscar por motor ou veículo..." aria-label="Buscar produto" (input)="aoDigitarBusca($event)">
+  </div>
+  <div>
+    @if (!lista().length) {
+      <div class="empty">Nada cadastrado ainda.</div>
+    } @else if (!visiveis().length) {
+      <div class="empty">Nenhum produto com esse nome.</div>
+    } @else {
+      <app-lista-agrupada [grupos]="grupos()">
+        <ng-template let-c>
+          <div class="linha" (click)="cadastro.abrir(c)">
+            <div class="linha-titulo">{{ c.nome }}</div>
+            <div style="display:flex;gap:18px;font-size:12px">
+              <div><span style="opacity:.55">Móvel </span><strong>{{ c.movelFaixa ? c.movelFaixa + ' mm' : '—' }}</strong></div>
+              <div><span style="opacity:.55">Fixo </span><strong>{{ c.fixoFaixa ? c.fixoFaixa + ' mm' : '—' }}</strong></div>
+            </div>
+          </div>
+        </ng-template>
+      </app-lista-agrupada>
+      @if (restantes() > 0) {
+        <button type="button" class="btn btn-secondary btn-block" (click)="mostrarMais()">Mostrar mais ({{ restantes() }} restantes)</button>
+      }
+    }
+  </div>
+} @else {
+  <div class="empty">Carregando...</div>
+}

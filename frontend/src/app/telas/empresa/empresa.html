@@ -1,0 +1,27 @@
+<h2 class="titulo">Minha empresa</h2>
+<div class="subtitulo">A logo aparece no topo do app e nos orçamentos em PDF</div>
+
+<img class="logo-previa" alt="Logo da empresa" [hidden]="!logo()" [attr.src]="logo()">
+<div class="empty" [hidden]="!!logo()">Nenhuma logo enviada. Os orçamentos saem só com o nome da empresa.</div>
+<div class="subtitulo" style="text-align:center;margin-bottom:var(--space-3)">PNG ou JPG, até 5 MB. PNG com fundo transparente fica melhor no orçamento (um JPG leva o fundo branco junto).</div>
+<input #seletor type="file" accept="image/png,image/jpeg" style="display:none" (change)="aoEscolherArquivo($event)">
+<button type="button" class="btn btn-primary btn-block" [disabled]="enviando()" (click)="escolherImagem()">{{ enviando() ? 'Enviando…' : 'Escolher imagem' }}</button>
+<button type="button" class="btn btn-danger btn-block" [hidden]="!logo()" [disabled]="removendo()" (click)="removerLogo()">{{ removendo() ? 'Removendo…' : 'Remover logo' }}</button>
+
+<!-- dados que aparecem no cabeçalho do orçamento -->
+<h2 class="secao" style="margin-top:28px">Dados no orçamento</h2>
+<app-campo rotulo="Nome da empresa">
+  <input class="input" type="text" maxlength="120" placeholder="Nome da empresa" [value]="nome()" (input)="nome.set(valorDe($event))">
+</app-campo>
+<app-campo rotulo="WhatsApp / telefone">
+  <input class="input" type="tel" inputmode="tel" maxlength="40" placeholder="WhatsApp / telefone" [value]="telefone()"
+         (input)="telefone.set(mascararAoDigitar($event))" (blur)="telefone.set(exibirAoSair($event))">
+</app-campo>
+<app-campo rotulo="Instagram">
+  <input class="input" type="text" maxlength="60" placeholder="Instagram (sem @)" autocapitalize="none" autocomplete="off" [value]="instagram()" (input)="instagram.set(valorDe($event))">
+</app-campo>
+<app-campo rotulo="Slogan">
+  <input class="input" type="text" maxlength="120" placeholder="Frase abaixo do nome (opcional)" [value]="slogan()" (input)="slogan.set(valorDe($event))">
+</app-campo>
+<div class="subtitulo">Telefone, Instagram e slogan em branco não aparecem no orçamento.</div>
+<button type="button" class="btn btn-primary btn-block" [disabled]="salvando()" (click)="salvarDados()">{{ salvando() ? 'Salvando…' : 'Salvar dados' }}</button>

@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
+import { AltoMedidasService, ResumoAltoMedidas } from '../../core/alto-medidas.service';
 import { CacheService } from '../../core/cache.service';
 import { Dashboard, Inicio } from './inicio';
 
@@ -9,10 +12,13 @@ const DASH: Dashboard = {
 };
 
 describe('Inicio', () => {
-  function criar(dash: Dashboard) {
+  function criar(dash: Dashboard, daniel: ResumoAltoMedidas | null = null) {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AltoMedidasService, useValue: { resumo: async () => daniel } },
         { provide: CacheService, useValue: { comCache: async (_p: string, render: (d: Dashboard) => void) => render(dash) } },
       ],
     });
@@ -37,6 +43,33 @@ describe('Inicio', () => {
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.stat-card')[3].click();
     expect(navegar).toHaveBeenCalledWith(['/pedidos'], { queryParams: { filtro: 'atrasados' } });
+  });
+
+  it('sem resumo do Daniel (integração desligada) não mostra o cartão', async () => {
+    const fixture = criar(DASH);
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.card-destaque')).toBeNull();
+  });
+
+  it('com valor devido ao Daniel mostra o cartão pequeno, antes dos cards, e o toque abre o Alto Medidas', async () => {
+    const fixture = criar(DASH, { devidoAoDaniel: 1234.5, quantidadeDevida: 2 });
+    await fixture.whenStable();
+    const html = fixture.nativeElement as HTMLElement;
+    const cartao = html.querySelector('.card-destaque') as HTMLElement;
+    expect(cartao.textContent).toContain('Você deve ao Daniel');
+    expect(cartao.textContent).toContain('R$ 1.234,50');
+    expect(cartao.textContent).toContain('2 virabrequins que o cliente já pagou · toque para conferir');
+    expect(cartao.style.padding).toBe('14px');
+    expect(cartao.compareDocumentPosition(html.querySelector('.stat-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    cartao.click();
+    expect(ir).toHaveBeenCalledWith('/alto-medidas');
+  });
+
+  it('nada a repassar (quantidade 0) não mostra o cartão', async () => {
+    const fixture = criar(DASH, { devidoAoDaniel: 0, quantidadeDevida: 0 });
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).querySelector('.card-destaque')).toBeNull();
   });
 
   it('sem entregas mostra a mensagem vazia', async () => {

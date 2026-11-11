@@ -84,7 +84,7 @@ contra um servidor falso: perguntas, escolha, resposta aberta, conferencia, pree
 
 ### Front em Angular (`frontend/`)
 
-45 testes unitarios (vitest) dos servicos de base: sessao compativel com o `localStorage` do app atual, interceptor (token, `X-Auth-Refresh`, 401 com nova tentativa unica, avisos), cache (mostra o guardado e revalida, descarta resposta atrasada), dialogos e guarda de saida, e a tela Inicio. Rodar com `npm test -- --watch=false` dentro de `frontend/`. Ainda nao ha ponta a ponta (Playwright entra nas proximas fases).
+113 testes (vitest): as telas ja migradas (lista vinda da API, corpo do POST/PUT igual ao do app atual, validacoes, confirmacao e 409 ao remover, invalidacao de cache, alternancia do dashboard, envio e remocao da logo) e os servicos de base: sessao compativel com o `localStorage` do app atual, interceptor (token, `X-Auth-Refresh`, 401 com nova tentativa unica, avisos), cache (mostra o guardado e revalida, descarta resposta atrasada), dialogos e guarda de saida, e a tela Inicio. Rodar com `npm test -- --watch=false` dentro de `frontend/`. Ainda nao ha ponta a ponta (Playwright entra nas proximas fases).
 
 ## Comportamento atual registrado (nao e aprovacao)
 
