@@ -58,6 +58,7 @@ export interface ItemPedido {
 }
 
 export interface CategoriaValor {
+  categoria?: string | null;
   categoriaRotulo?: string | null;
   valorTotal?: number | string | null;
   valorServicos?: number | string | null;
@@ -68,11 +69,13 @@ export interface CategoriaValor {
 export interface PedidoDetalhe {
   id: number;
   cliente?: Cliente | null;
-  componentes?: { nome: string; categoriaRotulo?: string | null }[] | null;
+  componentes?: { id?: number; nome: string; categoriaRotulo?: string | null }[] | null;
   pedidoDescricao?: string | null;
   datCriacao?: string | null;
   datEntregaEstimada?: string | null;
   situacao: string;
+  /** ABERTO | EM_ANDAMENTO | PRONTO (o formulário de edição escolhe entre estes). */
+  status?: string | null;
   finalizado?: boolean;
   servicos?: ItemPedido[] | null;
   pecas?: ItemPedido[] | null;
@@ -83,3 +86,25 @@ export interface PedidoDetalhe {
   subtotal?: number | null;
   totalGeral?: number | null;
 }
+
+/** Cliente escolhido no formulário do pedido (também é o que vai para o rascunho). */
+export interface ClienteEscolhido {
+  id: number;
+  nome: string;
+  telefone?: string | null;
+}
+
+/** Modelo (cabeçote, bloco...) já adicionado ao pedido. */
+export interface ComponentePedido {
+  id: number;
+  nome: string;
+}
+
+/** Valor de serviços e de peças de uma categoria marcada no pedido. */
+export interface ValoresCategoria {
+  valorServicos: number;
+  valorPecas: number;
+}
+
+/** Categoria marcada + valores, na ordem em que foi marcada (o app.js guarda num Map). */
+export type CategoriaMarcada = [string, ValoresCategoria];

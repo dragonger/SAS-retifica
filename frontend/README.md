@@ -35,5 +35,5 @@ npx ng test --watch=false
 
 - `src/app/core/`: serviços de base (sessão, interceptor HTTP, cache, diálogos, identidade, guarda de saída). Usam as mesmas
   chaves do `localStorage` do app atual (`retifica_auth`, `retifica_logo`, ...), então os dois apps compartilham a sessão.
-- `src/app/telas/`: telas. Ja migradas: inicio, catalogo, servicos, pecas, clientes, produtos, encerrados, dashboard, empresa, lista de pedidos e visualizar pedido. As demais rotas (formulario do pedido, Alto Medidas, trocar senha) apontam para `em-migracao`, que leva ao app atual.
+- `src/app/telas/`: telas. Ja migradas: inicio, catalogo, servicos, pecas, clientes, produtos, encerrados, dashboard, empresa, lista de pedidos, visualizar pedido e formulario do pedido (novo/editar, com rascunhos). As demais rotas (Alto Medidas, trocar senha) apontam para `em-migracao`, que leva ao app atual. Falta o "Ditar pedido" (fase 4): o formulario ja expoe a API que ele usa (`obterAtual`, `aplicar`, `cadastrarCliente`, `irParaAba`, `ordemAbas`).
 - Telas com formulário implementam `ComGuardaSaida` e usam `guardaDeSaida` no `canDeactivate` da rota.

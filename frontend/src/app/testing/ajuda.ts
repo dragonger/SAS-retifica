@@ -25,5 +25,11 @@ export async function esperar(fixture: ComponentFixture<unknown>, ciclos = 4): P
 /** Escreve num campo e dispara `input`, como o usuário digitando. */
 export function digitar(campo: HTMLInputElement | HTMLSelectElement, valor: string): void {
   campo.value = valor;
-  campo.dispatchEvent(new Event(campo instanceof HTMLSelectElement ? 'change' : 'input'));
+  campo.dispatchEvent(new Event(campo instanceof HTMLSelectElement ? 'change' : 'input', { bubbles: true })); // como no navegador: o evento sobe até o formulário
+}
+
+/** JWT de teste (a assinatura não é conferida pelo front): só o que `AuthService.claims()` lê. */
+export function tokenDeTeste(claims: object = { usuarioId: 7, empresaId: 3 }): string {
+  const b64 = (o: object) => btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return b64({ alg: 'none' }) + '.' + b64(claims) + '.assinatura';
 }
