@@ -5,10 +5,12 @@ import { ApiService } from '../../core/api.service';
 import { CacheService } from '../../core/cache.service';
 import { registrarClienteRecente } from '../../core/clientes-recentes';
 import { DialogoService } from '../../core/dialogo.service';
+import { DitadoService } from '../../core/ditado.service';
 import { ComGuardaSaida, GuardaSaida } from '../../core/guarda-saida.service';
 import { OrcamentoCacheService } from '../../core/orcamento-cache.service';
 import { RascunhoService } from '../../core/rascunho.service';
 import { TopoService } from '../../core/topo.service';
+import { IconeMicrofone } from '../../shared/icone-microfone';
 import { Cabecote, Categoria, Cliente, ItemCatalogo, PedidoDetalhe } from '../../shared/modelos';
 import { comOcupado } from '../../shared/ocupado';
 import {
@@ -18,6 +20,7 @@ import { AbaCliente } from './aba-cliente';
 import { AbaComponentes } from './aba-componentes';
 import { AbaItens } from './aba-itens';
 import { AbaPedido } from './aba-pedido';
+import { ContextoDitado, DitadoOverlay } from './ditado-overlay';
 import { CatalogoPedido, EstadoPedidoForm } from './estado-pedido-form';
 
 /** Catálogos que o formulário carrega (CATALOGO_PATHS do app.js), nesta ordem. */
@@ -36,7 +39,7 @@ export const ATRASO_RASCUNHO_MS = 400;
 @Component({
   selector: 'app-pedido-form',
   templateUrl: './pedido-form.html',
-  imports: [AbaCliente, AbaPedido, AbaComponentes, AbaItens],
+  imports: [AbaCliente, AbaPedido, AbaComponentes, AbaItens, DitadoOverlay, IconeMicrofone],
   providers: [EstadoPedidoForm],
   host: { style: 'display: contents' },
 })
@@ -45,6 +48,7 @@ export class PedidoForm implements ComGuardaSaida {
   private readonly api = inject(ApiService);
   private readonly cache = inject(CacheService);
   private readonly dialogo = inject(DialogoService);
+  private readonly ditado = inject(DitadoService);
   private readonly orcamentos = inject(OrcamentoCacheService);
   private readonly rascunhos = inject(RascunhoService);
   private readonly router = inject(Router);
@@ -60,6 +64,20 @@ export class PedidoForm implements ComGuardaSaida {
 
   /** Ordem das etapas (o ditado decide para qual ir primeiro). */
   readonly ordemAbas = ORDEM_ABAS;
+
+  // — ditar o pedido: só em pedido novo e só quando a IA está ligada no servidor (barraDitado do app.js) —
+  protected readonly ditadoLigado = signal(false);
+  protected readonly ditadoAberto = signal(false);
+  private abrindoDitado = false;
+  /** O que o painel do ditado usa do formulário (ctx do abrirDitado). */
+  protected readonly contextoDitado: ContextoDitado = {
+    obterAtual: () => this.obterAtual(),
+    catalogo: () => this.catalogo(),
+    aplicar: dados => this.aplicar(dados),
+    cadastrarCliente: nome => this.cadastrarCliente(nome),
+    irParaAba: aba => this.irParaAba(aba),
+    ordemAbas: ORDEM_ABAS,
+  };
 
   private carga = 0;
   private destruido = false;
@@ -101,9 +119,10 @@ export class PedidoForm implements ComGuardaSaida {
     this.pronto.set(false);
     this.naoEncontrado.set(false);
     this.id.set(id);
+    this.ditadoLigado.set(false);
+    this.ditadoAberto.set(false);
     this.chave = chaveDoRascunho(id);
     this.topo.definirTitulo(id ? 'Editar pedido #' + id : 'Novo pedido');
-
     let catalogo: CatalogoPedido;
     let pedido: PedidoDetalhe | null;
     try {
@@ -121,6 +140,10 @@ export class PedidoForm implements ComGuardaSaida {
     this.selecionarAba('cliente');
     this.linhaBase = this.fotografia();
     this.pronto.set(true);
+    // "Ditar pedido": só em pedido novo e só com a IA ligada no servidor (a resposta fica guardada no DitadoService)
+    if (!id) {
+      void this.ditado.habilitado().then(ligado => { if (ligado && minha === this.carga && !this.destruido) this.ditadoLigado.set(true); });
+    }
 
     // rascunho guardado: o cartão "Continuar" já abre direto nele; senão pergunta
     const guardado = this.rascunhos.ler(this.chave);
@@ -290,10 +313,19 @@ export class PedidoForm implements ComGuardaSaida {
     };
   }
 
-  // ---------- API para o ditado (fase 4: ctx do abrirDitado) ----------
-  // TODO fase 4: barraDitado ("Ditar pedido"), só em pedido novo e só com a IA ligada no servidor
-  // (ditadoHabilitado, GET /api/ditado/status). O botão abre o painel com este ctx: obterAtual, catalogo, aplicar,
-  // cadastrarCliente, irParaAba e ordemAbas.
+  // ---------- ditado (ctx do abrirDitado do app.js) ----------
+
+  /** Botão "Ditar pedido": mostra o aviso de privacidade (só na primeira vez) e abre o painel. */
+  protected async abrirDitado(): Promise<void> {
+    if (this.abrindoDitado || this.ditadoAberto()) return;
+    this.abrindoDitado = true;
+    try {
+      if (!(await this.ditado.avisoDePrivacidade()) || this.destruido) return;
+      this.ditadoAberto.set(true);
+    } finally {
+      this.abrindoDitado = false;
+    }
+  }
 
   /** Dados atuais do formulário, no formato do rascunho (sem a etapa). */
   obterAtual(): DadosRascunho {

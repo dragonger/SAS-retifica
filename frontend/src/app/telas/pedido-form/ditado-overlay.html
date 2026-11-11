@@ -1,0 +1,138 @@
+<div #fundo class="ditado-overlay" role="dialog" aria-modal="true" aria-label="Ditar pedido">
+  <div class="ditado-painel blueprint">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+    @switch (fase()) {
+      <!-- 1) gravar / escrever -->
+      @case ('gravar') {
+        <h2 class="ditado-titulo">Ditar pedido</h2>
+        @if (erro(); as mensagem) {
+          <p class="ditado-nota ditado-erro">{{ mensagem }}</p>
+        }
+        @if (comVoz) {
+          <button type="button" class="btn btn-secondary btn-block" style="gap:8px" [class.ditado-gravando]="ouvindo()" (click)="alternarVoz()">
+            <app-icone-microfone />{{ ouvindo() ? 'Parar' : 'Falar' }}
+          </button>
+        } @else {
+          <p class="ditado-nota">Este navegador não ouve a voz. Escreva o pedido aqui, ou toque no microfone do teclado do celular.</p>
+        }
+        <p class="ditado-nota ditado-ouvindo" [class.ditado-aguarde]="ouvindo() && !pronto()">{{ !ouvindo() ? '' : (pronto()
+          ? 'Ouvindo… pode falar. Toque em Parar quando terminar.'
+          : 'Ligando o microfone… espere a vibração para falar.') }}</p>
+        <textarea #campoTexto class="input" rows="6" maxlength="2000" aria-label="Pedido ditado" id="ditadoTexto"
+                  placeholder="Fale ou escreva o pedido…" [value]="textoOriginal" (input)="aoDigitar()"></textarea>
+        <p class="ditado-nota">Exemplo: "Pedido do João da Silva, cabeçote do AP 1.8, plainar e trocar guias, quatro válvulas, cento e cinquenta de serviço, entrega sexta."</p>
+        <div class="ditado-botoes">
+          <button type="button" class="btn btn-primary btn-block" [disabled]="!temTexto()" (click)="enviar()">Entender o pedido</button>
+          <button type="button" class="btn btn-ghost btn-block" (click)="fechar()">Cancelar</button>
+        </div>
+      }
+
+      <!-- 2) aguardando a IA -->
+      @case ('entendendo') {
+        <h2 class="ditado-titulo">Ditar pedido</h2>
+        <div class="ditado-espera" role="status">{{ textoEspera() }}</div>
+        <p class="ditado-nota">Leva alguns segundos.</p>
+      }
+
+      <!-- 3) perguntas de esclarecimento -->
+      @case ('perguntas') {
+        <h2 class="ditado-titulo">A IA tem uma dúvida</h2>
+        <p class="ditado-nota">Pergunta {{ rodada() }} de até {{ maxRodadas() - 1 }}. Toque numa opção, ou responda falando ou escrevendo.</p>
+        @if (erro(); as mensagem) {
+          <p class="ditado-nota ditado-erro">{{ mensagem }}</p>
+        }
+        @for (p of perguntas(); track p.id) {
+          <div class="ditado-pergunta">
+            <div class="ditado-pergunta-texto">{{ p.texto }}</div>
+            @if (p.tipo === 'ESCOLHA') {
+              <div class="ditado-opcoes">
+                @for (o of p.opcoes || []; track o.indice) {
+                  <button type="button" class="chip" [class.active]="escolhas()[p.id] === o.indice"
+                          [attr.aria-pressed]="escolhas()[p.id] === o.indice" (click)="escolherChip(p, o.indice, livre)">{{ o.rotulo }}</button>
+                }
+              </div>
+            }
+            <div class="ditado-resposta">
+              <input #livre class="input" type="text" maxlength="300" aria-label="Outra resposta"
+                     [attr.placeholder]="p.tipo === 'ESCOLHA' ? 'Outra resposta…' : 'Sua resposta…'" (input)="aoDigitarResposta(p, livre)">
+              @if (comVoz) {
+                <button type="button" class="btn btn-ghost ditado-mic" aria-label="Responder falando"
+                        [class.ditado-gravando]="micsGravando().has(p.id)" (click)="alternarMic(p, livre)"><app-icone-microfone /></button>
+              }
+            </div>
+          </div>
+        }
+        <div class="ditado-botoes">
+          <button type="button" class="btn btn-primary btn-block" [disabled]="!podeResponder()" (click)="responder()">Responder</button>
+          <button type="button" class="btn btn-secondary btn-block" (click)="pularEConferir()">Pular e conferir</button>
+          <button type="button" class="btn btn-ghost btn-block" (click)="fechar()">Cancelar</button>
+        </div>
+      }
+
+      <!-- 4) conferência -->
+      @case ('conferir') {
+        <h2 class="ditado-titulo">Confira o que entendi</h2>
+        @for (l of linhas(); track $index) {
+          <div [class]="'ditado-linha ' + l.cls">
+            <span [class]="'ditado-tag ' + l.cls">{{ l.tag }}</span>
+            <div class="ditado-linha-corpo">
+              <div>{{ l.texto }}</div>
+              @if (l.opcoes) {
+                <div class="ditado-opcoes">
+                  @for (o of l.opcoes; track o.id) {
+                    <button type="button" class="chip" (click)="l.escolher!(o.id)">{{ o.nome }}</button>
+                  }
+                </div>
+              }
+              @if (l.extra === 'valores' && l.valor; as v) {
+                <div class="ditado-valores">
+                  <label class="ditado-valor"><span>Serviços R$</span>
+                    <input class="input" type="number" min="0" step="0.01" [value]="v.valorServicos || ''"
+                           [attr.aria-label]="'Serviços R$ de ' + l.rotuloValor" (change)="definirValor(v, 'valorServicos', $any($event.target))"></label>
+                  <label class="ditado-valor"><span>Peças R$</span>
+                    <input class="input" type="number" min="0" step="0.01" [value]="v.valorPecas || ''"
+                           [attr.aria-label]="'Peças R$ de ' + l.rotuloValor" (change)="definirValor(v, 'valorPecas', $any($event.target))"></label>
+                </div>
+              }
+              @if (l.extra === 'entrega') {
+                <input class="input" type="date" [value]="entendimento().entregaData" aria-label="Data de entrega"
+                       (change)="definirEntrega($any($event.target))">
+              }
+            </div>
+            @if (l.remover) {
+              <button type="button" class="ditado-remover" aria-label="Remover" (click)="l.remover()">✕</button>
+            }
+          </div>
+        } @empty {
+          <p class="ditado-nota ditado-erro">Não entendi nada que dê para preencher. Tente de novo.</p>
+        }
+        @if (conflitos().length) {
+          <div class="ditado-secao">
+            <h3>O formulário já tinha outra coisa (não vou trocar)</h3>
+            @for (c of conflitos(); track $index) {
+              <div class="ditado-linha duvida"><span class="ditado-tag duvida">Conflito</span><div class="ditado-linha-corpo">{{ c.texto }}</div></div>
+            }
+          </div>
+        }
+        @if (pendencias().length) {
+          <div class="ditado-secao">
+            <h3>Ficou pendente (você completa à mão)</h3>
+            <ul class="ditado-pendencias">
+              @for (t of pendencias(); track $index) {
+                <li>{{ t }}</li>
+              }
+            </ul>
+          </div>
+        }
+        <div class="ditado-botoes">
+          @if (linhas().length) {
+            <button type="button" class="btn btn-primary btn-block" (click)="preencher()">Preencher formulário</button>
+          }
+          <button type="button" class="btn btn-secondary btn-block" (click)="faseGravar()">Ditar de novo</button>
+          <button type="button" class="btn btn-ghost btn-block" (click)="fechar()">Cancelar</button>
+        </div>
+      }
+    }
+  </div>
+</div>
