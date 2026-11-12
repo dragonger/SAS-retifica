@@ -3,12 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "copiar": "node scripts/copiar-estaticos.mjs",
-    "prestart": "npm run copiar",
     "start": "ng serve",
-    "prebuild": "npm run copiar",
     "build": "ng build",
-    "prewatch": "npm run copiar",
     "watch": "ng build --watch --configuration development",
     "build:backend": "node scripts/build-backend.mjs",
     "test": "ng test"

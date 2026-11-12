@@ -15,13 +15,13 @@ O reconhecimento de voz do Chrome do Android encerra a escuta sozinho (silêncio
 ```
 Retífica.apk (Capacitor)
  ├─ WebView ──────────────▶ https://retifica-backend-production.up.railway.app   (o PWA de sempre)
- └─ plugin DitadoVoz (Java) ◀── app.js: ditadoVozNativa()  (só dentro do APK)
+ └─ plugin DitadoVoz (Java) ◀── frontend: core/ditado-voz.ts  (só dentro do APK)
 ```
 
 - `capacitor.config.json`: `server.url` aponta para produção. **Mudou o site, o app muda sozinho**; só mudança no código nativo pede APK novo.
 - `www/index.html`: página mostrada se o aparelho estiver sem internet.
 - `android/app/src/main/java/br/com/dih/retifica/DitadoVozPlugin.java`: o plugin. Eventos `estado`, `resultado`, `erro`; métodos `disponivel`, `iniciar`, `parar`, `encerrar`.
-- `static/app.js`: `ditadoNativo()` detecta o plugin; `ditadoVozNativa()` tem a mesma interface do `ditadoVoz` do navegador. Fora do APK nada muda.
+- `frontend/src/app/core/ditado-voz.ts`: detecta o plugin e usa a voz nativa com a mesma interface da voz do navegador. Fora do APK nada muda.
 - O texto do `resultado` é a escuta inteira (frases finalizadas + a parcial); o app o junta ao que já estava digitado.
 
 ## Identidade e assinatura

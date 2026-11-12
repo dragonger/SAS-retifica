@@ -81,7 +81,7 @@ Fluxo seguro, na ordem:
 2. `git push origin main` **e** `git push saas main`.
 3. Conferir que as três refs são iguais: `git rev-parse main origin/main saas/main`.
 4. Publicar: `railway up --ci --service retifica-backend` (a pasta pode estar ligada a outro serviço por padrão, então sempre informe `--service`).
-5. Conferir: `/health` responde 200, o `app.js` servido tem a mudança nova e uma rota protegida responde 401 sem login.
+5. Conferir: `/health` responde 200, o `index.html` servido aponta para o `main-<hash>.js` do build novo e uma rota protegida responde 401 sem login.
 
 **Por que enviar para os dois remotos:** mudar uma variável (ou pedir "redeploy" no painel) refaz o build a partir do Git, **não** do último `railway up`. Se o `saas/main` estiver atrás, a produção volta por minutos a uma versão antiga. Isso já aconteceu (2026-10-16): os dados ficaram intactos, mas o app voltou a uma versão 34 commits atrás até ser corrigido. Evite encadear comandos com `&&` sem conferir cada passo.
 

@@ -97,5 +97,5 @@ Resultado: `{sessaoId, rodada, maxRodadas, situacao: "PERGUNTAS"|"PRONTO", pergu
 ## Onde está no código
 
 - `backend/.../ditado/`: `DitadoService` (orquestra), `NormalizadorDitado` (barreira de segurança), `PromptDitado`, `EsquemaDitado`, `AnthropicModeloDitado` (SDK da Anthropic), `CatalogoDitado`, `SessoesDitado`, `LimiteDitado`; controller em `backend/.../web/DitadoController.java`.
-- `backend/src/main/resources/static/ditado.js`: regra pura do front (transforma o entendimento em dados do formulário, sem nunca sobrescrever); a tela (microfone, perguntas, conferência) está em `app.js`, função `abrirDitado`.
+- `frontend/src/app/shared/ditado-regra.ts`: regra pura do front (transforma o entendimento em dados do formulário, sem nunca sobrescrever); o painel (microfone, perguntas, conferência) está em `telas/pedido-form/ditado-overlay`.
 - Testes: ver [TESTES.md](TESTES.md). Nenhum teste usa uma chave real: o SDK fala com um servidor falso no localhost.

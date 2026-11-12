@@ -33,7 +33,7 @@ O desktop acessava o banco direto, sem login. O futuro dele ainda não foi decid
 | Autenticação | Spring Security + JWT (`jjwt` 0.13.0) |
 | PDF | OpenPDF, com fontes Barlow embutidas em `core/src/main/resources/fonts` |
 | Desktop | JavaFX 19 |
-| Front-end | PWA em JavaScript puro (`app.js`), sem framework nem build |
+| Front-end | PWA em Angular 22 (`frontend/`), servido pelo backend na raiz |
 
 O compilador usa `-parameters` (`maven.compiler.parameters=true`): sem isso, o Spring 7 não resolve `@PathVariable Long id` sem nome explícito.
 

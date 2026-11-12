@@ -12,6 +12,7 @@
           "/manifest.json",
           "/*.css",
           "/*.js",
+          "!/sw.js",
           "/icon.svg",
           "/icon-*.png",
           "/fonts/fonts.css"
@@ -31,10 +32,12 @@
     }
   ],
   "navigationUrls": [
-    "/novo/**",
+    "/**",
     "!/**/*.*",
     "!/**/*__*",
     "!/**/*__*/**",
-    "!/api/**"
+    "!/api/**",
+    "!/novo/**",
+    "!/health"
   ]
 }

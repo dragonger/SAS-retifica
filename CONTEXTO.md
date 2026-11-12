@@ -12,7 +12,7 @@ Ponto de partida para quem retoma o projeto (pessoa ou assistente). Este arquivo
 | Módulos, stack, modelo de dados, API, autenticação, riscos | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) |
 | Rodar, compilar e testar localmente | [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md) |
 | Railway, Neon, variáveis, como publicar | [docs/PRODUCAO.md](docs/PRODUCAO.md) |
-| O que o app faz e como o `app.js` funciona | [docs/PWA.md](docs/PWA.md) |
+| O que o app faz e como o front funciona | [docs/PWA.md](docs/PWA.md) |
 | Multiempresa: estado, decisões, o que falta, login automático | [docs/SAAS.md](docs/SAAS.md) |
 | Armadilhas já encontradas e cuidados com os dados reais | [docs/LICOES.md](docs/LICOES.md) |
 | App Android, Alto Medidas, WhatsApp, ditado, `hbm2ddl`, testes | [backend/ALTO-MEDIDAS.md](backend/ALTO-MEDIDAS.md), [backend/WHATSAPP-API.md](backend/WHATSAPP-API.md), [backend/DITADO.md](backend/DITADO.md), [android-app/LEIA-ME.md](android-app/LEIA-ME.md), [backend/SCHEMA-STARTUP.md](backend/SCHEMA-STARTUP.md), [backend/TESTES.md](backend/TESTES.md) |
@@ -23,7 +23,7 @@ Ponto de partida para quem retoma o projeto (pessoa ou assistente). Este arquivo
 - **Integração com o Alto Medidas**: ligada. O lado do Firebase (PR #2 do `alto-medidas`) ainda espera aprovação e publicação; enquanto isso nenhuma OS chega.
 - **WhatsApp**: código pronto, desligado (faltam as credenciais da Meta).
 - **App Android (APK)**: `android-app/` (Capacitor), abre o site de produção e usa o reconhecimento de voz nativo do Android para o ditado (evita o corte de palavras do Chrome). Mesmo identificador e mesma chave do APK TWA antigo, então instala por cima. Instalação direta, sem Play Store. Ver [android-app/LEIA-ME.md](android-app/LEIA-ME.md). **Falta testar nos celulares** (S22 Ultra e S26).
-- **Front em Angular (em migração)**: `frontend/` (Angular 22), servido em `/novo/` em paralelo ao PWA atual, que continua na raiz até a troca final. Fases 0 a 5 prontas (casca, serviços de base, Início, catálogos, clientes, produtos, encerrados, dashboard, Minha empresa, pedidos com PDF, compartilhar, foto e WhatsApp, formulário do pedido e rascunhos compatíveis com o app atual, o ditado com voz do navegador e nativa, Alto Medidas, trocar senha, login (desligado enquanto o login automático estiver ativo) e o service worker do Angular); falta a troca da raiz (fase 6). Funções novas do front ficam congeladas até a troca. Ver [frontend/README.md](frontend/README.md).
+- **Front em Angular**: `frontend/` (Angular 22), servido na raiz desde a fase 6 (2026-11-12); o `app.js` antigo foi removido. O build vai para `backend/src/main/resources/static/` (gerado; só `.well-known/` é versionado ali). `/sw.js` é um worker de transição que resgata aparelhos com o worker antigo e precisa continuar publicado; `/novo/` redireciona para `/`. Volta: tag `antes-fase6`. Ver [frontend/README.md](frontend/README.md).
 - **Ditar o pedido por voz** (IA com perguntas de esclarecimento): código pronto, **desligado** até existir `ANTHROPIC_API_KEY` no Railway. Haiku 5.5, 100 ditados por empresa por dia e 300 no total, só em pedido novo. Ver [backend/DITADO.md](backend/DITADO.md).
 - **Login automático**: ativo e mantido (decisão do dono em 2026-10-17). Ver [docs/SAAS.md](docs/SAAS.md#login-automático).
 - **Desktop JavaFX**: não compila desde a Fase 1b; será remodelado depois (decisão do dono em 2026-10-17), então não é prioridade agora.

@@ -110,4 +110,4 @@ a cobrar respostas dentro da janela de 24h, no mesmo valor de utilidade.
 - `backend/.../web/WhatsAppController.java`: `GET /api/whatsapp/status` e
   `POST /api/pedidos/{id}/whatsapp`, que aceita opcionalmente o PDF do aparelho
   no campo `pdf`.
-- `backend/.../static/app.js`: botão na tela do pedido (`enviarPelaApi`).
+- `frontend/src/app/core/whatsapp.service.ts`: botão na tela do pedido.

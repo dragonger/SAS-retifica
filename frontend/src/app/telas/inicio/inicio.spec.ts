@@ -40,13 +40,6 @@ describe('Inicio', () => {
     expect(html.textContent).toContain('R$ 4.760,00');
   });
 
-  it('mostra a marca "Versão nova" no rodapé (para distinguir do app antigo durante a migração)', async () => {
-    const fixture = criar(DASH);
-    await fixture.whenStable();
-    const marca = (fixture.nativeElement as HTMLElement).querySelector('.marca-versao');
-    expect(marca?.textContent?.trim()).toBe('Versão nova');
-  });
-
   it('o card leva a #/pedidos?filtro=...', async () => {
     const fixture = criar(DASH);
     await fixture.whenStable();

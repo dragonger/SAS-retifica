@@ -22,17 +22,13 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "**/*",
-                "input": "src/legado"
               }
             ],
             "styles": [
-              "../backend/src/main/resources/static/style.css",
+              "src/base.css",
               "src/styles.css"
             ],
-            "baseHref": "/novo/"
+            "baseHref": "/"
           },
           "configurations": {
             "production": {

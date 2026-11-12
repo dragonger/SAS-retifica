@@ -20,7 +20,7 @@ import org.springframework.http.HttpStatus;
  *
  * Sem um AuthenticationEntryPoint explícito, o Spring Security usa
  * Http403ForbiddenEntryPoint por padrão — token ausente/expirado/inválido
- * vira 403 em vez de 401. O app.js só faz logout automático (limparAuth +
+ * vira 403 em vez de 401. O front (interceptor) só faz logout automático (limpa a sessão +
  * redireciona pro login) em cima de 401, então token vencido ficava preso
  * num 403 mostrando só um toast de erro pra sempre. Por isso forçamos 401
  * aqui: não existe checagem de papel/role nessa app, então todo "acesso
