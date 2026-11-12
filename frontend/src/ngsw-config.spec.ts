@@ -30,8 +30,12 @@ describe('ngsw-config.json', () => {
     expect(lazy.resources.files).toEqual(expect.arrayContaining(['/fonts/**', '/vendor/**']));
   });
 
-  it('navegação só dentro de /novo/ e nunca para /api', () => {
-    expect(c.navigationUrls).toContain('/novo/**');
-    expect(c.navigationUrls).toContain('!/api/**');
+  it('assume a navegação da raiz, mas nunca /api (PDF abre por navegação), /health nem /novo/ (redireciona)', () => {
+    expect(c.navigationUrls).toContain('/**');
+    for (const fora of ['!/api/**', '!/health', '!/novo/**']) expect(c.navigationUrls).toContain(fora);
+  });
+
+  it('não guarda o sw.js de transição (ele precisa vir sempre do servidor)', () => {
+    expect(grupo('app').resources.files).toContain('!/sw.js');
   });
 });

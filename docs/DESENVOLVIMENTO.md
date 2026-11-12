@@ -54,7 +54,7 @@ A porta vem de `PORT` (o Railway injeta `8080` em produção); sem ela vale `844
 
 Em banco vazio, o `BootstrapUsuario` cria a empresa 1 e um usuário com senha aleatória, gravada em `~/.retificasDesktop/bootstrap-credentials.txt` (e escrita no log de inicialização). A chave JWT local é gerada em `~/.retificasDesktop/jwt-secret.key`. Em produção a chave vem de `JWT_SECRET`.
 
-Com o login automático ativo, o próprio PWA desativa a tela de login e entra sozinho como o usuário 1 (ver [SAAS.md](SAAS.md#login-automático)). Se o usuário 1 não existir, o endpoint responde 401 e o app fica tentando de novo; para religar a tela de login é preciso mexer no `app.js` e no `AuthController`, não basta desligar o endpoint.
+Com o login automático ativo, o próprio PWA desativa a tela de login e entra sozinho como o usuário 1 (ver [SAAS.md](SAAS.md#login-automático)). Se o usuário 1 não existir, o endpoint responde 401 e o app fica tentando de novo; para religar a tela de login é preciso mudar `LOGIN_AUTOMATICO_ATIVO` em `frontend/src/app/core/login-automatico.ts` e mexer no `AuthController`, não basta desligar o endpoint.
 
 ## Acesso pelo celular (túnel)
 
