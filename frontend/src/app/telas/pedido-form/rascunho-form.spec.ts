@@ -372,7 +372,6 @@ describe('PedidoForm: rascunhos', () => {
     beforeEach(async () => { f = await montarFormulario(); });
 
     it('o interceptor grava o rascunho antes de limpar a sessão, no dono certo', async () => {
-      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('sem rede'))); // o login automático falha: o foco aqui é o rascunho
       await escolherCliente('Maria');
       TestBed.inject(GuardaSaidaService).registrar(f.componente);
       const chamada = TestBed.inject(ApiService).get('/api/qualquer').catch(() => 'falhou');

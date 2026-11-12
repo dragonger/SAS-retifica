@@ -54,6 +54,12 @@ final class ApiTeste {
         return enviar(montar(caminho, token).POST(HttpRequest.BodyPublishers.noBody()).build());
     }
 
+    /** POST sem corpo e sem token, vindo de um endereco (X-Forwarded-For), como a demonstracao recebe pelo proxy. */
+    Resposta postDeEndereco(String caminho, String ip) {
+        return enviar(HttpRequest.newBuilder(URI.create(base + caminho)).header("X-Forwarded-For", ip)
+                .POST(HttpRequest.BodyPublishers.noBody()).build());
+    }
+
     Resposta postComChave(String caminho, String chave, Object corpo) {
         return enviar(HttpRequest.newBuilder(URI.create(base + caminho))
                 .header("Content-Type", "application/json").header("X-Api-Key", chave)

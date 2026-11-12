@@ -19,4 +19,9 @@ public final class SecurityUtils {
     public static Long empresaAtual() {
         return principalAtual().getEmpresaId();
     }
+
+    /** True quando quem chama está numa sessão de demonstração. */
+    public static boolean ehDemo() {
+        return principalAtual().isDemo();
+    }
 }

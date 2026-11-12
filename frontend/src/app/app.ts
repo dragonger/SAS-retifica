@@ -2,11 +2,13 @@ import { Component, ElementRef, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { GuardsCheckEnd, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
+import { AuthService } from './core/auth.service';
 import { CacheService } from './core/cache.service';
 import { DialogoAberto, DialogoService } from './core/dialogo.service';
 import { GuardaSaidaService } from './core/guarda-saida.service';
 import { IdentidadeService } from './core/identidade.service';
 import { MenuPedidoService } from './core/menu-pedido.service';
+import { SessaoService } from './core/sessao.service';
 import { TopoService } from './core/topo.service';
 import { AvisoNovaVersao } from './shared/aviso-nova-versao';
 import { Foco } from './shared/foco';
@@ -31,6 +33,13 @@ export class App {
   protected readonly topo = inject(TopoService);
   protected readonly identidade = inject(IdentidadeService);
   protected readonly menuPedido = inject(MenuPedidoService);
+  protected readonly auth = inject(AuthService);
+  protected readonly sessao = inject(SessaoService);
+
+  /** "14:32" (horário local do aparelho) para a faixa da demonstração. */
+  protected horaDe(data: Date): string {
+    return data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
 
   private readonly conteudo = viewChild<ElementRef<HTMLElement>>('conteudo');
 

@@ -13,7 +13,7 @@ Ponto de partida para quem retoma o projeto (pessoa ou assistente). Este arquivo
 | Rodar, compilar e testar localmente | [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md) |
 | Railway, Neon, variáveis, como publicar | [docs/PRODUCAO.md](docs/PRODUCAO.md) |
 | O que o app faz e como o front funciona | [docs/PWA.md](docs/PWA.md) |
-| Multiempresa: estado, decisões, o que falta, login automático | [docs/SAAS.md](docs/SAAS.md) |
+| Multiempresa: estado, decisões, o que falta, login e demonstração | [docs/SAAS.md](docs/SAAS.md) |
 | Armadilhas já encontradas e cuidados com os dados reais | [docs/LICOES.md](docs/LICOES.md) |
 | App Android, Alto Medidas, WhatsApp, ditado, `hbm2ddl`, testes | [backend/ALTO-MEDIDAS.md](backend/ALTO-MEDIDAS.md), [backend/WHATSAPP-API.md](backend/WHATSAPP-API.md), [backend/DITADO.md](backend/DITADO.md), [android-app/LEIA-ME.md](android-app/LEIA-ME.md), [backend/SCHEMA-STARTUP.md](backend/SCHEMA-STARTUP.md), [backend/TESTES.md](backend/TESTES.md) |
 
@@ -25,7 +25,7 @@ Ponto de partida para quem retoma o projeto (pessoa ou assistente). Este arquivo
 - **App Android (APK)**: `android-app/` (Capacitor), abre o site de produção e usa o reconhecimento de voz nativo do Android para o ditado (evita o corte de palavras do Chrome). Mesmo identificador e mesma chave do APK TWA antigo, então instala por cima. Instalação direta, sem Play Store. Ver [android-app/LEIA-ME.md](android-app/LEIA-ME.md). **Falta testar nos celulares** (dois celulares Samsung com Android 14 ou mais novo).
 - **Front em Angular**: `frontend/` (Angular 22), servido na raiz desde a fase 6 (2026-11-12); o `app.js` antigo foi removido. O build vai para `backend/src/main/resources/static/` (gerado; só `.well-known/` é versionado ali). `/sw.js` é um worker de transição que resgata aparelhos com o worker antigo e precisa continuar publicado; `/novo/` redireciona para `/`. Volta: tag `antes-fase6`. Ver [frontend/README.md](frontend/README.md).
 - **Ditar o pedido por voz** (IA com perguntas de esclarecimento): **ligado** em produção (`ANTHROPIC_API_KEY` configurada no Railway). Haiku 5.5, 100 ditados por empresa por dia e 300 no total, só em pedido novo. Ver [backend/DITADO.md](backend/DITADO.md).
-- **Login automático**: ativo e mantido (decisão do dono em 2026-10-17). Ver [docs/SAAS.md](docs/SAAS.md#login-automático).
+- **Login**: com e-mail e senha desde 2026-11-12 (o login automático foi removido). Na tela de login, **Abrir demonstração** cria uma empresa isolada com dados fictícios, apagada em 2 horas. Ver [docs/SAAS.md](docs/SAAS.md#login-e-demonstração).
 - **Desktop JavaFX**: não compila desde a Fase 1b; será remodelado depois (decisão do dono em 2026-10-17), então não é prioridade agora.
 - **Testes**: 192 testes no backend (JUnit) e 623 no front (vitest), cobrindo isolamento, dinheiro, sessão, pedidos, PDF, WhatsApp, Alto Medidas, contratos da API e ditado; ver [backend/TESTES.md](backend/TESTES.md). Falta só desempenho (N+1), a lista de valores aceitos do `HIBERNATE_HBM2DDL` e o ponta a ponta do PWA.
 
@@ -41,7 +41,7 @@ Ponto de partida para quem retoma o projeto (pessoa ou assistente). Este arquivo
 ## Pendências conhecidas
 
 - Aprovar e publicar o PR do Alto Medidas (segredos do Firebase `DIH_ENTRADA_KEY` e `DIH_SAIDA_KEY`, `firebase deploy --only functions`, nova versão do app do parceiro) e testar com uma OS de teste.
-- Decidir as integrações por empresa (ver [docs/SAAS.md](docs/SAAS.md)). O login automático e o desktop já têm decisão (mantido e remodelado depois).
+- Decidir as integrações por empresa (ver [docs/SAAS.md](docs/SAAS.md)). O desktop já tem decisão (remodelado depois).
 - Testar o APK novo nos dois celulares e registrar o resultado (se ainda cortar palavras, o plano B é transcrever o áudio no servidor, com custo e com o áudio saindo do celular).
 - Ditado: já está ligado; falta avaliar o acerto da IA com algumas frases reais, testar no celular (microfone no Chrome e no APK) e manter um limite de gasto mensal no Console da Anthropic.
 - Fase 2 do SaaS: onboarding de outras oficinas.

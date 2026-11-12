@@ -347,8 +347,9 @@ public class PedidoRepository {
      * sistema não usa mais, mas pedidos criados naquela época ainda têm linhas
      * lá presas pela chave estrangeira, e aí excluir o pedido falhava (erro
      * 500). Em banco criado depois, a tabela nem existe — por isso a checagem.
+     * Também usada pela limpeza das empresas de demonstração (EmpresaDemoRepository).
      */
-    private static void apagarCategoriasLegadas(EntityManager em, Long pedidoId) {
+    static void apagarCategoriasLegadas(EntityManager em, Long pedidoId) {
         Object tabela = em.createNativeQuery("SELECT CAST(to_regclass('pedido_categoria') AS text)").getSingleResult();
         if (tabela != null) {
             em.createNativeQuery("DELETE FROM pedido_categoria WHERE pedido_id = ?1")

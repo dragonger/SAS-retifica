@@ -8,8 +8,6 @@ import { firstValueFrom } from 'rxjs';
  */
 export const STATUS_SEM_AVISO = new HttpContextToken<readonly number[]>(() => []);
 
-/** Marca a requisição que já foi refeita depois de um 401 (evita laço). */
-export const JA_RETENTOU = new HttpContextToken<boolean>(() => false);
 
 /**
  * O 401 desta chamada NÃO significa sessão vencida (ex.: "senha atual incorreta"):

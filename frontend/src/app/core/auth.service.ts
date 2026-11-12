@@ -1,13 +1,13 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 
-/** Chaves do localStorage compartilhadas com o app atual (static/app.js). */
+/** Chaves do localStorage (as mesmas do app antigo em JavaScript puro, para não perder sessão nem rascunhos). */
 export const CHAVE_AUTH = 'retifica_auth';
 export const CHAVE_LOGO = 'retifica_logo';
 export const CHAVE_RASCUNHOS = 'retifica_rascunhos';
 export const CHAVE_CLIENTES_RECENTES = 'retifica_clientes_recentes';
 export const CHAVE_DITADO_AVISO = 'retifica_ditado_aviso';
 
-/** Formato gravado em `retifica_auth` (resposta de /api/auth/auto-login). */
+/** Formato gravado em `retifica_auth` (resposta de /api/auth/login ou /api/auth/demo). */
 export interface SessaoAuth {
   token: string;
   nome?: string;
@@ -18,7 +18,26 @@ export interface SessaoAuth {
 export interface ClaimsToken {
   usuarioId?: number | string;
   empresaId?: number | string;
+  /** Sessão de demonstração (dados fictícios, apagada no fim do prazo). */
+  demo?: boolean;
+  /** Fim da validade, em segundos desde 1970 (padrão do JWT). */
+  exp?: number;
   [outro: string]: unknown;
+}
+
+/** Resultado de abrir a demonstração. */
+export type ResultadoDemo = 'ok' | 'limite' | 'indisponivel' | 'semConexao';
+
+/** Lê as claims de um JWT (sem validar a assinatura: só leitura do que o servidor já emitiu). */
+export function claimsDoToken(token: string | undefined | null): ClaimsToken | null {
+  try {
+    if (!token) return null;
+    const partes = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(partes), c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)) as ClaimsToken;
+  } catch {
+    return null;
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -26,7 +45,11 @@ export class AuthService {
   /** Sessão atual (espelho reativo do localStorage). */
   readonly sessao = signal<SessaoAuth | null>(this.lerAuth());
 
-  private autoLoginEmAndamento: Promise<boolean> | null = null;
+  /** Fim da demonstração, se a sessão atual for de demonstração; null numa sessão normal. */
+  readonly demoExpiraEm = computed<Date | null>(() => {
+    const c = claimsDoToken(this.sessao()?.token);
+    return c?.demo && typeof c.exp === 'number' ? new Date(c.exp * 1000) : null;
+  });
 
   lerAuth(): SessaoAuth | null {
     try {
@@ -61,36 +84,8 @@ export class AuthService {
   }
 
   /**
-   * Login desativado no app atual: sem sessão salva, autentica sozinho via
-   * /api/auth/auto-login. Usa fetch direto (como o app.js) para não passar
-   * pelo interceptor, que também chama este método no 401.
-   * Resolve true se há sessão ao final.
-   */
-  garantirAutoLogin(): Promise<boolean> {
-    if (this.lerAuth()) return Promise.resolve(true);
-    if (!this.autoLoginEmAndamento) {
-      this.autoLoginEmAndamento = this.autoLogin().finally(() => { this.autoLoginEmAndamento = null; });
-    }
-    return this.autoLoginEmAndamento;
-  }
-
-  /** Força um novo auto-login (usado depois de um 401, quando a sessão já foi limpa). */
-  private async autoLogin(): Promise<boolean> {
-    try {
-      const resp = await fetch('/api/auth/auto-login', { method: 'POST' });
-      if (!resp.ok) return false;
-      const dados = (await resp.json()) as SessaoAuth;
-      this.gravar(dados);
-      return true;
-    } catch {
-      // sem conexão: a próxima navegação tenta de novo
-      return false;
-    }
-  }
-
-  /**
-   * Tela de login (telaLogin do app.js): fetch direto, sem o interceptor — um 401 aqui é
-   * "senha errada", não sessão vencida. Grava a sessão se entrou.
+   * Tela de login: fetch direto, sem o interceptor — um 401 aqui é "senha errada", não sessão
+   * vencida. Grava a sessão se entrou.
    */
   async entrar(email: string, senha: string): Promise<'ok' | 'invalido' | 'semConexao'> {
     let resp: Response;
@@ -108,17 +103,26 @@ export class AuthService {
     return 'ok';
   }
 
-  /** Claims do JWT (sem validar assinatura: só leitura do que o servidor já emitiu). */
-  claims(): ClaimsToken | null {
+  /**
+   * Abre uma demonstração: o servidor cria uma empresa isolada com dados fictícios e devolve uma
+   * sessão que vale 2 horas. 429 = muitas demonstrações agora; 503 = desligada.
+   */
+  async entrarDemo(): Promise<ResultadoDemo> {
+    let resp: Response;
     try {
-      const token = this.lerAuth()?.token;
-      if (!token) return null;
-      const partes = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const bytes = Uint8Array.from(atob(partes), c => c.charCodeAt(0));
-      return JSON.parse(new TextDecoder().decode(bytes)) as ClaimsToken;
+      resp = await fetch('/api/auth/demo', { method: 'POST' });
     } catch {
-      return null;
+      return 'semConexao';
     }
+    if (resp.status === 429) return 'limite';
+    if (!resp.ok) return 'indisponivel';
+    this.gravar((await resp.json()) as SessaoAuth);
+    return 'ok';
+  }
+
+  /** Claims do JWT da sessão (sem validar assinatura: só leitura do que o servidor já emitiu). */
+  claims(): ClaimsToken | null {
+    return claimsDoToken(this.lerAuth()?.token);
   }
 
   usuarioId(): number | string | null {

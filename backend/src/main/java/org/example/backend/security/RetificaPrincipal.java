@@ -10,11 +10,22 @@ public class RetificaPrincipal {
     private final Long usuarioId;
     private final Long empresaId;
     private final String email;
+    private final boolean demo;
 
     public RetificaPrincipal(Long usuarioId, Long empresaId, String email) {
+        this(usuarioId, empresaId, email, false);
+    }
+
+    public RetificaPrincipal(Long usuarioId, Long empresaId, String email, boolean demo) {
         this.usuarioId = usuarioId;
         this.empresaId = empresaId;
         this.email = email;
+        this.demo = demo;
+    }
+
+    /** Sessão de demonstração (dados fictícios): ditado, WhatsApp e troca de senha ficam bloqueados. */
+    public boolean isDemo() {
+        return demo;
     }
 
     public Long getUsuarioId() {

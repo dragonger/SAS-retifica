@@ -37,12 +37,13 @@ npm test -- --watch=false   # vitest, 623 testes
 - `src/app/telas/`: telas: inicio, catalogo, servicos, pecas, clientes, produtos, encerrados, dashboard, empresa, lista de pedidos, visualizar pedido, formulario do pedido (novo/editar, com rascunhos), "Ditar pedido" (so em pedido novo: `shared/ditado-regra.ts` e a regra pura, `core/ditado.service.ts` e `core/ditado-voz.ts` cuidam do servidor e da voz, `telas/pedido-form/ditado-overlay` e o painel), Alto Medidas (`#/alto-medidas`), trocar senha (`#/trocar-senha`) e login.
 - Telas com formulário implementam `ComGuardaSaida` e usam `guardaDeSaida` no `canDeactivate` da rota.
 
-## Login automático
+## Login e demonstração
 
-Hoje o app entra sozinho (`/api/auth/auto-login`) e `#/login` redireciona para o Início. O interruptor é uma
-constante só: `LOGIN_AUTOMATICO_ATIVO` em `src/app/core/login-automatico.ts`. Em `false`: `#/login` mostra o componente `Login`
-(`POST /api/auth/login`), a rota protegida sem sessão manda para ele e um 401 volta para ele em vez de renovar a sessão.
-O botão "Trocar senha"/"Sair" do topo segue escondido (ligá-los é com o login).
+`#/login` pede e-mail e senha; sem sessão, toda rota leva para lá (`core/sessao.guard.ts`) e um 401 também (`core/auth.interceptor.ts`).
+Embaixo do formulário, "Abrir demonstração" (`POST /api/auth/demo`) entra numa empresa isolada com dados fictícios, apagada em 2 horas;
+o token da demonstração tem a claim `demo` e o `exp`, que o `AuthService.demoExpiraEm()` lê para a faixa do topo. Entrar, abrir a
+demonstração e sair passam pelo `SessaoService`, que recarrega a página (`RECARREGAR`) para zerar os caches em memória.
+"Trocar senha" e "Sair" ficam no Catálogo (na demonstração, só "Sair"). Detalhes do lado do servidor em `docs/SAAS.md`.
 
 ## Service worker (ngsw)
 

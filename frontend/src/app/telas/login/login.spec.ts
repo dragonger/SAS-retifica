@@ -1,15 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { AuthService, CHAVE_AUTH } from '../../core/auth.service';
+import { RECARREGAR } from '../../core/sessao.service';
 import { digitar, esperar } from '../../testing/ajuda';
 import { Login } from './login';
 
 describe('Login', () => {
   let navegar: ReturnType<typeof vi.spyOn>;
+  let recarregar: ReturnType<typeof vi.fn>;
 
   function criar() {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    recarregar = vi.fn();
+    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: RECARREGAR, useValue: recarregar }] });
     navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const fixture = TestBed.createComponent(Login);
     return { fixture, html: fixture.nativeElement as HTMLElement };
@@ -18,6 +21,8 @@ describe('Login', () => {
   const campo = (html: HTMLElement, placeholder: string) => html.querySelector(`input[placeholder^="${placeholder}"]`) as HTMLInputElement;
   const erro = (html: HTMLElement) => html.querySelector('.empty') as HTMLElement;
   const entrar = (html: HTMLElement) => html.querySelector('button.btn-primary') as HTMLButtonElement;
+  const abrirDemo = (html: HTMLElement) => [...html.querySelectorAll('button')].find(b => b.textContent?.includes('Abrir demonstração'))!;
+  const erroDemo = (html: HTMLElement) => html.querySelector('.demo-login .empty') as HTMLElement;
 
   function resposta(status: number, corpo: object = {}) {
     return vi.fn().mockResolvedValue({ ok: status >= 200 && status < 300, status, json: async () => corpo });
@@ -47,7 +52,7 @@ describe('Login', () => {
     expect(f).not.toHaveBeenCalled();
   });
 
-  it('sucesso: POST /api/auth/login com o e-mail aparado, grava retifica_auth e vai ao Início', async () => {
+  it('sucesso: POST /api/auth/login com o e-mail aparado, grava retifica_auth e recarrega no Início (zera os caches)', async () => {
     const f = resposta(200, { token: 'abc', nome: 'Ana', empresaNome: 'DIH' });
     vi.stubGlobal('fetch', f);
     const { fixture, html } = criar();
@@ -61,7 +66,7 @@ describe('Login', () => {
     expect(JSON.parse(init.body)).toEqual({ email: 'ana@dih.com', senha: 'segredo' });
     expect(JSON.parse(localStorage.getItem(CHAVE_AUTH)!)).toEqual({ token: 'abc', nome: 'Ana', empresaNome: 'DIH' });
     expect(TestBed.inject(AuthService).sessao()?.token).toBe('abc');
-    expect(navegar).toHaveBeenCalledWith('/inicio');
+    expect(recarregar).toHaveBeenCalledWith('#/inicio');
   });
 
   it('Enter no campo de senha também entra', async () => {
@@ -84,6 +89,7 @@ describe('Login', () => {
     await esperar(fixture);
     expect(erro(html).textContent).toBe('E-mail ou senha inválidos.');
     expect(localStorage.getItem(CHAVE_AUTH)).toBeNull();
+    expect(recarregar).not.toHaveBeenCalled();
     expect(navegar).not.toHaveBeenCalled();
   });
 
@@ -95,5 +101,44 @@ describe('Login', () => {
     entrar(html).click();
     await esperar(fixture);
     expect(erro(html).textContent).toBe('Sem conexão com o servidor.');
+  });
+
+  it('tem a opção de demonstração, explicando que os dados são fictícios e apagados em 2 horas', async () => {
+    const { fixture, html } = criar();
+    await esperar(fixture);
+    expect(html.querySelector('.demo-login')!.textContent).toContain('dados fictícios');
+    expect(html.querySelector('.demo-login')!.textContent).toContain('2 horas');
+    expect(abrirDemo(html)).toBeTruthy();
+    expect(erroDemo(html).hidden).toBe(true);
+  });
+
+  it('Abrir demonstração: POST /api/auth/demo, grava a sessão e recarrega no Início', async () => {
+    const f = resposta(200, { token: 'demo', nome: 'Visitante', empresaNome: 'Retífica Demonstração' });
+    vi.stubGlobal('fetch', f);
+    const { fixture, html } = criar();
+    abrirDemo(html).click();
+    await esperar(fixture);
+    expect(f).toHaveBeenCalledWith('/api/auth/demo', { method: 'POST' });
+    expect(JSON.parse(localStorage.getItem(CHAVE_AUTH)!).empresaNome).toBe('Retífica Demonstração');
+    expect(recarregar).toHaveBeenCalledWith('#/inicio');
+  });
+
+  it('demonstração recusada por limite (429): avisa para tentar depois e não entra', async () => {
+    vi.stubGlobal('fetch', resposta(429, { erro: 'x' }));
+    const { fixture, html } = criar();
+    abrirDemo(html).click();
+    await esperar(fixture);
+    expect(erroDemo(html).hidden).toBe(false);
+    expect(erroDemo(html).textContent).toContain('Tente de novo em alguns minutos');
+    expect(localStorage.getItem(CHAVE_AUTH)).toBeNull();
+    expect(recarregar).not.toHaveBeenCalled();
+  });
+
+  it('demonstração desligada (503): avisa que não está disponível', async () => {
+    vi.stubGlobal('fetch', resposta(503, { erro: 'x' }));
+    const { fixture, html } = criar();
+    abrirDemo(html).click();
+    await esperar(fixture);
+    expect(erroDemo(html).textContent).toBe('A demonstração não está disponível no momento.');
   });
 });

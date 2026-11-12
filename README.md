@@ -6,9 +6,22 @@ Sistema web e mobile usado **em produção, todos os dias**, pela Retífica Dih 
 ![Spring Boot 4.1](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
 ![Angular 22](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-192%20backend%20%7C%20623%20front-2E7D32)
+[![Testes](https://github.com/dragonger/SAS-retifica/actions/workflows/testes.yml/badge.svg)](https://github.com/dragonger/SAS-retifica/actions/workflows/testes.yml)
+![Testes](https://img.shields.io/badge/testes-197%20backend%20%7C%20626%20front-2E7D32)
 
 > **English summary** at the [end of this page](#english-summary).
+
+## Experimente
+
+<img src="docs/imagens/login-demonstracao.png" width="230" align="right" alt="Tela de login com a opção Abrir demonstração">
+
+Abra **[retifica-backend-app.up.railway.app](https://retifica-backend-app.up.railway.app)** e toque em **Abrir demonstração**. O sistema cria na hora uma empresa só sua, com clientes, pedidos e faturamento fictícios, separada dos dados reais. Ela é apagada sozinha depois de 2 horas.
+
+Dá para criar e editar pedidos, gerar o orçamento em PDF, ver o dashboard e mudar os dados da empresa. O ditado com IA fica desligado na demonstração (cada uso tem custo).
+
+<sub>Fora do horário da oficina o servidor fica desligado para economizar e acorda no primeiro acesso: a primeira abertura pode levar uns 10 segundos.</sub>
+
+<br clear="right">
 
 ## O que o sistema faz
 
@@ -39,7 +52,9 @@ Sistema web e mobile usado **em produção, todos os dias**, pela Retífica Dih 
 
 **Infraestrutura enxuta.** Backend no Railway com Postgres gerenciado no Neon. Um cron liga e desliga o backend no horário da oficina, e um proxy pequeno o acorda sob demanda fora do horário. A imagem Docker é multi-estágio (Node para o front, Maven para o backend, JRE enxuta no final). ([docs/PRODUCAO.md](docs/PRODUCAO.md))
 
-**Testes que protegem dados reais.** Os testes de integração sobem o Spring contra um Postgres descartável e **abortam se o ambiente apontar para outro banco**. Integrações externas (IA e WhatsApp) são testadas contra servidores falsos locais. Regras de negócio valem no servidor, não só na tela: pedido finalizado, por exemplo, não aceita edição pela API (409), com a linha travada no banco para um "finalizar" simultâneo não escapar. ([backend/TESTES.md](backend/TESTES.md))
+**Demonstração isolada e descartável.** O botão da tela de login cria uma empresa nova para cada visitante, com dados fictícios montados pelos mesmos controllers do app, e um token que vale 2 horas e não se renova. Uma tarefa agendada apaga a empresa inteira no fim do prazo, e só apaga empresa marcada como demonstração, conferido com a linha travada na mesma transação. Na demonstração, IA, WhatsApp e troca de senha ficam bloqueados no servidor, e há limite por endereço e por dia. ([docs/SAAS.md](docs/SAAS.md#login-e-demonstração))
+
+**Testes que protegem dados reais.** Os testes de integração sobem o Spring contra um Postgres descartável e **abortam se o ambiente apontar para outro banco**. Integrações externas (IA e WhatsApp) são testadas contra servidores falsos locais, e o GitHub Actions roda tudo a cada push. Regras de negócio valem no servidor, não só na tela: pedido finalizado, por exemplo, não aceita edição pela API (409), com a linha travada no banco para um "finalizar" simultâneo não escapar. ([backend/TESTES.md](backend/TESTES.md))
 
 ## Arquitetura
 
@@ -102,15 +117,15 @@ mvn -pl core,backend -am -DskipTests package
 SSL_ENABLED=false java -jar backend/target/retificas-backend.jar
 ```
 
-O app abre em `http://localhost:8443`. Para trabalhar só no front com recarga automática, rode `npm start` dentro de `frontend/` (usa o backend local). O passo a passo completo, com HTTPS local e acesso pelo celular, está em [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md).
+O app abre em `http://localhost:8443`. Para entrar, use **Abrir demonstração** ou o usuário criado no primeiro boot (a senha fica em `~/.retificasDesktop/bootstrap-credentials.txt`). Para trabalhar só no front com recarga automática, rode `npm start` dentro de `frontend/` (usa o backend local). O passo a passo completo, com HTTPS local e acesso pelo celular, está em [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md).
 
 ## Testes
 
 ```bash
 docker compose -f docker-compose.test.yml up -d --wait   # Postgres descartável em localhost:5544
-mvn -pl core,backend -am test                             # 192 testes do backend
+mvn -pl core,backend -am test                             # 197 testes do backend
 docker compose -f docker-compose.test.yml down
-(cd frontend && npm test -- --watch=false)                # 623 testes do front
+(cd frontend && npm test -- --watch=false)                # 626 testes do front
 ```
 
 O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
@@ -138,7 +153,7 @@ O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
 
 Registradas de propósito, com o motivo:
 
-- **Login automático ligado.** Hoje só uma empresa usa o sistema, então o app entra sozinho como o usuário dela. A tela de login, o JWT e o isolamento por empresa já existem e estão testados. Para desligar: uma constante no front e a remoção do endpoint de auto-login no backend, com o passo a passo em [docs/SAAS.md](docs/SAAS.md#login-automático).
+- **Sessões não são revogáveis.** Trocar a senha não invalida tokens já emitidos; só trocar o `JWT_SECRET` derruba todas as sessões. O próximo passo é guardar uma versão da sessão por usuário.
 - **O módulo desktop** (JavaFX) é o app original e não acompanha o modelo atual. Está fora do build.
 
 ## Cuidados para quem for mexer
@@ -155,7 +170,8 @@ Registradas de propósito, com o motivo:
 - **Voice dictation with an LLM, kept on a short leash:** Claude Haiku turns a spoken order into structured data using only the company's catalog. Every returned ID is validated server-side, the model asks clarifying questions when something is ambiguous, and nothing is saved without human review.
 - **Zero-downtime front-end rewrite:** a vanilla JS single-file app was migrated to Angular in six phases, running side by side at `/novo/` until approved on real phones, with a transition service worker that moves cached clients to the new app.
 - **Native Android voice plugin** (Java `SpeechRecognizer`, segmented sessions) to fix word cuts in the browser's speech API.
-- **Tests:** 192 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 623 front-end tests with Vitest.
+- **Live demo:** open the app and tap *Abrir demonstração*: you get your own isolated company with fictitious data, deleted after 2 hours.
+- **Tests:** 197 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 626 front-end tests with Vitest, run by GitHub Actions on every push.
 
 ## Autor
 

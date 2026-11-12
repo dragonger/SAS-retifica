@@ -50,7 +50,7 @@ public class WhatsAppController {
 
     @GetMapping("/api/whatsapp/status")
     public Map<String, Boolean> status() {
-        return Map.of("habilitado", whatsApp.isHabilitado());
+        return Map.of("habilitado", whatsApp.isHabilitado() && !SecurityUtils.ehDemo());
     }
 
     /**
@@ -62,6 +62,9 @@ public class WhatsAppController {
     @PostMapping("/api/pedidos/{id}/whatsapp")
     public ResponseEntity<Map<String, String>> enviar(@PathVariable Long id,
                                                       @RequestParam(name = "pdf", required = false) MultipartFile pdf) {
+        if (SecurityUtils.ehDemo()) {
+            return erro(403, "O envio pelo WhatsApp não está disponível na demonstração.");
+        }
         if (!whatsApp.isHabilitado()) {
             return erro(503, "Envio pelo WhatsApp ainda não configurado.");
         }

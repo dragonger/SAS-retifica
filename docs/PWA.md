@@ -19,7 +19,7 @@ O visual é o "blueprint" do design compartilhado pelo dono (fontes Barlow e Bar
 
 ## Navegação
 
-Roteamento por hash (`#/...`), em `frontend/src/app/app.routes.ts`. Abas da barra inferior: **Início**, **Pedidos**, **Produtos** (`#/cabecotes`, o catálogo de componentes técnicos), **Encerrados**, **Dashboard**. O ícone do catálogo no topo leva a `#/catalogo`, com Clientes, Serviços, Peças, **Minha empresa** (`#/empresa`) e, para a empresa da integração, a tela do parceiro de virabrequins (Alto Medidas, `#/alto-medidas`). Existem ainda `#/trocar-senha`, que só se alcança digitando o hash porque o botão está escondido, e `#/login`, que hoje redireciona para `#/inicio` por causa do login automático. O logo da barra superior funciona como botão "início".
+Roteamento por hash (`#/...`), em `frontend/src/app/app.routes.ts`. Abas da barra inferior: **Início**, **Pedidos**, **Produtos** (`#/cabecotes`, o catálogo de componentes técnicos), **Encerrados**, **Dashboard**. O ícone do catálogo no topo leva a `#/catalogo`, com Clientes, Serviços, Peças, **Minha empresa** (`#/empresa`) e, para a empresa da integração, a tela do parceiro de virabrequins (Alto Medidas, `#/alto-medidas`). O Catálogo também tem **Trocar senha** (`#/trocar-senha`) e **Sair**. Sem sessão, tudo leva a `#/login`, que tem e-mail e senha e, embaixo, **Abrir demonstração** (empresa isolada com dados fictícios, apagada em 2 horas, com uma faixa no topo avisando o horário). O logo da barra superior funciona como botão "início".
 
 ## Telas
 
@@ -61,7 +61,7 @@ Sem mudança de API nem de banco. No Angular: `core/guarda-saida.service.ts` (gu
 ## Sessão e cache
 
 - O token e o nome ficam em `localStorage` (`retifica_auth`) e vão em toda chamada pelo interceptor (`core/auth.interceptor.ts`). Um 401 limpa a sessão. A renovação chega no header `X-Auth-Refresh`.
-- **Login automático**: hoje o `AuthService` obtém o token sozinho em `POST /api/auth/auto-login`, e a tela de login e os botões Sair e Trocar senha ficam escondidos (ver [SAAS.md](SAAS.md#login-automático)).
+- **Login e demonstração**: `POST /api/auth/login` ou `POST /api/auth/demo`; entrar e sair recarregam a página para zerar os caches em memória (ver [SAAS.md](SAAS.md#login-e-demonstração)).
 - **Service worker**: o do Angular (`ngsw-worker.js`, escopo `/`) guarda o shell (nunca `/api`) e mostra "Nova versão disponível" quando há build novo (detalhes em [frontend/README.md](../frontend/README.md#service-worker-ngsw)). Ao testar mudanças no navegador, desregistre-o e limpe os caches (`navigator.serviceWorker.getRegistrations()` e `caches.delete`), senão o teste roda em cima do build antigo.
 - **`/sw.js` é o worker de transição** e deve continuar publicado: aparelhos que ainda têm o worker do app antigo (cache `retifica-shell-vN`) baixam este arquivo ao abrir o app, ele apaga os caches `retifica-*`, se desregistra e recarrega a aba, que então recebe o Angular. O `/novo/ngsw-worker.js` faz o mesmo com o worker que o Angular registrou em `/novo/` durante a migração (apaga só `ngsw:/novo/...`). O Spring (`FrontConfig`) serve index, manifest e workers com `Cache-Control: no-cache` e redireciona `/novo/` para `/`.
 - Leituras usam o `CacheService` (`comCache`), e `invalidar` limpa as chaves afetadas depois de uma escrita.

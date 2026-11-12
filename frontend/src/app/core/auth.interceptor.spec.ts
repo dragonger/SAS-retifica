@@ -1,7 +1,7 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ApiService, ErroApi } from './api.service';
+import { ApiService } from './api.service';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService, CHAVE_AUTH, CHAVE_LOGO } from './auth.service';
 import { DialogoService } from './dialogo.service';
@@ -59,43 +59,20 @@ describe('authInterceptor', () => {
     expect(await p).toBeNull();
   });
 
-  it('401: limpa a sessão, refaz o login automático e repete a chamada uma vez', async () => {
+  it('401: limpa a sessão e a logo, não tenta entrar de novo, não repete a chamada e não gera toast', async () => {
     localStorage.setItem(CHAVE_LOGO, '{"versao":1,"dataUrl":"data:x"}');
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ token: 'tk-novo', nome: 'Ana' }) }));
-
-    const p = api.get('/api/x');
-    http.expectOne('/api/x').flush({}, { status: 401, statusText: 'Unauthorized' });
-
-    const segunda = await vi.waitFor(() => http.expectOne('/api/x'));
-    expect(segunda.request.headers.get('Authorization')).toBe('Bearer tk-novo');
-    expect(localStorage.getItem(CHAVE_LOGO)).toBeNull();
-    segunda.flush({ ok: true });
-    expect(await p).toEqual({ ok: true });
-    expect(dialogo.toastVisivel()).toBe(false); // 401 não gera toast
-  });
-
-  it('401 de novo na repetição: falha sem entrar em laço', async () => {
-    const fetchFalso = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ token: 'tk-novo' }) });
+    const fetchFalso = vi.fn();
     vi.stubGlobal('fetch', fetchFalso);
 
     const p = api.get('/api/x');
     p.catch(() => undefined);
     http.expectOne('/api/x').flush({}, { status: 401, statusText: 'Unauthorized' });
-    const segunda = await vi.waitFor(() => http.expectOne('/api/x'));
-    segunda.flush({}, { status: 401, statusText: 'Unauthorized' });
 
     await expect(p).rejects.toMatchObject({ status: 401 });
-    expect(fetchFalso).toHaveBeenCalledTimes(1); // um único login automático
+    expect(localStorage.getItem(CHAVE_LOGO)).toBeNull();
+    expect(fetchFalso).not.toHaveBeenCalled();
     http.expectNone('/api/x');
-  });
-
-  it('401 com login automático falhando: rejeita sem repetir', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
-    const p = api.get('/api/x');
-    p.catch(() => undefined);
-    http.expectOne('/api/x').flush({}, { status: 401, statusText: 'Unauthorized' });
-    await expect(p).rejects.toBeInstanceOf(ErroApi);
-    http.expectNone('/api/x');
+    expect(dialogo.toastVisivel()).toBe(false);
   });
 
   it('sem conexão: toast "Sem conexão com o servidor."', async () => {

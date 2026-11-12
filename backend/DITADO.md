@@ -49,7 +49,7 @@ celular / computador                       backend (Railway)                    
 - **Custo estimado** (Haiku 5.5, US$ 0,10 por milhão de tokens de entrada e US$ 0,50 por milhão de saída): cerca de **US$ 0,002 por chamada** com um catálogo de uns 8 mil tokens (menos de 1 centavo de real). O prompt do sistema (regras + catálogo) vai com cache de prompt, então as rodadas seguintes do mesmo ditado, e ditados seguidos da mesma empresa em 5 minutos, saem mais baratos. Os números reais aparecem no log (`Ditado: modelo=... entrada=... saida=... cache_lido=...`).
 - **Limites do app:** 100 ditados por empresa por dia e 300 no total. **Um ditado conta 1 uso**, reservado ao começar e devolvido se a primeira chamada à IA falhar. As perguntas de esclarecimento não contam. No pior caso, são 4 chamadas por uso (menos de US$ 1 por dia por empresa).
 - Os contadores ficam **em memória** e zeram quando o backend reinicia (deploy ou desligamento da noite). Servem como trava de custo, não como contabilidade. **O limite de gasto do Console da Anthropic é a proteção que vale**, e é por isso que ele é o passo 1 de "Como ligar".
-- **Por que existe um teto global:** o login automático deixa qualquer pessoa com a URL obter um token; sem teto, alguém poderia gastar a sua cota.
+- **Por que existe um teto global:** protege a cota caso muitas empresas usem ao mesmo tempo. Na demonstração (empresa de visitante, ver `docs/SAAS.md`) o ditado fica desligado: `status` responde `habilitado=false` e as chamadas, 403.
 - Texto de no máximo 2000 caracteres; respostas de no máximo 300; até 4 ditados ao mesmo tempo (os demais recebem 429 "tente de novo em instantes").
 
 ## O que é enviado, e para quem
