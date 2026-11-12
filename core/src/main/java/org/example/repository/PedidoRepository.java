@@ -9,6 +9,7 @@ import org.hibernate.Hibernate;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.LockModeType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,6 +153,16 @@ public class PedidoRepository {
     public <R> R atualizar(Long id, Long empresaId, Long clienteId, List<Long> componenteIds,
                            Consumer<PedidoModel> aplicar, Function<PedidoModel, R> mapear) {
         return emTransacao(em -> {
+            // Trava a linha (SELECT ... FOR UPDATE) e lê o estado atual antes de mexer em qualquer coisa:
+            // um "finalizar" que chegue ao mesmo tempo espera esta transação, e um que já tenha terminado
+            // aparece aqui. Pedido de outra empresa continua virando null (404), nunca 409.
+            PedidoModel travado = travar(em, id, empresaId);
+            if (travado == null) {
+                return null;
+            }
+            if (travado.isFinalizado()) {
+                throw new PedidoFinalizadoException(id);
+            }
             PedidoModel pedido = carregarComItens(em, id, empresaId, false);
             if (pedido == null) {
                 return null;
@@ -179,6 +190,17 @@ public class PedidoRepository {
             em.flush();
             return mapear.apply(pedido);
         });
+    }
+
+    /** O pedido da empresa com a linha travada para escrita até o fim da transação; null se não existe nela. */
+    private PedidoModel travar(EntityManager em, Long id, Long empresaId) {
+        List<PedidoModel> resultado = em.createQuery(
+                        "SELECT p FROM PedidoModel p WHERE p.id = :id AND p.empresa.id = :empresaId", PedidoModel.class)
+                .setParameter("id", id)
+                .setParameter("empresaId", empresaId)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultList();
+        return resultado.isEmpty() ? null : resultado.get(0);
     }
 
     private <R> R emTransacao(Function<EntityManager, R> trabalho) {
@@ -325,8 +347,9 @@ public class PedidoRepository {
      * sistema não usa mais, mas pedidos criados naquela época ainda têm linhas
      * lá presas pela chave estrangeira, e aí excluir o pedido falhava (erro
      * 500). Em banco criado depois, a tabela nem existe — por isso a checagem.
+     * Também usada pela limpeza das empresas de demonstração (EmpresaDemoRepository).
      */
-    private static void apagarCategoriasLegadas(EntityManager em, Long pedidoId) {
+    static void apagarCategoriasLegadas(EntityManager em, Long pedidoId) {
         Object tabela = em.createNativeQuery("SELECT CAST(to_regclass('pedido_categoria') AS text)").getSingleResult();
         if (tabela != null) {
             em.createNativeQuery("DELETE FROM pedido_categoria WHERE pedido_id = ?1")

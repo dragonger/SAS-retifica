@@ -26,7 +26,30 @@ public class EmpresaModel {
     @Column(length = 120)
     private String slogan;
 
+    /*
+     * Empresa de DEMONSTRAÇÃO (aberta pela tela de login, com dados fictícios). Nulo/false = empresa real.
+     * Só empresas com demo = true e prazo vencido são apagadas pela limpeza (EmpresaDemoRepository).
+     */
+    private Boolean demo;
+    private LocalDateTime demoExpiraEm;
+
     public EmpresaModel() {
+    }
+
+    public boolean isDemo() {
+        return Boolean.TRUE.equals(demo);
+    }
+
+    public void setDemo(boolean demo) {
+        this.demo = demo;
+    }
+
+    public LocalDateTime getDemoExpiraEm() {
+        return demoExpiraEm;
+    }
+
+    public void setDemoExpiraEm(LocalDateTime demoExpiraEm) {
+        this.demoExpiraEm = demoExpiraEm;
     }
 
     public Long getId() {

@@ -41,13 +41,14 @@ Como o isolamento funciona e onde ele é frágil: [ARQUITETURA.md](ARQUITETURA.m
 - **Desktop JavaFX**: deixa de ser a ferramenta operacional (pedidos e cadastros ficam só no PWA) e passa a focar em informações financeiras e relatórios, com um acabamento mais robusto que o JavaFX atual. Ainda sem escopo nem stack definidos, e hoje o módulo nem compila; em 2026-10-17 o dono decidiu que ele será remodelado depois, sem consertar o atual.
 - **Banco**: só Postgres, também em desenvolvimento (a decisão antiga de "continuar com H2 por enquanto" foi superada pela migração de 2026-07-31).
 
-## Login automático
+## Login e demonstração
 
-Em 2026-09-12 o dono pediu para desativar a tela de login: `POST /api/auth/auto-login` (público, `AuthController`) devolve um token do **usuário 1 (da empresa 1, a Dih)** sem senha, e o PWA o chama sozinho. O risco foi aceito explicitamente, e em 2026-10-17 o dono confirmou que o login automático continua.
+**Login.** Desde 2026-11-12 o app pede e-mail e senha (`POST /api/auth/login`). O antigo login automático (`POST /api/auth/auto-login`, que de 2026-09-12 a 2026-11-12 entregava sem senha o token do usuário 1, da empresa real) foi **removido**: o endpoint responde 404 e o front não tem mais esse modo. Os tokens emitidos por ele valem até expirar (30 dias, renovados enquanto o app é usado) ou até o `JWT_SECRET` ser trocado; trocar o segredo derruba todas as sessões e quem usa o app entra de novo com a senha. **Esqueceu a senha?** Defina `REDEFINIR_SENHA_EMAIL` e `REDEFINIR_SENHA` no Railway: na subida o servidor grava essa senha para o usuário (só quem tem acesso às variáveis do servidor consegue). Depois de entrar, apague as duas (`docs/PRODUCAO.md`).
 
-O que isso significa na prática:
-- Quem conhecer uma das URLs públicas obtém um token de 30 dias, renovável, com acesso total aos dados da empresa 1: clientes, pedidos, catálogo, logo, Alto Medidas e, com o WhatsApp ligado, envio de mensagens.
-- O isolamento por empresa continua valendo **para quem tem token de outra empresa**, mas não protege a empresa 1.
-- Mesmo removendo o endpoint, os tokens já emitidos valem até expirar (30 dias, e são renovados enquanto o app for usado) ou até o `JWT_SECRET` ser trocado.
+**Demonstração.** Na tela de login, "Abrir demonstração" (`POST /api/auth/demo`, público) cria para o visitante uma **empresa nova e isolada** (`EMPRESA.demo = true`), com dados fictícios (5 clientes, 5 componentes, catálogo, 5 pedidos em aberto e 3 encerrados), e devolve um token de **2 horas que não se renova**. A limpeza (`DemoService.limparVencidas`, a cada 10 minutos) apaga a empresa inteira quando o prazo vence. Os dados entram pelos mesmos controllers do app, então passam pelas mesmas validações e cálculos.
 
-Para voltar ao login normal: remover `autoLogin()` e `garantirAutoLogin()`, voltar o `rotear()` para `#/login`, reexibir Sair e Trocar senha, subir a versão do service worker, **garantir que a Dih sabe a senha do usuário 1** (ela só apareceu no log do primeiro boot e não há "esqueci minha senha"), decidir se troca o `JWT_SECRET` e avisar quem usa o app e o APK. Quando o login normal voltar, cada usuário cai na logo da própria empresa (tudo é resolvido pela empresa do token). O teste `autoLoginPublicoEstaAtivoHoje` registra o comportamento atual e deve passar a esperar 404.
+- **Isolamento:** é o mesmo de qualquer empresa (tudo filtrado pela empresa do token). A limpeza só apaga empresa com `demo = true`, conferido com a linha travada na mesma transação; empresa real nunca, nem com prazo preenchido (`DemoTest`).
+- **Bloqueado na demonstração:** ditado (custa IA), envio pelo WhatsApp e troca de senha (o usuário da demonstração não tem senha conhecida).
+- **Fora da demonstração por natureza:** a integração com o Alto Medidas é exclusiva da retífica original (`ALTO_MEDIDAS_EMPRESA_ID`); nenhuma outra empresa a vê.
+- **Limites:** até 30 demonstrações ao mesmo tempo, 5 por endereço por hora e 200 por dia. `DEMO_HABILITADA=false` no Railway desliga.
+- **No app:** uma faixa no topo avisa "Demonstração com dados fictícios · apagada às HH:MM", com Sair. Entrar e sair recarregam a página, para nada de uma sessão ficar na memória da outra.

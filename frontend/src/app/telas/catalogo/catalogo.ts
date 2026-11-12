@@ -1,12 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { AltoMedidasService } from '../../core/alto-medidas.service';
+import { AuthService } from '../../core/auth.service';
+import { SessaoService } from '../../core/sessao.service';
 import { TopoService } from '../../core/topo.service';
 import { MenuCard } from '../../shared/menu-card';
 
 /** Menu do Catálogo (telaCatalogoMenu do app.js): Clientes, Serviços, Peças, Minha empresa e, só para a empresa com a integração, o Daniel. */
 @Component({
   selector: 'app-catalogo',
-  imports: [MenuCard],
+  imports: [MenuCard, RouterLink],
   template: `
     <h2 class="titulo">Catálogo</h2>
     <div class="subtitulo">Clientes, serviços e peças usados nos orçamentos</div>
@@ -31,10 +34,20 @@ import { MenuCard } from '../../shared/menu-card';
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 9h1"></path><path d="M14 9h1"></path><path d="M9 13h1"></path><path d="M14 13h1"></path><path d="M10 21v-4h4v4"></path></svg>
       </app-menu-card>
     </div>
+
+    <h3 class="secao" style="margin-top:32px">Conta</h3>
+    <div class="btn-group conta" style="margin-top:8px">
+      @if (!auth.demoExpiraEm()) {
+        <a class="btn btn-secondary" routerLink="/trocar-senha">Trocar senha</a>
+      }
+      <button type="button" class="btn btn-ghost" (click)="sessao.sair()">Sair</button>
+    </div>
   `,
 })
 export class Catalogo {
   private readonly altoMedidas = inject(AltoMedidasService);
+  protected readonly auth = inject(AuthService);
+  protected readonly sessao = inject(SessaoService);
 
   /** Só aparece para a empresa com a integração do Alto Medidas. */
   protected readonly daniel = signal(false);

@@ -3,6 +3,7 @@ package org.example.backend.web;
 import org.example.backend.dto.*;
 import org.example.backend.security.SecurityUtils;
 import org.example.model.*;
+import org.example.repository.PedidoFinalizadoException;
 import org.example.repository.PedidoRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -153,17 +154,25 @@ public class PedidoController {
         return ResponseEntity.ok(dto);
     }
 
+    /** Pedido finalizado não é editável: responde 409 com a mensagem para a tela (a tela já esconde "Editar"). */
     @PutMapping("/{id}")
-    public ResponseEntity<PedidoDetalheDTO> atualizar(@PathVariable Long id, @RequestBody PedidoRequestDTO request) {
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody PedidoRequestDTO request) {
         if (request.clienteId == null || temValorInvalido(request)) {
             return ResponseEntity.badRequest().build();
         }
-        PedidoDetalheDTO dto = pedidoRepository.atualizar(
-                id, SecurityUtils.empresaAtual(), request.clienteId, request.componenteIds,
-                pedido -> aplicarRequest(pedido, request),
-                this::toDetalhe);
+        PedidoDetalheDTO dto;
+        try {
+            dto = pedidoRepository.atualizar(
+                    id, SecurityUtils.empresaAtual(), request.clienteId, request.componenteIds,
+                    pedido -> aplicarRequest(pedido, request),
+                    this::toDetalhe);
+        } catch (PedidoFinalizadoException e) {
+            return ResponseEntity.status(409).body(Map.of("erro", MSG_PEDIDO_FINALIZADO));
+        }
         return dto == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(dto);
     }
+
+    static final String MSG_PEDIDO_FINALIZADO = "Este pedido já foi finalizado e não pode mais ser editado.";
 
     @PostMapping("/{id}/finalizar")
     public ResponseEntity<PedidoDetalheDTO> finalizar(@PathVariable Long id) {

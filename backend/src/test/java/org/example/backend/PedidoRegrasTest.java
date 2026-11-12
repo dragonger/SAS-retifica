@@ -392,6 +392,47 @@ class PedidoRegrasTest {
     }
 
     @Test
+    void pedidoFinalizadoNaoPodeSerEditadoENadaMuda() {
+        Cenario c = cenario();
+        long cli = cliente(c, "Cliente Finalizado");
+        Map<String, Object> original = corpo(cli);
+        original.put("servicos", List.of(item("Plainar", "CABECOTE")));
+        long pedido = criarPedido(c, original);
+        assertThat(api().postSemCorpo("/api/pedidos/" + pedido + "/finalizar", c.token).status()).isEqualTo(200);
+        JsonNode antes = detalhe(c, pedido);
+        Object carimbo = valor("select datentrega from pedido where id = ?1", pedido);
+
+        Map<String, Object> alterado = corpo(cliente(c, "Outro Cliente"));
+        alterado.put("pedidoDescricao", "Tentativa de mudar depois de finalizado");
+        alterado.put("servicos", List.of(item("Brunir", "BLOCO")));
+        alterado.put("categoriaValores", List.of(Map.of("categoria", "BLOCO", "valorServicos", 999, "valorPecas", 0)));
+        var r = api().put("/api/pedidos/" + pedido, c.token, alterado);
+
+        assertThat(r.status()).as(r.corpo()).isEqualTo(409);
+        assertThat(r.json().get("erro").asString()).contains("finalizado");
+        JsonNode depois = detalhe(c, pedido);
+        assertThat(depois.toString()).as("nada do pedido muda").isEqualTo(antes.toString());
+        assertThat(valor("select datentrega from pedido where id = ?1", pedido)).isEqualTo(carimbo);
+    }
+
+    @Test
+    void pedidoAbertoContinuaEditavelEOutraEmpresaRecebe404MesmoFinalizado() {
+        Cenario a = cenario();
+        Cenario b = cenario();
+        long pedido = criarPedido(a, corpo(cliente(a, "Cliente Editavel")));
+
+        Map<String, Object> alterado = corpo(cliente(a, "Cliente Editavel"));
+        alterado.put("pedidoDescricao", "Descricao nova");
+        var editado = api().put("/api/pedidos/" + pedido, a.token, alterado);
+        assertThat(editado.status()).as(editado.corpo()).isEqualTo(200);
+        assertThat(editado.json().get("pedidoDescricao").asString()).isEqualTo("Descricao nova");
+
+        api().postSemCorpo("/api/pedidos/" + pedido + "/finalizar", a.token);
+        var deOutraEmpresa = api().put("/api/pedidos/" + pedido, b.token, corpo(cliente(b, "Cliente B")));
+        assertThat(deOutraEmpresa.status()).as("nao revela que o pedido existe nem que esta finalizado").isEqualTo(404);
+    }
+
+    @Test
     void encerradosAgrupamPorMesComTotaisPorClienteECategoria() {
         Cenario c = cenario();
         long x = cliente(c, "Cliente X");

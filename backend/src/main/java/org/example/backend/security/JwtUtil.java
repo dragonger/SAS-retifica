@@ -42,6 +42,27 @@ public class JwtUtil {
                 usuario.getEmpresa() != null ? usuario.getEmpresa().getId() : null);
     }
 
+    /**
+     * Token da DEMONSTRAÇÃO: vence junto com a empresa de demonstração (que é apagada nesse prazo) e
+     * nunca é renovado (claim {@code demo = true}, ver {@link #precisaRenovar}).
+     */
+    public String gerarDemo(UsuarioModel usuario, Instant expiraEm) {
+        return Jwts.builder()
+                .subject(usuario.getEmail())
+                .claim("usuarioId", usuario.getId())
+                .claim("empresaId", usuario.getEmpresa().getId())
+                .claim("demo", true)
+                .issuedAt(Date.from(Instant.now()))
+                .expiration(Date.from(expiraEm))
+                .signWith(chave)
+                .compact();
+    }
+
+    /** True se o token é de uma sessão de demonstração. */
+    public static boolean ehDemo(Claims claims) {
+        return Boolean.TRUE.equals(claims.get("demo", Boolean.class));
+    }
+
     /** Renova um token válido (mesmo usuário/empresa, nova expiração) — mantém a sessão ativa sem exigir login de novo. */
     public String renovar(Claims claims) {
         return gerar(claims.getSubject(), claims.get("usuarioId", Long.class), claims.get("empresaId", Long.class));
@@ -71,6 +92,9 @@ public class JwtUtil {
 
     /** True quando falta pouco pra expirar — sinal pro filtro renovar o token silenciosamente. */
     public boolean precisaRenovar(Claims claims) {
+        if (ehDemo(claims)) {
+            return false; // a demonstração acaba no prazo dela, junto com a empresa
+        }
         Instant limiteRenovacao = claims.getExpiration().toInstant().minus(RENOVAR_SE_FALTAM_DIAS, ChronoUnit.DAYS);
         return Instant.now().isAfter(limiteRenovacao);
     }

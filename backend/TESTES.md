@@ -1,9 +1,11 @@
 # Testes do backend
 
-Testes automatizados do backend (187 de Java + 15 de JavaScript hoje): isolamento entre empresas, regras de dinheiro, sessao,
+Testes automatizados do backend (201 testes em JUnit hoje; os 626 do front estao mais abaixo): isolamento entre empresas, regras de dinheiro, sessao,
 integracoes, PDF, contratos da API e o ditado do pedido. Eles rodam contra um **Postgres descartavel local**, nunca contra o banco de producao.
 
 ## Como rodar
+
+No GitHub, o workflow `.github/workflows/testes.yml` roda os testes do backend (com um Postgres descartável) e os do front, mais o build de produção, a cada push na `main` e em todo pull request.
 
 ```bash
 docker compose -f docker-compose.test.yml up -d --wait   # Postgres em localhost:5544, banco retificas_test, sem volume
@@ -11,7 +13,7 @@ mvn -pl core,backend -am test
 docker compose -f docker-compose.test.yml down
 ```
 
-Cada `up` comeca de um banco vazio. O Maven do IntelliJ serve (ver CONTEXTO.md).
+Cada `up` comeca de um banco vazio. O Maven do IntelliJ serve (ver [docs/DESENVOLVIMENTO.md](../docs/DESENVOLVIMENTO.md)).
 O build da imagem Docker continua com `-DskipTests`.
 
 ## O que protege o banco de producao
@@ -22,7 +24,7 @@ O build da imagem Docker continua com `-DskipTests`.
   `jdbc:postgresql://localhost|127.0.0.1:PORTA/retificas_test`, ou se alguma integracao externa estiver ligada.
   Ele proprio e testado em `GuardaBancoLocalTest`.
 - `user.home` dos testes aponta para `backend/target/test-home` (o bootstrap nao escreve credenciais no seu home).
-- Os testes usam e-mails `@example.test` e dados com sufixo aleatorio; nao usam ids reais (nada de pedido #129).
+- Os testes usam e-mails `@example.test` e dados com sufixo aleatorio; nao usam ids reais (nada de pedido real de producao).
 
 ## Os testes
 
@@ -33,10 +35,12 @@ O build da imagem Docker continua com `-DskipTests`.
 | `GuardaBancoLocalTest` | A trava anti-producao recusa banco remoto, outro nome de banco e integracoes ligadas. |
 | `PedidoTotaisTest` | Total do pedido: soma por categoria, desconto em valor (limitado ao subtotal) e percentual (arredonda meio para cima, limita em 100%), total nunca negativo. Unitario puro. |
 | `JwtUtilTest` | Token preserva usuario e empresa; adulterado, de outra chave, expirado, `alg:none` e corpo trocado nao validam; renova so quando faltam menos de 7 dias e mantem a empresa. |
-| `MesDeReferenciaTest` | Mes do filtro "Virabrequins do Daniel" pelo relogio de Brasilia (virada do mes e do ano), formatos de data e fallbacks. |
+| `MesDeReferenciaTest` | Mes do filtro da tela do parceiro (Alto Medidas) pelo relogio de Brasilia (virada do mes e do ano), formatos de data e fallbacks. |
 | `AltoMedidasRegrasTest` | Entrada idempotente que nunca desmarca o pago da DIH; validacoes (400); total devido (polimento, abatimento, nao pago, repassado); total geral igual em qualquer filtro de mes; pagamento (400/404/409, idempotente, pendente de sincronia). Totais conferidos por diferenca. |
 | `SessaoEIntegracoesDesligadasTest` | Header `X-Auth-Refresh` (renova perto de expirar, mantem a empresa); com Alto Medidas sem chave a entrada da 503; WhatsApp sem token fica desligado e o envio da 503 sem tentar a rede. |
-| `PedidoRegrasTest` | Pedido pela API: sincronizacao de itens (repetidos, prefixo estavel, troca no meio, descricao vazia, peca sem quantidade, categoria), totais gravados e recalculados, tipo de desconto/categoria/status desconhecidos, limites de texto (255/2000) e valores negativos, finalizar idempotente (carimbo exato no banco), encerrados por mes, dashboard, situacao atrasado/finalizado, cascade e orphanRemoval, tabela legada `pedido_categoria`, 409 ao apagar cliente/componente em uso, validacao dos cadastros e catalogos, PDF e `/health`. Cada teste usa uma empresa propria. |
+| `DemoTest` | Demonstração: empresa nova e isolada com dados fictícios, token de 2 horas que não renova, cada clique uma empresa nova, nada vaza entre a demonstração e uma empresa real, ditado/WhatsApp/troca de senha bloqueados (403), limite de 5 por endereço por hora (429) e a limpeza que apaga só a demonstração vencida, com todos os dados, e nunca uma empresa real (nem com prazo preenchido). |
+| `RedefinicaoDeSenhaTest` | Recuperacao de acesso pelas variaveis `REDEFINIR_SENHA_EMAIL`/`REDEFINIR_SENHA`: grava a senha nova (e-mail normalizado como no login) e a antiga deixa de valer; sem as variaveis nada muda; recusa senha curta, e-mail desconhecido e usuario de demonstracao. |
+| `PedidoRegrasTest` | Pedido pela API: sincronizacao de itens (repetidos, prefixo estavel, troca no meio, descricao vazia, peca sem quantidade, categoria), totais gravados e recalculados, tipo de desconto/categoria/status desconhecidos, limites de texto (255/2000) e valores negativos, finalizar idempotente (carimbo exato no banco), encerrados por mes, dashboard, situacao atrasado/finalizado, cascade e orphanRemoval, tabela legada `pedido_categoria`, 409 ao apagar cliente/componente em uso, validacao dos cadastros e catalogos, PDF e `/health`. Cada teste usa uma empresa propria. **Pedido finalizado nao aceita edicao** (PUT responde 409 e nada muda; outra empresa continua recebendo 404, sem saber que o pedido existe). |
 | `AutenticacaoEEmpresaTest` | Login (e-mail normalizado, 401/400), troca de senha, dados da empresa (limites, `@` do Instagram, vazio de proposito) e logo (rejeita texto/GIF/vazio/8001 px/acima de 5 MB; reduz a 400 px; nova versao; remocao). |
 | `LogoNormalizadorTest` | Normalizacao da logo sem subir o servidor: nao amplia, limita a 400 px mantendo a proporcao, JPEG vira PNG, rejeicoes. |
 | `WhatsAppServiceTest` | Telefone brasileiro (DDI, DDD), parametro do modelo (quebra de linha, tab, espacos) e mensagem de erro da Meta. |
@@ -71,9 +75,6 @@ sincronia marcando com o estado mudado.
 | `SessaoEIntegracoesDesligadasTest` | (acrescimo) sem a chave da IA o status mostra desligado e as duas rotas respondem 503. |
 | `frontend/src/app/shared/ditado-regra.spec.ts` (vitest) | A regra pura do front: preenche o pedido completo, o que falta vira pendencia com a aba certa, **nunca troca o que ja estava preenchido (vira conflito)**, nao duplica itens, escolher uma duvida resolve, respostas montadas, deteccao do reconhecimento de voz. |
 
-Os testes de JavaScript rodam com `node --test backend/src/test/js/ditado.test.js` (precisa so do Node; nao ha `package.json`). No Bash do Windows
-passe o caminho do arquivo: pasta e glob nao rodam nada.
-
 O `GuardaBancoLocal` agora tambem aborta se `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` ou `ANTHROPIC_BASE_URL` estiverem definidas no ambiente, e o
 surefire as zera: uma chave real do seu computador nunca chega aos testes (a IA e ligada nos testes por propriedade do Spring, com chave falsa).
 
@@ -84,7 +85,7 @@ contra um servidor falso: perguntas, escolha, resposta aberta, conferencia, pree
 
 ### Front em Angular (`frontend/`)
 
-621 testes (vitest): Alto Medidas (listas por mes, marcar pagamento, cartao do Inicio), trocar senha, login nos dois modos, aviso de nova versao com `SwUpdate` falso e sanidade do `ngsw-config.json` (sem cache de `/api`); ditado (a regra do `ditado.js` portada com os mesmos 15 casos e mais 19, voz do navegador com o padrao do Android simulado, voz nativa com plugin falso, servico e painel nas 4 fases); formulario do pedido (as 4 etapas, cadastros rapidos, seletores em lote, salvar e editar), barra de total com os mesmos casos do `PedidoTotaisTest`, rascunhos (autosave, limite de 5, validade de 14 dias, formato antigo, salvar no 401); pedidos (lista, filtros, busca sem acento, visualizar, finalizar, excluir, cache do orcamento em PDF, compartilhar com `navigator.share` simulado, foto com pdf-lib simulado, WhatsApp manual e pela API) e as demais telas ja migradas (lista vinda da API, corpo do POST/PUT igual ao do app atual, validacoes, confirmacao e 409 ao remover, invalidacao de cache, alternancia do dashboard, envio e remocao da logo) e os servicos de base: sessao compativel com o `localStorage` do app atual, interceptor (token, `X-Auth-Refresh`, 401 com nova tentativa unica, avisos), cache (mostra o guardado e revalida, descarta resposta atrasada), dialogos e guarda de saida, e a tela Inicio. Rodar com `npm test -- --watch=false` dentro de `frontend/`. Ainda nao ha ponta a ponta.
+626 testes (vitest): login e demonstração (rota, guarda, 401 leva ao login, botão da demonstração, faixa com o horário, Sair recarrega); pedido finalizado (formulario nao abre; 409 ao salvar mostra a mensagem do servidor); Alto Medidas (listas por mes, marcar pagamento, cartao do Inicio), trocar senha, login nos dois modos, aviso de nova versao com `SwUpdate` falso e sanidade do `ngsw-config.json` (sem cache de `/api`); ditado (a regra do ditado em `shared/ditado-regra.spec.ts`, com os casos que vieram do antigo `ditado.js` e outros novos, voz do navegador com o padrao do Android simulado, voz nativa com plugin falso, servico e painel nas 4 fases); formulario do pedido (as 4 etapas, cadastros rapidos, seletores em lote, salvar e editar), barra de total com os mesmos casos do `PedidoTotaisTest`, rascunhos (autosave, limite de 5, validade de 14 dias, formato antigo, salvar no 401); pedidos (lista, filtros, busca sem acento, visualizar, finalizar, excluir, cache do orcamento em PDF, compartilhar com `navigator.share` simulado, foto com pdf-lib simulado, WhatsApp manual e pela API) e as demais telas ja migradas (lista vinda da API, corpo do POST/PUT igual ao do app antigo, validacoes, confirmacao e 409 ao remover, invalidacao de cache, alternancia do dashboard, envio e remocao da logo) e os servicos de base: sessao compativel com o `localStorage` do app antigo, interceptor (token, `X-Auth-Refresh`, 401 com nova tentativa unica, avisos), cache (mostra o guardado e revalida, descarta resposta atrasada), dialogos e guarda de saida, e a tela Inicio. Rodar com `npm test -- --watch=false` dentro de `frontend/`. Ainda nao ha ponta a ponta.
 
 `FrontCacheTest` (backend) confere o `Cache-Control` do front: index, manifest e service workers com `no-cache`, arquivos com hash por um ano, `/api` intocado.
 
@@ -92,8 +93,6 @@ Troca de versao do front (fase 6), conferida a mao no Chrome contra o backend lo
 
 ## Comportamento atual registrado (nao e aprovacao)
 
-- `autoLoginPublicoEstaAtivoHoje`: `POST /api/auth/auto-login` responde 200 sem senha. Foi um risco aceito pelo dono
-  em 12/09; quando for desligado, o teste deve passar a esperar 404.
 - `pedidoNovoNaoVinculaClienteNemComponenteDeOutraEmpresa` aceita 200 (pedido criado **sem** o cliente de A)
   ou 400/404. Hoje a API responde 200 e ignora o cliente de outra empresa; se o comportamento passar a ser 400,
   o teste continua valendo.
@@ -119,5 +118,5 @@ repositorio quando precisam de uma foto exata.
 - Desempenho (contagem de consultas / N+1) em `listar` e `encerrados`.
 - A whitelist de `HIBERNATE_HBM2DDL` no `JPAUtil` (le `System.getenv` direto; testar exigiria uma pequena refatoracao).
 - Ponta a ponta automatizado do PWA no navegador (a tela do ditado foi percorrida a mao; nao ha Playwright) e o desktop, que continua fora do build.
-- **O plugin nativo de voz** (`android-app/`, `DitadoVozPlugin.java`): sem testes automatizados e sem celular nesta máquina. A lógica do lado do app (`ditadoVozNativa`) foi simulada em node com um plugin falso; o plugin Java só compila e foi conferido no APK (permissão do microfone, assinatura igual à do APK antigo). Precisa de teste nos aparelhos (S22 Ultra e S26).
+- **O plugin nativo de voz** (`android-app/`, `DitadoVozPlugin.java`): sem testes automatizados e sem celular nesta máquina. A lógica do lado do app (em `core/ditado-voz.ts`) é coberta no vitest com um plugin falso; o plugin Java só compila e foi conferido no APK (permissão do microfone, assinatura igual à do APK antigo). Precisa de teste nos dois celulares Samsung com Android 14 ou mais novo.
 - **O reconhecimento de voz em si** (microfone, permissao, Android e o APK) e a qualidade real da IA com a chave verdadeira: so testaveis em aparelho e com a chave.

@@ -33,7 +33,7 @@ class MatrizDeEndpointsTest {
 
     static final Set<String> PUBLICO = Set.of(
             "POST /api/auth/login",
-            "POST /api/auth/auto-login",
+            "POST /api/auth/demo",
             "POST /api/integracoes/alto-medidas/os",
             "GET /health");
 
@@ -109,12 +109,10 @@ class MatrizDeEndpointsTest {
     }
 
     @Test
-    void autoLoginPublicoEstaAtivoHoje() {
-        // Registra o comportamento ATUAL, aceito pelo dono em 12/09: qualquer visitante recebe o
-        // token da empresa do usuario 1. Quando o auto-login for desligado, este teste deve virar
-        // "responde 404" (ver relatorio da auditoria).
+    void autoLoginFoiRemovido() {
+        // Ate 2026-11-12 este endpoint entregava, sem senha, o token da empresa do usuario 1.
+        // Foi trocado pela demonstracao isolada (POST /api/auth/demo, ver DemoTest).
         var r = new ApiTeste(porta).postSemCorpo("/api/auth/auto-login", null);
-        assertThat(r.status()).isEqualTo(200);
-        assertThat(r.json().get("token").asString()).isNotBlank();
+        assertThat(r.status()).isEqualTo(404);
     }
 }

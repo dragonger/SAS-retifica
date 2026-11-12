@@ -1,6 +1,6 @@
 # Arquitetura
 
-Estado em 2026-10-17, conferido contra o código da `main`.
+Estado em 2026-11-12, conferido contra o código da `main`.
 
 ## Módulos
 
@@ -77,7 +77,7 @@ Todas exigem `Authorization: Bearer <token>`, exceto as marcadas como públicas.
 
 | Recurso | Rotas |
 |---|---|
-| Autenticação (**pública**) | `POST /api/auth/login`, `POST /api/auth/auto-login` |
+| Autenticação (**pública**) | `POST /api/auth/login`, `POST /api/auth/demo` |
 | Pedidos | `GET/POST /api/pedidos`, `GET/PUT/DELETE /api/pedidos/{id}`, `GET /api/pedidos/dashboard`, `GET /api/pedidos/encerrados`, `POST /api/pedidos/{id}/finalizar`, `GET /api/pedidos/{id}/pdf`, `POST /api/pedidos/{id}/whatsapp` |
 | Clientes | `GET/POST /api/clientes`, `GET/PUT/DELETE /api/clientes/{id}` |
 | Componentes técnicos | `GET/POST /api/cabecotes`, `PUT/DELETE /api/cabecotes/{id}` |
@@ -106,7 +106,7 @@ Uma matriz equivalente a esta, dentro do `MatrizDeEndpointsTest`, é conferida c
 
 | Risco | Detalhe |
 |---|---|
-| Login automático público | `POST /api/auth/auto-login` devolve um token do usuário 1 (hoje, da empresa 1) sem senha. Ver [SAAS.md](SAAS.md#login-automático). |
+| Demonstração pública | `POST /api/auth/demo` cria empresas sem senha para visitantes. Mitigado: empresa isolada, sem IA nem WhatsApp, token de 2 horas que não renova, apagada no fim do prazo, limites por endereço e por dia. Ver [SAAS.md](SAAS.md#login-e-demonstração). |
 | Sessão não revogável | Trocar a senha não invalida tokens já emitidos, e a renovação os mantém vivos. Só trocar o `JWT_SECRET` derruba todos. |
 | `salvar(entity)` não confere a empresa | Os controllers atuais buscam por `id + empresa` antes de salvar, mas um controller novo que não faça isso abriria uma brecha. |
 | Backfill para a primeira empresa | Com várias empresas, uma linha criada sem empresa (por um bug ou pelo desktop) vira dado da empresa 1 no próximo boot. |
@@ -125,9 +125,9 @@ Uma matriz equivalente a esta, dentro do `MatrizDeEndpointsTest`, é conferida c
 
 | Integração | Estado | Documento |
 |---|---|---|
-| Alto Medidas (virabrequins do Daniel) | Ligada em produção | [backend/ALTO-MEDIDAS.md](../backend/ALTO-MEDIDAS.md) |
+| Alto Medidas (virabrequins do parceiro) | Ligada em produção | [backend/ALTO-MEDIDAS.md](../backend/ALTO-MEDIDAS.md) |
 | WhatsApp Business (envio do orçamento) | Código pronto, **desligado** (faltam as credenciais da Meta) | [backend/WHATSAPP-API.md](../backend/WHATSAPP-API.md) |
 | App Android (Capacitor, voz nativa) | Pronto para teste; instalação direta do APK | [android-app/LEIA-ME.md](../android-app/LEIA-ME.md) |
-| Anthropic (ditar o pedido por voz) | Código pronto, **desligado** (falta `ANTHROPIC_API_KEY`) | [backend/DITADO.md](../backend/DITADO.md) |
+| Anthropic (ditar o pedido por voz) | **Ligada** em produção (`ANTHROPIC_API_KEY` configurada) | [backend/DITADO.md](../backend/DITADO.md) |
 
 O **ditado** (`org.example.backend.ditado`) manda o texto transcrito pelo navegador ao Claude (SDK oficial `anthropic-java`, saída estruturada) junto com o catálogo da empresa do token. Tudo que a IA devolve passa pelo `NormalizadorDitado`, que descarta ids que não existam no catálogo **da empresa** e limita valores, datas e tamanhos. A conversa (perguntas de esclarecimento, até 4 chamadas por ditado) fica numa sessão **em memória** no servidor (20 minutos, no máximo 200), e o limite diário (100 por empresa, 300 no total) também é em memória e zera no reinício. Até 4 chamadas simultâneas à IA, para não ocupar as 20 threads do Tomcat.

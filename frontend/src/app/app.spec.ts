@@ -5,8 +5,10 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { App } from './app';
 import { authInterceptor } from './core/auth.interceptor';
+import { CHAVE_AUTH } from './core/auth.service';
 import { MenuPedidoService } from './core/menu-pedido.service';
-import { esperar } from './testing/ajuda';
+import { RECARREGAR } from './core/sessao.service';
+import { esperar, tokenDeTeste } from './testing/ajuda';
 
 @Component({ selector: 'app-vazio', template: '' })
 class Vazio {}
@@ -126,5 +128,63 @@ describe('App: menu "Mais opções" do pedido', () => {
     await esperar(fixture);
     expect(menu.aberto()).toBe(false);
     expect(popover(html).hidden).toBe(true);
+  });
+});
+
+describe('App: faixa da demonstração', () => {
+  async function criar(claims: object | null) {
+    localStorage.clear();
+    if (claims) localStorage.setItem(CHAVE_AUTH, JSON.stringify({ token: tokenDeTeste(claims) }));
+    const recarregar = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: 'inicio', component: Vazio }]),
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: RECARREGAR, useValue: recarregar },
+      ],
+    });
+    const fixture = TestBed.createComponent(App);
+    await TestBed.inject(Router).navigateByUrl('/inicio');
+    await esperar(fixture);
+    return { html: fixture.nativeElement as HTMLElement, recarregar };
+  }
+
+  it('sessão de demonstração: mostra a faixa com o horário em que ela será apagada', async () => {
+    const fim = new Date(2026, 10, 12, 14, 32);
+    const { html } = await criar({ usuarioId: 9, empresaId: 8, demo: true, exp: fim.getTime() / 1000 });
+    const faixa = html.querySelector('.faixa-demo') as HTMLElement;
+    expect(faixa.textContent).toContain('Demonstração com dados fictícios');
+    expect(faixa.textContent).toContain('14:32');
+  });
+
+  it('Sair na faixa limpa a sessão e recarrega na tela de login', async () => {
+    const { html, recarregar } = await criar({ usuarioId: 9, empresaId: 8, demo: true, exp: 1794500000 });
+    (html.querySelector('.faixa-demo button') as HTMLButtonElement).click();
+    expect(localStorage.getItem(CHAVE_AUTH)).toBeNull();
+    expect(recarregar).toHaveBeenCalledWith('#/login');
+  });
+
+  it('sessão normal: sem faixa', async () => {
+    const { html } = await criar({ usuarioId: 1, empresaId: 1, exp: 1794500000 });
+    expect(html.querySelector('.faixa-demo')).toBeNull();
+  });
+
+  it('na tela de login a barra de abas fica escondida (sem sessão nenhuma aba abre)', async () => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'login', component: Vazio }, { path: 'inicio', component: Vazio }]),
+        provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/login');
+    await esperar(fixture);
+    const html = fixture.nativeElement as HTMLElement;
+    expect((html.querySelector('nav.tab-bar') as HTMLElement).hidden).toBe(true);
+    await router.navigateByUrl('/inicio');
+    await esperar(fixture);
+    expect((html.querySelector('nav.tab-bar') as HTMLElement).hidden).toBe(false);
   });
 });

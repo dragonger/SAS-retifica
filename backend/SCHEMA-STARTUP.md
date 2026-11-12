@@ -10,7 +10,7 @@
 
 ## Medições
 
-**Não foi possível medir.** O Docker Desktop está instalado, mas o daemon está parado (pipe `dockerDesktopLinuxEngine` inexistente) e não há `psql`/`postgres` no PATH. Iniciar o Docker Desktop e baixar a imagem `postgres:16-alpine` são ações de sistema/download que não foram autorizadas, e produção (Neon) não pode ser usada. Portanto não há números de tempo nem de round trips, e nenhum ganho em produção é afirmado aqui.
+**Na medição original, não foi possível medir.** Naquele momento, na máquina de desenvolvimento, o Docker Desktop estava instalado, mas o daemon estava parado (pipe `dockerDesktopLinuxEngine` inexistente) e não havia `psql`/`postgres` no PATH. Iniciar o Docker Desktop e baixar a imagem `postgres:16-alpine` são ações de sistema/download que não foram autorizadas, e produção (Neon) não pode ser usada. Portanto não há números de tempo nem de round trips, e nenhum ganho em produção é afirmado aqui.
 
 Para medir depois (fora de produção): `docker compose up -d`, criar a EMF via `Persistence.createEntityManagerFactory("retificasPU", mapa)` com `hibernate.hbm2ddl.auto` = update / none / validate (5+ execuções, JVM nova, schema já criado) e repetir atrás de um proxy TCP com latência injetada (0/20/80/150 ms) para simular o Neon. Latência simulada não é a rede real Railway-Neon (a região do Neon não está registrada no repositório). Também não foi verificado o padrão de `hibernate.hbm2ddl.jdbc_metadata_extraction_strategy` nem o efeito de `hibernate.boot.allow_jdbc_metadata_access=false` com update.
 

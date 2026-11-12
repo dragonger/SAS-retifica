@@ -1,6 +1,6 @@
 # Produção (Railway + Neon)
 
-No ar desde 2026-07-31. Estado conferido em 2026-10-17.
+No ar desde 2026-07-31. Estado conferido em 2026-11-12.
 
 ## Visão geral
 
@@ -19,7 +19,7 @@ retifica-backend-app.up.railway.app ─────────► retifica-back
 Railway Service Cron ──► liga/desliga o retifica-backend pela API do Railway, no horário da oficina
 ```
 
-Projeto `daring-benevolence`, ambiente `production`, com três serviços:
+O projeto no Railway tem o ambiente `production`, com três serviços:
 
 | Serviço | O que faz |
 |---|---|
@@ -55,6 +55,9 @@ Detalhes do proxy: [railway-wake-proxy/LEIA-ME.txt](../railway-wake-proxy/LEIA-M
 |---|---|---|---|
 | `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` | sim | Postgres local do `docker-compose.yml` | Conexão com o Neon. |
 | `JWT_SECRET` | sim | gera um arquivo local | Chave de assinatura dos tokens (Base64, 32 bytes ou mais). Trocar derruba todas as sessões. |
+| `REDEFINIR_SENHA_EMAIL` + `REDEFINIR_SENHA` | não | vazias | Recuperação de acesso: na subida, grava essa senha para o usuário desse e-mail (mínimo 6 caracteres; recusa usuário de demonstração; a senha não vai para o log). **Apague as duas depois de entrar**, senão toda subida volta a gravar a mesma senha. |
+| `DEMO_HABILITADA` | não | ligada | `false` desliga o botão "Abrir demonstração" (o servidor responde 503). |
+| `DEMO_LIMPEZA_MS` | não | `600000` | Intervalo da limpeza das demonstrações vencidas. |
 | `SSL_ENABLED` | sim (`false`) | `true` | O Railway termina o HTTPS na borda; o app escuta HTTP por dentro. |
 | `PORT` | automática | `8443` | Injetada pelo Railway (`8080`). |
 | `HIBERNATE_HBM2DDL` | não | `update` | Aceita `update`, `validate`, `none`. Ver [SCHEMA-STARTUP.md](../backend/SCHEMA-STARTUP.md). |
@@ -63,7 +66,7 @@ Detalhes do proxy: [railway-wake-proxy/LEIA-ME.txt](../railway-wake-proxy/LEIA-M
 | `ALTO_MEDIDAS_RETRY_MS` | não | `600000` | Intervalo da repetição do aviso de pagamento. |
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | para ligar | — | Ver [WHATSAPP-API.md](../backend/WHATSAPP-API.md). **Hoje desligado.** |
 | `WHATSAPP_TEMPLATE_NAME`, `WHATSAPP_TEMPLATE_LANG`, `WHATSAPP_API_VERSION`, `WHATSAPP_GRAPH_URL` | não | `orcamento`, `pt_BR`, `v23.0`, `https://graph.facebook.com` | Ajustes do WhatsApp. |
-| `ANTHROPIC_API_KEY` | para ligar o ditado | — | Chave da API da Anthropic para ditar o pedido por voz. Ver [DITADO.md](../backend/DITADO.md). **Hoje desligado.** Defina também um limite de gasto no Console da Anthropic. |
+| `ANTHROPIC_API_KEY` | para ligar o ditado | — | Chave da API da Anthropic para ditar o pedido por voz. Ver [DITADO.md](../backend/DITADO.md). **Hoje ligado.** Mantenha também um limite de gasto no Console da Anthropic. |
 | `DITADO_MODELO`, `DITADO_EFFORT`, `DITADO_LIMITE_DIA`, `DITADO_LIMITE_GLOBAL_DIA`, `DITADO_TIMEOUT_S`, `DITADO_MAX_RETRIES` | não | `claude-haiku-5-5`, `low`, `100`, `300`, `30`, `1` | Ajustes do ditado (modelo, limites por dia, tempo e novas tentativas). |
 | `ANTHROPIC_BASE_URL` | não | — | **Só testes**: aponta o ditado para um servidor falso. Não defina em produção. |
 
@@ -99,4 +102,6 @@ Os dados reais saíram de um arquivo H2 local e foram levados ao Neon exportando
 
 ## Aplicativo Android
 
-Existe um APK (Trusted Web Activity) que abre o domínio público. Os arquivos de assinatura ficam em `android-signing/`, **fora do git** (`.gitignore`). Perder a chave de assinatura obriga a reinstalar o app em todos os aparelhos para publicar qualquer atualização; mantenha um backup fora do repositório.
+O app Android atual é feito com Capacitor: uma casca do site de produção (o domínio público) com um plugin nativo de voz para o ditado. Os arquivos de assinatura ficam fora do git. Perder a chave de assinatura obriga a reinstalar o app em todos os aparelhos para publicar qualquer atualização; mantenha um backup fora do repositório.
+
+Compilação, assinatura e instalação: [android-app/LEIA-ME.md](../android-app/LEIA-ME.md).

@@ -1,5 +1,7 @@
 package org.example.backend.web;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.example.backend.demo.DemoService;
 import org.example.backend.dto.LoginRequestDTO;
 import org.example.backend.dto.LoginResponseDTO;
 import org.example.backend.security.JwtUtil;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -20,9 +24,12 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public AuthController(PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    private final DemoService demoService;
+
+    public AuthController(PasswordEncoder passwordEncoder, JwtUtil jwtUtil, DemoService demoService) {
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.demoService = demoService;
     }
 
     @PostMapping("/login")
@@ -38,19 +45,26 @@ public class AuthController {
     }
 
     /**
-     * Login automático temporário (tela de login desativada a pedido do
-     * usuário) — sempre autentica como o usuário 1 (bootstrap/empresa real),
-     * sem senha. TODO: remover e voltar pro /login normal quando a tela de
-     * login for reativada; enquanto isso, qualquer um com a URL pública
-     * entra sem senha.
+     * Abre uma DEMONSTRAÇÃO: empresa nova e isolada, com dados fictícios, apagada depois de
+     * {@link DemoService#DURACAO}. Público (é o botão da tela de login). O login automático
+     * (/auto-login, que entregava a empresa real sem senha) foi removido em 2026-11-12.
      */
-    @PostMapping("/auto-login")
-    public ResponseEntity<LoginResponseDTO> autoLogin() {
-        UsuarioModel usuario = usuarioRepository.buscarPorId(1L);
-        if (usuario == null) {
-            return ResponseEntity.status(401).build();
+    @PostMapping("/demo")
+    public ResponseEntity<Object> demo(HttpServletRequest requisicao) {
+        DemoService.Resultado r = demoService.criar(ipDe(requisicao));
+        if (r.sessao() == null) {
+            return ResponseEntity.status(r.status()).body(Map.of("erro", r.erro()));
         }
-        return ResponseEntity.ok(paraResposta(usuario));
+        return ResponseEntity.ok(r.sessao());
+    }
+
+    /** Primeiro endereço do X-Forwarded-For (o app roda atrás do proxy do Railway); senão, o da conexão. */
+    static String ipDe(HttpServletRequest requisicao) {
+        String encaminhado = requisicao.getHeader("X-Forwarded-For");
+        if (encaminhado != null && !encaminhado.isBlank()) {
+            return encaminhado.split(",")[0].trim();
+        }
+        return requisicao.getRemoteAddr();
     }
 
     private LoginResponseDTO paraResposta(UsuarioModel usuario) {

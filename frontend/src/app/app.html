@@ -25,14 +25,21 @@
       <button type="button" class="danger" (click)="menuPedido.excluir()">Excluir pedido</button>
     }
   </div>
-  <!-- Trocar senha e Sair seguem escondidos enquanto o login automático estiver ligado (como no app atual). -->
 </header>
+
+@if (auth.demoExpiraEm(); as fim) {
+  <div class="faixa-demo" role="status"
+       style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 18px;font-size:13px;line-height:1.35;background:var(--color-accent-100);color:var(--color-accent-800);border-bottom:1px solid var(--color-divider)">
+    <span>Demonstração com dados fictícios · apagada às {{ horaDe(fim) }}</span>
+    <button type="button" class="btn btn-ghost" style="padding:4px 10px;min-height:0;font-size:13px" (click)="sessao.sair()">Sair</button>
+  </div>
+}
 
 <main #conteudo id="conteudo">
   <router-outlet (activate)="guarda.registrar($event)" (deactivate)="guarda.desregistrar()" />
 </main>
 
-<nav class="tab-bar">
+<nav class="tab-bar" [hidden]="caminho() === '/login'">
   <button class="tab" [class.active]="abaAtiva('inicio')" (click)="irParaAba('inicio')">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 2l9 7.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
     <span>Início</span>

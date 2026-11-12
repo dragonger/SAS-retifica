@@ -25,6 +25,9 @@ public class UsuarioController {
 
     @PutMapping("/senha")
     public ResponseEntity<Void> trocarSenha(@RequestBody TrocarSenhaRequestDTO request) {
+        if (SecurityUtils.ehDemo()) {
+            return ResponseEntity.status(403).build(); // o usuário da demonstração não tem senha conhecida
+        }
         if (request.novaSenha == null || request.novaSenha.length() < 6) {
             return ResponseEntity.badRequest().build();
         }

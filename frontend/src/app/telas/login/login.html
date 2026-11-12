@@ -9,5 +9,15 @@
     <input class="input" type="password" placeholder="Senha" autocomplete="current-password" [value]="senha()"
            (input)="senha.set(valorDe($event))" (keydown.enter)="entrar()">
   </app-campo>
-  <button type="button" class="btn btn-primary btn-block" (click)="entrar()">Entrar</button>
+  <button type="button" class="btn btn-primary btn-block" [disabled]="ocupado()" (click)="entrar()">Entrar</button>
+
+  <section class="demo-login" aria-labelledby="tituloDemo"
+           style="margin-top:28px;padding-top:22px;border-top:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+    <h3 id="tituloDemo" class="secao" style="margin:0">Quer conhecer o sistema?</h3>
+    <p style="margin:0;font-size:14px;line-height:1.45;color:var(--color-neutral-700)">
+      Abra uma demonstração com dados fictícios. Ela fica separada dos dados reais e é apagada depois de 2 horas.
+    </p>
+    <div class="empty" [hidden]="!erroDemo()" style="color:#a4453f;padding:0;text-align:left">{{ erroDemo() }}</div>
+    <button type="button" class="btn btn-secondary btn-block" [disabled]="ocupado()" (click)="abrirDemonstracao()">Abrir demonstração</button>
+  </section>
 </div>

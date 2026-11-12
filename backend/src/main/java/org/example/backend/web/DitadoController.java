@@ -41,19 +41,31 @@ public class DitadoController {
         this.servico = servico;
     }
 
+    /** Na demonstração o ditado fica desligado (cada chamada custa IA). */
+    static final String MSG_DEMO = "O ditado não está disponível na demonstração.";
+
     @GetMapping("/status")
     public DitadoService.Status status() {
+        if (SecurityUtils.ehDemo()) {
+            return new DitadoService.Status(false, 0);
+        }
         return servico.status(SecurityUtils.empresaAtual());
     }
 
     @PostMapping
     public ResponseEntity<Object> iniciar(@RequestBody TextoRequest corpo) {
+        if (SecurityUtils.ehDemo()) {
+            return ResponseEntity.status(403).body(Map.of("erro", MSG_DEMO));
+        }
         RetificaPrincipal quem = SecurityUtils.principalAtual();
         return executar(() -> servico.iniciar(quem.getEmpresaId(), quem.getUsuarioId(), corpo != null ? corpo.texto() : null));
     }
 
     @PostMapping("/{id}/respostas")
     public ResponseEntity<Object> responder(@PathVariable String id, @RequestBody RespostasRequest corpo) {
+        if (SecurityUtils.ehDemo()) {
+            return ResponseEntity.status(403).body(Map.of("erro", MSG_DEMO));
+        }
         RetificaPrincipal quem = SecurityUtils.principalAtual();
         List<RespostaRecebida> respostas = corpo == null || corpo.respostas() == null ? List.of()
                 : corpo.respostas().stream()

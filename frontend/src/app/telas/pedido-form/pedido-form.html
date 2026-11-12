@@ -1,5 +1,7 @@
 @if (naoEncontrado()) {
   <div class="empty">Pedido não encontrado.</div>
+} @else if (finalizado()) {
+  <div class="empty">Este pedido já foi finalizado e não pode mais ser editado.</div>
 } @else if (!pronto()) {
   <div class="empty">Carregando...</div>
 } @else {

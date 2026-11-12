@@ -1,6 +1,5 @@
 import { Routes, UrlMatcher, UrlSegment } from '@angular/router';
 import { guardaDeSaida } from './core/guarda-saida.service';
-import { LOGIN_AUTOMATICO_ATIVO } from './core/login-automatico';
 import { exigirSessao } from './core/sessao.guard';
 import { AltoMedidas } from './telas/alto-medidas/alto-medidas';
 import { Cabecotes } from './telas/cabecotes/cabecotes';
@@ -31,14 +30,11 @@ export function pedidoPorId(sufixo?: string): UrlMatcher {
   };
 }
 
-/**
- * Com `loginAutomatico` ligado (como hoje) `#/login` redireciona para o Início,
- * igual ao app atual; desligado, mostra a tela de login.
- */
-export function criarRotas(loginAutomatico: boolean): Routes {
+/** `#/login` é público (entrar com senha ou abrir a demonstração); o resto exige sessão. */
+export function criarRotas(): Routes {
   return [
     { path: '', pathMatch: 'full', redirectTo: 'inicio' },
-    loginAutomatico ? { path: 'login', redirectTo: 'inicio' } : { path: 'login', component: Login },
+    { path: 'login', component: Login },
     {
       path: '',
       canActivateChild: [exigirSessao],
@@ -66,4 +62,4 @@ export function criarRotas(loginAutomatico: boolean): Routes {
   ];
 }
 
-export const routes: Routes = criarRotas(LOGIN_AUTOMATICO_ATIVO);
+export const routes: Routes = criarRotas();

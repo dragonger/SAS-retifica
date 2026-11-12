@@ -64,34 +64,31 @@ describe('AuthService', () => {
     expect(auth.donoDosRascunhos()).toBe('anonimo');
   });
 
-  it('garantirAutoLogin grava a sessão devolvida pelo servidor', async () => {
-    const fetchFalso = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ token: 'auto', nome: 'Auto', empresaNome: 'E' }) });
+  it('entrarDemo grava a sessão de demonstração devolvida pelo servidor', async () => {
+    const token = jwt({ usuarioId: 90, empresaId: 80, demo: true, exp: 1794500000 });
+    const fetchFalso = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ token, nome: 'Visitante', empresaNome: 'Retífica Demonstração' }) });
     vi.stubGlobal('fetch', fetchFalso);
-    expect(await auth.garantirAutoLogin()).toBe(true);
-    expect(fetchFalso).toHaveBeenCalledWith('/api/auth/auto-login', { method: 'POST' });
-    expect(auth.lerAuth()?.token).toBe('auto');
+    expect(await auth.entrarDemo()).toBe('ok');
+    expect(fetchFalso).toHaveBeenCalledWith('/api/auth/demo', { method: 'POST' });
+    expect(auth.lerAuth()?.empresaNome).toBe('Retífica Demonstração');
+    expect(auth.demoExpiraEm()?.getTime()).toBe(1794500000 * 1000);
   });
 
-  it('garantirAutoLogin não chama o servidor se já há sessão', async () => {
-    auth.gravar({ token: 'ja' });
-    const fetchFalso = vi.fn();
-    vi.stubGlobal('fetch', fetchFalso);
-    expect(await auth.garantirAutoLogin()).toBe(true);
-    expect(fetchFalso).not.toHaveBeenCalled();
-  });
-
-  it('garantirAutoLogin devolve false sem conexão ou com resposta de erro', async () => {
+  it('entrarDemo: 429 vira "limite", outro erro "indisponivel", sem rede "semConexao", e nada é gravado', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429 }));
+    expect(await auth.entrarDemo()).toBe('limite');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+    expect(await auth.entrarDemo()).toBe('indisponivel');
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
-    expect(await auth.garantirAutoLogin()).toBe(false);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
-    expect(await auth.garantirAutoLogin()).toBe(false);
+    expect(await auth.entrarDemo()).toBe('semConexao');
     expect(auth.lerAuth()).toBeNull();
   });
 
-  it('chamadas simultâneas de garantirAutoLogin compartilham uma só requisição', async () => {
-    const fetchFalso = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ token: 'um' }) });
-    vi.stubGlobal('fetch', fetchFalso);
-    await Promise.all([auth.garantirAutoLogin(), auth.garantirAutoLogin()]);
-    expect(fetchFalso).toHaveBeenCalledTimes(1);
+  it('demoExpiraEm é null numa sessão normal e sem sessão', () => {
+    expect(auth.demoExpiraEm()).toBeNull();
+    auth.gravar({ token: jwt({ usuarioId: 1, empresaId: 1, exp: 1794500000 }) });
+    expect(auth.demoExpiraEm()).toBeNull();
+    auth.limpar();
+    expect(auth.demoExpiraEm()).toBeNull();
   });
 });

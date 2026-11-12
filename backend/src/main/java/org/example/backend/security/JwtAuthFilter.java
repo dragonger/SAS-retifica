@@ -39,7 +39,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 RetificaPrincipal principal = new RetificaPrincipal(
                         claims.get("usuarioId", Long.class),
                         claims.get("empresaId", Long.class),
-                        claims.getSubject());
+                        claims.getSubject(),
+                        JwtUtil.ehDemo(claims));
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(principal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(auth);
