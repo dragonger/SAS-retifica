@@ -11,8 +11,16 @@ export const STATUS_SEM_AVISO = new HttpContextToken<readonly number[]>(() => []
 /** Marca a requisição que já foi refeita depois de um 401 (evita laço). */
 export const JA_RETENTOU = new HttpContextToken<boolean>(() => false);
 
+/**
+ * O 401 desta chamada NÃO significa sessão vencida (ex.: "senha atual incorreta"):
+ * o interceptor não limpa a sessão nem refaz o login, só devolve o ErroApi(401).
+ */
+export const ERRO_401_PROPRIO = new HttpContextToken<boolean>(() => false);
+
 export interface OpcoesApi {
   statusSemAviso?: readonly number[];
+  /** Ver ERRO_401_PROPRIO. */
+  erro401Proprio?: boolean;
 }
 
 /** Erro de uma chamada à API. `detalhe` vem do corpo `{"erro": "..."}` do servidor, se houver. */
@@ -62,6 +70,8 @@ export class ApiService {
   }
 
   private contexto(opcoes?: OpcoesApi): HttpContext {
-    return new HttpContext().set(STATUS_SEM_AVISO, opcoes?.statusSemAviso ?? []);
+    return new HttpContext()
+      .set(STATUS_SEM_AVISO, opcoes?.statusSemAviso ?? [])
+      .set(ERRO_401_PROPRIO, !!opcoes?.erro401Proprio);
   }
 }

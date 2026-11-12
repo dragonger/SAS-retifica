@@ -1,0 +1,11 @@
+<h2 class="titulo">Trocar senha</h2>
+<app-campo rotulo="Senha atual">
+  <input class="input" type="password" placeholder="Senha atual" autocomplete="current-password" [value]="atual()" (input)="atual.set(valorDe($event))">
+</app-campo>
+<app-campo rotulo="Nova senha">
+  <input class="input" type="password" placeholder="Nova senha (mín. 6 caracteres)" autocomplete="new-password" [value]="nova()" (input)="nova.set(valorDe($event))">
+</app-campo>
+<app-campo rotulo="Confirmar nova senha">
+  <input class="input" type="password" placeholder="Confirmar nova senha" autocomplete="new-password" [value]="confirma()" (input)="confirma.set(valorDe($event))">
+</app-campo>
+<button type="button" class="btn btn-primary btn-block" (click)="salvar()">Salvar</button>

@@ -88,6 +88,26 @@ export class AuthService {
     }
   }
 
+  /**
+   * Tela de login (telaLogin do app.js): fetch direto, sem o interceptor — um 401 aqui é
+   * "senha errada", não sessão vencida. Grava a sessão se entrou.
+   */
+  async entrar(email: string, senha: string): Promise<'ok' | 'invalido' | 'semConexao'> {
+    let resp: Response;
+    try {
+      resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
+      });
+    } catch {
+      return 'semConexao';
+    }
+    if (!resp.ok) return 'invalido';
+    this.gravar((await resp.json()) as SessaoAuth);
+    return 'ok';
+  }
+
   /** Claims do JWT (sem validar assinatura: só leitura do que o servidor já emitiu). */
   claims(): ClaimsToken | null {
     try {

@@ -1,0 +1,57 @@
+@if (dados(); as d) {
+  <h2 class="titulo">Virabrequins do Daniel</h2>
+  <div class="subtitulo">Finalizados no Alto Medidas — marque quando o cliente pagar</div>
+
+  <!-- o total devido é SEMPRE o geral (todos os meses); o mês só filtra as listas -->
+  <div style="margin-bottom:18px">
+    <app-cartao-devido-ao-daniel [valor]="d.devidoAoDaniel" [quantidade]="d.quantidadeDevida" [grande]="true" [linhaExtra]="extra(d)" />
+  </div>
+
+  <!-- filtro de meses (pelo mês em que o virabrequim foi finalizado) -->
+  @if (d.meses && d.meses.length) {
+    <div class="field" style="margin-bottom:22px">
+      <label>Mês de finalização</label>
+      <select class="input" aria-label="Mês de finalização" (change)="trocarMes($event)">
+        <option value="todos" [selected]="d.mes === 'todos'">Todos os meses</option>
+        @for (m of d.meses; track m.mes) {
+          <option [value]="m.mes" [selected]="d.mes === m.mes">{{ rotuloMes(m.mes) }} · {{ textoQuantidade(m.quantidade) }}</option>
+        }
+      </select>
+    </div>
+  }
+
+  @for (s of secoes(d); track s.titulo) {
+    <div style="margin-bottom:22px">
+      <h2 class="secao">{{ s.titulo + sufixo(d) }} — {{ moeda(s.g.total) }}</h2>
+      @if (s.g.itens.length) {
+        <div>
+          @for (os of s.g.itens; track os.id) {
+            <div class="linha" style="cursor:default">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+                <div class="linha-titulo">OS #{{ os.numero || '—' }}</div>
+                <strong>{{ valor(os) }}</strong>
+              </div>
+              <div style="font-size:13px;opacity:.75">{{ detalhes(os) }}</div>
+              @if (datas(os)) {
+                <div style="font-size:12px;opacity:.6">{{ datas(os) }}</div>
+              }
+              @if (!os.pagoSincronizado) {
+                <div style="font-size:12px;color:var(--color-danger)">Ainda não avisado ao Alto Medidas — vai tentar de novo sozinho.</div>
+              }
+              @if (!os.repassadoEm) {
+                <div style="margin-top:8px">
+                  <button type="button" [class]="'btn ' + (os.pago ? 'btn-secondary' : 'btn-primary')"
+                          [disabled]="salvando().has(os.id)" (click)="alternarPagamento(os)">{{ salvando().has(os.id) ? 'Salvando…' : (os.pago ? 'Desfazer' : 'Cliente pagou') }}</button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty">{{ d.mes !== 'todos' ? s.vazioMes : s.vazioTodos }}</div>
+      }
+    </div>
+  }
+} @else {
+  <div class="empty">Carregando...</div>
+}

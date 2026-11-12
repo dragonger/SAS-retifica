@@ -57,6 +57,8 @@
 
 <div id="toast" class="toast" [class.erro]="dialogo.toastErro()" [hidden]="!dialogo.toastVisivel()">{{ dialogo.toastTexto() }}</div>
 
+<app-aviso-nova-versao />
+
 @if (dialogo.dialogos().at(-1); as d) {
   <div #fundo
        style="position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in srgb, var(--color-text) 45%, transparent)"
