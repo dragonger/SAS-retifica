@@ -2,7 +2,9 @@
 
 Sistema para uma retífica de motores (hoje usado pela **Retífica Dih Soluções**), pensado para virar um SaaS multiempresa. Cada empresa tem os próprios clientes, pedidos, catálogos, logo e dados de contato; os dados ficam isolados por empresa.
 
-O uso do dia a dia é pelo **PWA** (a página web/mobile instalável no celular): pedidos, clientes, catálogo, orçamento em PDF, encerrados e dashboard. A mesma API também integra com o app **Alto Medidas** (virabrequins do Daniel) e, quando ligado, com o **WhatsApp Business**.
+O uso do dia a dia é pelo **PWA** (a página web/mobile instalável no celular): pedidos, clientes, catálogo, orçamento em PDF, encerrados e dashboard.
+
+**O front-end é em Angular 22** (`frontend/`). Até novembro de 2026 era um único `app.js` em JavaScript puro; a migração para Angular foi feita em fases, com o app novo rodando em paralelo em `/novo/` até ser conferido no celular, e foi concluída em 2026-11-12 sem mudar o visual, as rotas nem a API. Histórico e decisões em [frontend/README.md](frontend/README.md). A mesma API também integra com o app **Alto Medidas** (virabrequins do Daniel) e, quando ligado, com o **WhatsApp Business**.
 
 ## Como o projeto é organizado
 
@@ -21,15 +23,16 @@ Produção: **Railway** (backend, proxy e cron) + **Neon** (Postgres gerenciado)
 
 ## Começando
 
-Requisitos: JDK 21 ou mais novo, Maven, Docker.
+Requisitos: JDK 21 ou mais novo, Maven, Docker e Node.js 22.
 
 ```bash
 docker compose up -d                      # Postgres local (porta 5432)
+(cd frontend && npm ci && npm run build:backend)   # compila o front e copia para o backend servir
 mvn -pl core,backend -am -DskipTests package
 SSL_ENABLED=false java -jar backend/target/retificas-backend.jar
 ```
 
-O app sobe em `http://localhost:8443`. Sem `SSL_ENABLED=false` ele exige um certificado local. O passo a passo completo, com o certificado, o túnel para testar no celular e os erros comuns, está em [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md).
+O app sobe em `http://localhost:8443`. Sem o passo do `frontend` a API funciona, mas a página fica vazia (o build do front não fica no git). Para mexer só no front, `npm start` dentro de `frontend/` abre o app em `http://localhost:4200` usando o backend local. Sem `SSL_ENABLED=false` ele exige um certificado local. O passo a passo completo, com o certificado, o túnel para testar no celular e os erros comuns, está em [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md).
 
 ## Testes
 
@@ -54,7 +57,7 @@ Os testes rodam só contra esse banco descartável e abortam se o ambiente apont
 | [backend/ALTO-MEDIDAS.md](backend/ALTO-MEDIDAS.md) | Integração com o Alto Medidas: configuração e operação. |
 | [android-app/LEIA-ME.md](android-app/LEIA-ME.md) | App Android (Capacitor) com voz nativa para o ditado: como gerar o APK, assinar e instalar. |
 | [frontend/README.md](frontend/README.md) | O front em Angular: como rodar, compilar, testar e o service worker. |
-| [backend/DITADO.md](backend/DITADO.md) | Ditar o pedido por voz, com IA que faz perguntas de esclarecimento (pronto e desligado). |
+| [backend/DITADO.md](backend/DITADO.md) | Ditar o pedido por voz, com IA que faz perguntas de esclarecimento (ligado em produção). |
 | [backend/WHATSAPP-API.md](backend/WHATSAPP-API.md) | Envio do orçamento pela API do WhatsApp (pronto e desligado). |
 | [backend/SCHEMA-STARTUP.md](backend/SCHEMA-STARTUP.md) | Custo do `hbm2ddl=update` na subida e alternativas. |
 | [backend/TESTES.md](backend/TESTES.md) | Como rodar os testes e o que cada um garante. |

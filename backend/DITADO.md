@@ -2,7 +2,7 @@
 
 Na tela de **novo pedido** há um botão **"Ditar pedido"**. A pessoa fala (ou escreve) o pedido, uma IA (Claude Haiku 5.5) lê o texto junto com o catálogo da empresa e devolve o que entendeu. Quando algo fica ambíguo ou falta, a IA **pergunta**. Depois vem uma tela de conferência; ao confirmar, o formulário é preenchido. **Nada é salvo sozinho**, e o que a pessoa já tinha preenchido **nunca é trocado**: a diferença aparece como conflito na conferência.
 
-O código já está pronto e **desligado**. Ele liga sozinho quando a variável `ANTHROPIC_API_KEY` existir no serviço `retifica-backend` do Railway. Sem a chave, o botão não aparece e as rotas respondem 503.
+**Ligado em produção** (a `ANTHROPIC_API_KEY` está configurada no serviço `retifica-backend` do Railway). O recurso só existe quando essa variável está presente: sem a chave, o botão não aparece e as rotas respondem 503.
 
 ## Como funciona
 

@@ -9,7 +9,8 @@
   ```
   Se der "não encontrado", procure de novo com `Get-ChildItem -Recurse -Filter mvn.cmd` a partir de `C:\Program Files\JetBrains`. Nos exemplos abaixo, `mvn` significa esse executável.
 - **Docker** (Docker Desktop no Windows, exige WSL2) para o Postgres local.
-- **GitHub CLI** (`gh`) para PRs; **Node.js** só para o Railway CLI e o proxy.
+- **Node.js 22** para compilar o front (`frontend/`, Angular), além do Railway CLI e do proxy.
+- **GitHub CLI** (`gh`) para PRs.
 
 ## Banco local
 
@@ -24,9 +25,12 @@ O volume `retificas_postgres_data` guarda os dados entre reinícios. `docker com
 ## Compilar e rodar o backend
 
 ```bash
+(cd frontend && npm ci && npm run build:backend)   # front em Angular -> backend/src/main/resources/static/
 mvn -pl core,backend -am -DskipTests package
 java -jar backend/target/retificas-backend.jar
 ```
+
+O build do front não fica no git: sem o primeiro passo o jar sobe só com a API e a página fica vazia. Depois de trocar o front, use `mvn clean package`, senão arquivos antigos de `target/classes/static/` vão junto para o jar. Para mexer só no front, `npm start` em `frontend/` (detalhes em [frontend/README.md](../frontend/README.md)).
 
 Use sempre `-pl core,backend -am`: o módulo `desktop` não compila (ver [ARQUITETURA.md](ARQUITETURA.md#desktop-javafx)), então `mvn clean compile` sem `-pl` falha.
 
