@@ -139,6 +139,13 @@ class DemoTest {
     }
 
     @Test
+    void integracaoDoAltoMedidasNaoApareceNaDemonstracao() {
+        // a integracao e exclusiva da empresa configurada em ALTO_MEDIDAS_EMPRESA_ID (a retifica original)
+        String demo = abrir("10.0.0.7");
+        assertThat(api().get("/api/alto-medidas/status", demo).json().get("habilitado").asBoolean()).isFalse();
+    }
+
+    @Test
     void limpezaApagaSoDemonstracaoVencidaENuncaEmpresaReal() {
         String vencida = abrir("10.0.0.4");
         String valendo = abrir("10.0.0.4");

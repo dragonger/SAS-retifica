@@ -2,6 +2,8 @@
 
 O parceiro de virabrequins finaliza os virabrequins no app **Alto Medidas** (repositório de terceiro, com Firebase). Cada OS finalizada chega aqui sozinha; a DIH marca **"Cliente pagou"** na tela do parceiro (Alto Medidas, dentro do *Catálogo*); quando a DIH repassa ao parceiro, ele toca em **"Confirmar Pagamento / Confirmar recebimento"** no Alto Medidas e a OS vira *Já repassado* nos dois apps. O topo da tela mostra **quanto a DIH deve ao parceiro** (clientes que já pagaram, ainda não repassado).
 
+**Exclusiva de uma empresa:** só a empresa definida em `ALTO_MEDIDAS_EMPRESA_ID` (a retífica original, empresa 1) usa a integração. Para qualquer outra empresa, inclusive as demonstrações abertas na tela de login, `/api/alto-medidas/status` responde `habilitado=false`, a tela e o cartão do Início não aparecem e as OS que chegam entram sempre na empresa configurada (`IsolamentoEntreEmpresasTest.altoMedidasSoEhVisivelParaEmpresaDaIntegracao`, `DemoTest`).
+
 A integração fica **desligada** até as variáveis abaixo existirem: sem elas o servidor sobe normal, a entrada responde 503 e a tela não aparece.
 
 ## Como as duas pontas conversam

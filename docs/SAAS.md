@@ -49,5 +49,6 @@ Como o isolamento funciona e onde ele é frágil: [ARQUITETURA.md](ARQUITETURA.m
 
 - **Isolamento:** é o mesmo de qualquer empresa (tudo filtrado pela empresa do token). A limpeza só apaga empresa com `demo = true`, conferido com a linha travada na mesma transação; empresa real nunca, nem com prazo preenchido (`DemoTest`).
 - **Bloqueado na demonstração:** ditado (custa IA), envio pelo WhatsApp e troca de senha (o usuário da demonstração não tem senha conhecida).
+- **Fora da demonstração por natureza:** a integração com o Alto Medidas é exclusiva da retífica original (`ALTO_MEDIDAS_EMPRESA_ID`); nenhuma outra empresa a vê.
 - **Limites:** até 30 demonstrações ao mesmo tempo, 5 por endereço por hora e 200 por dia. `DEMO_HABILITADA=false` no Railway desliga.
 - **No app:** uma faixa no topo avisa "Demonstração com dados fictícios · apagada às HH:MM", com Sair. Entrar e sair recarregam a página, para nada de uma sessão ficar na memória da outra.

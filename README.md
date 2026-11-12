@@ -7,7 +7,7 @@ Sistema web e mobile usado **em produção, todos os dias**, pela Retífica Dih 
 ![Angular 22](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
 [![Testes](https://github.com/dragonger/SAS-retifica/actions/workflows/testes.yml/badge.svg)](https://github.com/dragonger/SAS-retifica/actions/workflows/testes.yml)
-![Testes](https://img.shields.io/badge/testes-197%20backend%20%7C%20626%20front-2E7D32)
+![Testes](https://img.shields.io/badge/testes-198%20backend%20%7C%20626%20front-2E7D32)
 
 > **English summary** at the [end of this page](#english-summary).
 
@@ -37,7 +37,7 @@ Dá para criar e editar pedidos, gerar o orçamento em PDF, ver o dashboard e mu
 - **Orçamento em PDF** gerado no servidor, compartilhado direto do celular (Web Share API). A foto do componente entra como última página do próprio PDF, montada no aparelho.
 - **Ditar o pedido por voz**: a pessoa fala o pedido, uma IA entende, **pergunta o que ficou ambíguo** e mostra uma conferência antes de preencher o formulário. Nada é salvo sem confirmação.
 - **Dashboard** do mês por cliente e por categoria, e histórico de pedidos encerrados.
-- **Integração com um app parceiro** (Alto Medidas) para serviços de virabrequim terceirizados, com controle do que já foi pago e repassado.
+- **Integração com um app parceiro** (Alto Medidas) para serviços de virabrequim terceirizados, com controle do que já foi pago e repassado. É exclusiva da retífica original (a empresa definida em `ALTO_MEDIDAS_EMPRESA_ID`): as outras empresas, inclusive as demonstrações, não veem essa tela.
 - **Instalável**: PWA no navegador e app Android (Capacitor) com reconhecimento de voz nativo.
 
 ## Destaques técnicos
@@ -123,7 +123,7 @@ O app abre em `http://localhost:8443`. Para entrar, use **Abrir demonstração**
 
 ```bash
 docker compose -f docker-compose.test.yml up -d --wait   # Postgres descartável em localhost:5544
-mvn -pl core,backend -am test                             # 197 testes do backend
+mvn -pl core,backend -am test                             # 198 testes do backend
 docker compose -f docker-compose.test.yml down
 (cd frontend && npm test -- --watch=false)                # 626 testes do front
 ```
@@ -144,7 +144,7 @@ O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
 | [docs/DESENVOLVIMENTO.md](docs/DESENVOLVIMENTO.md) | Rodar, compilar, testar e depurar localmente. |
 | [docs/LICOES.md](docs/LICOES.md) | Armadilhas encontradas pelo caminho e como foram resolvidas. |
 | [android-app/LEIA-ME.md](android-app/LEIA-ME.md) | Gerar, assinar e instalar o APK. |
-| [backend/ALTO-MEDIDAS.md](backend/ALTO-MEDIDAS.md) | Integração com o app parceiro. |
+| [backend/ALTO-MEDIDAS.md](backend/ALTO-MEDIDAS.md) | Integração com o app parceiro (só da retífica original). |
 | [backend/WHATSAPP-API.md](backend/WHATSAPP-API.md) | Envio do orçamento pela API oficial do WhatsApp (pronto, desligado). |
 | [backend/SCHEMA-STARTUP.md](backend/SCHEMA-STARTUP.md) | Medição do custo do `hbm2ddl` na subida e alternativas. |
 | [CONTEXTO.md](CONTEXTO.md) | Estado atual e regras de trabalho, para retomar o projeto. |
@@ -171,7 +171,7 @@ Registradas de propósito, com o motivo:
 - **Zero-downtime front-end rewrite:** a vanilla JS single-file app was migrated to Angular in six phases, running side by side at `/novo/` until approved on real phones, with a transition service worker that moves cached clients to the new app.
 - **Native Android voice plugin** (Java `SpeechRecognizer`, segmented sessions) to fix word cuts in the browser's speech API.
 - **Live demo:** open the app and tap *Abrir demonstração*: you get your own isolated company with fictitious data, deleted after 2 hours.
-- **Tests:** 197 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 626 front-end tests with Vitest, run by GitHub Actions on every push.
+- **Tests:** 198 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 626 front-end tests with Vitest, run by GitHub Actions on every push.
 
 ## Autor
 
