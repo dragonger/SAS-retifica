@@ -659,6 +659,27 @@ describe('PedidoForm', () => {
     });
   });
 
+  describe('pedido finalizado', () => {
+    it('não abre o formulário: mostra que não pode ser editado (o servidor também recusa)', async () => {
+      f = await montarFormulario({ id: '12', pedido: { ...PEDIDO_12, finalizado: true } });
+      expect(f.html.querySelector('form')).toBeNull();
+      expect(textoDe(f.html)).toContain('Este pedido já foi finalizado e não pode mais ser editado.');
+    });
+
+    it('finalizado em outro aparelho durante a edição: o 409 mostra a mensagem do servidor e não sai da tela', async () => {
+      f = await montarFormulario({ id: '12' });
+      await avancar(3);
+      await clicar(botao(f.html, 'Salvar'));
+      f.http.expectOne({ method: 'PUT', url: '/api/pedidos/12' })
+        .flush({ erro: 'Este pedido já foi finalizado e não pode mais ser editado.' }, { status: 409, statusText: 'Conflict' });
+      await esperar(f.fixture);
+      expect(toast()).toBe('Este pedido já foi finalizado e não pode mais ser editado.');
+      expect(toastErro()).toBe(true);
+      expect(f.navegar).not.toHaveBeenCalled();
+      expect(botao(f.html, 'Salvar').disabled).toBe(false);
+    });
+  });
+
   describe('editar pedido', () => {
     beforeEach(async () => { f = await montarFormulario({ id: '12' }); });
 

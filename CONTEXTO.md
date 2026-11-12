@@ -27,7 +27,7 @@ Ponto de partida para quem retoma o projeto (pessoa ou assistente). Este arquivo
 - **Ditar o pedido por voz** (IA com perguntas de esclarecimento): **ligado** em produção (`ANTHROPIC_API_KEY` configurada no Railway). Haiku 5.5, 100 ditados por empresa por dia e 300 no total, só em pedido novo. Ver [backend/DITADO.md](backend/DITADO.md).
 - **Login automático**: ativo e mantido (decisão do dono em 2026-10-17). Ver [docs/SAAS.md](docs/SAAS.md#login-automático).
 - **Desktop JavaFX**: não compila desde a Fase 1b; será remodelado depois (decisão do dono em 2026-10-17), então não é prioridade agora.
-- **Testes**: 190 testes no backend (JUnit) e 621 no front (vitest), cobrindo isolamento, dinheiro, sessão, pedidos, PDF, WhatsApp, Alto Medidas, contratos da API e ditado; ver [backend/TESTES.md](backend/TESTES.md). Falta só desempenho (N+1), a lista de valores aceitos do `HIBERNATE_HBM2DDL` e o ponta a ponta do PWA.
+- **Testes**: 192 testes no backend (JUnit) e 623 no front (vitest), cobrindo isolamento, dinheiro, sessão, pedidos, PDF, WhatsApp, Alto Medidas, contratos da API e ditado; ver [backend/TESTES.md](backend/TESTES.md). Falta só desempenho (N+1), a lista de valores aceitos do `HIBERNATE_HBM2DDL` e o ponta a ponta do PWA.
 
 ## Regras de trabalho
 

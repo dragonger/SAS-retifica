@@ -9,6 +9,7 @@ import org.hibernate.Hibernate;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.LockModeType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,6 +153,16 @@ public class PedidoRepository {
     public <R> R atualizar(Long id, Long empresaId, Long clienteId, List<Long> componenteIds,
                            Consumer<PedidoModel> aplicar, Function<PedidoModel, R> mapear) {
         return emTransacao(em -> {
+            // Trava a linha (SELECT ... FOR UPDATE) e lê o estado atual antes de mexer em qualquer coisa:
+            // um "finalizar" que chegue ao mesmo tempo espera esta transação, e um que já tenha terminado
+            // aparece aqui. Pedido de outra empresa continua virando null (404), nunca 409.
+            PedidoModel travado = travar(em, id, empresaId);
+            if (travado == null) {
+                return null;
+            }
+            if (travado.isFinalizado()) {
+                throw new PedidoFinalizadoException(id);
+            }
             PedidoModel pedido = carregarComItens(em, id, empresaId, false);
             if (pedido == null) {
                 return null;
@@ -179,6 +190,17 @@ public class PedidoRepository {
             em.flush();
             return mapear.apply(pedido);
         });
+    }
+
+    /** O pedido da empresa com a linha travada para escrita até o fim da transação; null se não existe nela. */
+    private PedidoModel travar(EntityManager em, Long id, Long empresaId) {
+        List<PedidoModel> resultado = em.createQuery(
+                        "SELECT p FROM PedidoModel p WHERE p.id = :id AND p.empresa.id = :empresaId", PedidoModel.class)
+                .setParameter("id", id)
+                .setParameter("empresaId", empresaId)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultList();
+        return resultado.isEmpty() ? null : resultado.get(0);
     }
 
     private <R> R emTransacao(Function<EntityManager, R> trabalho) {

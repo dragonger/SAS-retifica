@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ApiService } from '../../core/api.service';
+import { ApiService, ErroApi } from '../../core/api.service';
 import { CacheService } from '../../core/cache.service';
 import { registrarClienteRecente } from '../../core/clientes-recentes';
 import { DialogoService } from '../../core/dialogo.service';
@@ -59,6 +59,8 @@ export class PedidoForm implements ComGuardaSaida {
   protected readonly id = signal<string | null>(null);
   protected readonly pronto = signal(false);
   protected readonly naoEncontrado = signal(false);
+  /** Pedido finalizado não é editável (o servidor também recusa com 409). */
+  protected readonly finalizado = signal(false);
   protected readonly salvando = signal(false);
   protected readonly formulario = viewChild<ElementRef<HTMLFormElement>>('formulario');
 
@@ -118,6 +120,7 @@ export class PedidoForm implements ComGuardaSaida {
     this.linhaBase = '';
     this.pronto.set(false);
     this.naoEncontrado.set(false);
+    this.finalizado.set(false);
     this.id.set(id);
     this.ditadoLigado.set(false);
     this.ditadoAberto.set(false);
@@ -135,6 +138,7 @@ export class PedidoForm implements ComGuardaSaida {
     }
     if (minha !== this.carga || this.destruido) return; // usuário já saiu dessa tela
     if (id && !pedido) { this.naoEncontrado.set(true); return; }
+    if (pedido?.finalizado) { this.finalizado.set(true); return; }
 
     this.estado.iniciar(catalogo, pedido);
     this.selecionarAba('cliente');
@@ -250,9 +254,19 @@ export class PedidoForm implements ComGuardaSaida {
     // Criar pedido pode levar vários segundos (servidor acordando / banco longe): o botão trava para um segundo
     // toque não duplicar o pedido.
     const id = this.id();
-    const salvo = await comOcupado(this.salvando, () => id
-      ? this.api.put<{ id: number }>('/api/pedidos/' + id, body)
-      : this.api.post<{ id: number }>('/api/pedidos', body));
+    let recusado: string | undefined;
+    const salvo = await comOcupado(this.salvando, async () => {
+      try {
+        return await (id
+          ? this.api.put<{ id: number }>('/api/pedidos/' + id, body, { statusSemAviso: [409] })
+          : this.api.post<{ id: number }>('/api/pedidos', body));
+      } catch (e) {
+        // finalizado em outro aparelho enquanto este editava: o servidor recusa com a mensagem certa
+        if (e instanceof ErroApi && e.status === 409) recusado = e.detalhe || 'Este pedido já foi finalizado e não pode mais ser editado.';
+        throw e;
+      }
+    });
+    if (recusado) { this.dialogo.toast(recusado, true); return; }
     if (!salvo) return;
     this.cache.invalidarPedidos();
     this.orcamentos.invalidar(salvo.id);

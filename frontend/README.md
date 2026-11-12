@@ -27,7 +27,7 @@ O `Dockerfile` faz isso sozinho num estágio Node antes do Maven. Fontes, ícone
 ## Testes
 
 ```bash
-npm test -- --watch=false   # vitest, 621 testes
+npm test -- --watch=false   # vitest, 623 testes
 ```
 
 ## Estrutura

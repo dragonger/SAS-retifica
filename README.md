@@ -6,7 +6,7 @@ Sistema web e mobile usado **em produção, todos os dias**, pela Retífica Dih 
 ![Spring Boot 4.1](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
 ![Angular 22](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
-![Testes](https://img.shields.io/badge/testes-190%20backend%20%7C%20621%20front-2E7D32)
+![Testes](https://img.shields.io/badge/testes-192%20backend%20%7C%20623%20front-2E7D32)
 
 > **English summary** at the [end of this page](#english-summary).
 
@@ -39,7 +39,7 @@ Sistema web e mobile usado **em produção, todos os dias**, pela Retífica Dih 
 
 **Infraestrutura enxuta.** Backend no Railway com Postgres gerenciado no Neon. Um cron liga e desliga o backend no horário da oficina, e um proxy pequeno o acorda sob demanda fora do horário. A imagem Docker é multi-estágio (Node para o front, Maven para o backend, JRE enxuta no final). ([docs/PRODUCAO.md](docs/PRODUCAO.md))
 
-**Testes que protegem dados reais.** Os testes de integração sobem o Spring contra um Postgres descartável e **abortam se o ambiente apontar para outro banco**. Integrações externas (IA e WhatsApp) são testadas contra servidores falsos locais. ([backend/TESTES.md](backend/TESTES.md))
+**Testes que protegem dados reais.** Os testes de integração sobem o Spring contra um Postgres descartável e **abortam se o ambiente apontar para outro banco**. Integrações externas (IA e WhatsApp) são testadas contra servidores falsos locais. Regras de negócio valem no servidor, não só na tela: pedido finalizado, por exemplo, não aceita edição pela API (409), com a linha travada no banco para um "finalizar" simultâneo não escapar. ([backend/TESTES.md](backend/TESTES.md))
 
 ## Arquitetura
 
@@ -108,9 +108,9 @@ O app abre em `http://localhost:8443`. Para trabalhar só no front com recarga a
 
 ```bash
 docker compose -f docker-compose.test.yml up -d --wait   # Postgres descartável em localhost:5544
-mvn -pl core,backend -am test                             # 190 testes do backend
+mvn -pl core,backend -am test                             # 192 testes do backend
 docker compose -f docker-compose.test.yml down
-(cd frontend && npm test -- --watch=false)                # 621 testes do front
+(cd frontend && npm test -- --watch=false)                # 623 testes do front
 ```
 
 O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
@@ -139,7 +139,6 @@ O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
 Registradas de propósito, com o motivo:
 
 - **Login automático ligado.** Hoje só uma empresa usa o sistema, então o app entra sozinho como o usuário dela. A tela de login, o JWT e o isolamento por empresa já existem e estão testados. Para desligar: uma constante no front e a remoção do endpoint de auto-login no backend, com o passo a passo em [docs/SAAS.md](docs/SAAS.md#login-automático).
-- **Edição de pedido finalizado** é bloqueada na tela, mas ainda não no servidor.
 - **O módulo desktop** (JavaFX) é o app original e não acompanha o modelo atual. Está fora do build.
 
 ## Cuidados para quem for mexer
@@ -156,7 +155,7 @@ Registradas de propósito, com o motivo:
 - **Voice dictation with an LLM, kept on a short leash:** Claude Haiku turns a spoken order into structured data using only the company's catalog. Every returned ID is validated server-side, the model asks clarifying questions when something is ambiguous, and nothing is saved without human review.
 - **Zero-downtime front-end rewrite:** a vanilla JS single-file app was migrated to Angular in six phases, running side by side at `/novo/` until approved on real phones, with a transition service worker that moves cached clients to the new app.
 - **Native Android voice plugin** (Java `SpeechRecognizer`, segmented sessions) to fix word cuts in the browser's speech API.
-- **Tests:** 190 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 621 front-end tests with Vitest.
+- **Tests:** 192 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 623 front-end tests with Vitest.
 
 ## Autor
 
