@@ -55,6 +55,7 @@ Detalhes do proxy: [railway-wake-proxy/LEIA-ME.txt](../railway-wake-proxy/LEIA-M
 |---|---|---|---|
 | `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` | sim | Postgres local do `docker-compose.yml` | Conexão com o Neon. |
 | `JWT_SECRET` | sim | gera um arquivo local | Chave de assinatura dos tokens (Base64, 32 bytes ou mais). Trocar derruba todas as sessões. |
+| `REDEFINIR_SENHA_EMAIL` + `REDEFINIR_SENHA` | não | vazias | Recuperação de acesso: na subida, grava essa senha para o usuário desse e-mail (mínimo 6 caracteres; recusa usuário de demonstração; a senha não vai para o log). **Apague as duas depois de entrar**, senão toda subida volta a gravar a mesma senha. |
 | `DEMO_HABILITADA` | não | ligada | `false` desliga o botão "Abrir demonstração" (o servidor responde 503). |
 | `DEMO_LIMPEZA_MS` | não | `600000` | Intervalo da limpeza das demonstrações vencidas. |
 | `SSL_ENABLED` | sim (`false`) | `true` | O Railway termina o HTTPS na borda; o app escuta HTTP por dentro. |
