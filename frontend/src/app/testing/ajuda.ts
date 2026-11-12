@@ -8,7 +8,8 @@ import { authInterceptor } from '../core/auth.interceptor';
 /** HttpClient com o interceptor real (ErroApi, toasts) e backend de teste, mais um roteador vazio. */
 export function provedoresDeTela(): (Provider | EnvironmentProviders)[] {
   return [
-    provideRouter([]),
+    // o 401 leva a /login (auth.interceptor): a rota precisa existir para a navegação não falhar fora do teste
+    provideRouter([{ path: 'login', children: [] }]),
     provideHttpClient(withInterceptors([authInterceptor])),
     provideHttpClientTesting(),
   ];

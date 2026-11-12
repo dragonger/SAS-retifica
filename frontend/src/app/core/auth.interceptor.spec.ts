@@ -1,6 +1,7 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { ApiService } from './api.service';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService, CHAVE_AUTH, CHAVE_LOGO } from './auth.service';
@@ -15,7 +16,11 @@ describe('authInterceptor', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting()],
+      providers: [
+        provideRouter([{ path: 'login', children: [] }]),
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+      ],
     });
     api = TestBed.inject(ApiService);
     http = TestBed.inject(HttpTestingController);
