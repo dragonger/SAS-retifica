@@ -89,6 +89,8 @@
                         <DATABASE_PASSWORD>retificas_teste</DATABASE_PASSWORD>
                         <JWT_SECRET>dGVzdGUtc2ludGV0aWNvLXNlbS12YWxvci1yZWFsLTMyYnl0ZXM=</JWT_SECRET>
                         <SSL_ENABLED>false</SSL_ENABLED>
+                        <!-- sem reserva de demonstrações montando em segundo plano durante os testes; DemoTest liga quando precisa -->
+                        <DEMO_RESERVA>0</DEMO_RESERVA>
                         <WHATSAPP_TOKEN></WHATSAPP_TOKEN>
                         <WHATSAPP_PHONE_NUMBER_ID></WHATSAPP_PHONE_NUMBER_ID>
                         <ALTO_MEDIDAS_PAGAMENTO_URL></ALTO_MEDIDAS_PAGAMENTO_URL>
