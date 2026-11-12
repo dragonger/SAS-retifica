@@ -35,7 +35,7 @@ celular / computador                       backend (Railway)                    
 
 | Variável | Padrão | O que é |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | — (desligado) | Chave da API. Sem ela o ditado fica desligado. |
+| `ANTHROPIC_API_KEY` | — (sem a chave, o recurso fica desligado) | Chave da API. Em produção ela está configurada; sem ela o ditado fica desligado. |
 | `DITADO_MODELO` | `claude-haiku-5-5` | Modelo usado. Subir para um mais capaz (por exemplo `claude-sonnet-5-5`) custa mais por ditado. |
 | `DITADO_EFFORT` | `low` | Quanto a IA "pensa": `low`, `medium`, `high`, `xhigh` ou `max`. |
 | `DITADO_LIMITE_DIA` | `100` | Ditados por empresa por dia. |

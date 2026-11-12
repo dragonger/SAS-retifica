@@ -39,7 +39,7 @@ Variáveis de ambiente (service retifica-wake-proxy no Railway):
   todo serviço (nem aparece em `railway variable list` por ser
   reservada), e o Spring usa ela (`server.port=${PORT:8443}`) — 8443 só
   vale quando não tem PORT nenhuma, o que nunca é o caso em produção no
-  Railway. (Zerei bastante tempo tentando debugar "rede privada não
+  Railway. (Perdeu-se bastante tempo tentando debugar "rede privada não
   funciona" quando na verdade era só a porta errada — a rede privada
   sempre funcionou normal.)
 - BACKEND_HEALTH_PATH (default /health) — o proxy só considera o backend

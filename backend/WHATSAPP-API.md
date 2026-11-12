@@ -55,11 +55,11 @@ Modelo: {{3}}
 Qualquer dúvida é só responder esta mensagem.
 ```
 
-- `{{1}}`: primeiro nome do cliente (ex.: Hudson)
-- `{{2}}`: número do orçamento (ex.: 0137)
+- `{{1}}`: primeiro nome do cliente (ex.: Cliente Exemplo)
+- `{{2}}`: número do orçamento (ex.: 0001)
 - `{{3}}`: modelo, o mesmo "Modelo" do PDF (ex.: Motor Tracker 2.0 Gasolina)
 
-Pra aprovação a Meta pede exemplos. Use Hudson / 0137 / Motor Tracker 2.0
+Pra aprovação a Meta pede exemplos. Use Cliente Exemplo / 0001 / Motor Tracker 2.0
 Gasolina e um PDF de orçamento qualquer como exemplo do documento. Pode trocar
 o texto fixo à vontade, desde que as três variáveis continuem com esse
 significado e nessa ordem. Mudou o nome ou o idioma do modelo? Ajuste as
@@ -74,7 +74,7 @@ variáveis opcionais abaixo.
 | `WHATSAPP_TEMPLATE_NAME` | não | `orcamento` | nome do modelo |
 | `WHATSAPP_TEMPLATE_LANG` | não | `pt_BR` | idioma do modelo |
 | `WHATSAPP_API_VERSION` | não | `v23.0` | versão da Graph API |
-| `WHATSAPP_GRAPH_URL` | não | `https://graph.facebook.com` | endereço base da Graph API (serve para apontar para um servidor falso em testes; nenhum teste usa hoje) |
+| `WHATSAPP_GRAPH_URL` | não | `https://graph.facebook.com` | endereço base da Graph API (serve para apontar para um servidor falso em testes; o `WhatsAppEnvioTest` usa essa variável) |
 
 O token é segredo. Configure pelo painel do Railway (Variables do serviço
 retifica-backend), nunca em arquivo do repositório. Salvar a variável reinicia
@@ -99,9 +99,9 @@ Erros comuns, que o app mostra na tela:
 
 ## Custo
 
-Cobrança por mensagem entregue. Utilidade no Brasil sai por cerca de
-R$ 0,04–0,05 por orçamento enviado. A partir de 1º/10/2026 a Meta também passa
-a cobrar respostas dentro da janela de 24h, no mesmo valor de utilidade.
+A Meta cobra por conversa de template, e os valores e as regras (inclusive para
+respostas dentro da janela de 24h) mudam com o tempo. Conferir a tabela atual de
+preços da Meta antes de ligar.
 
 ## Onde está no código
 

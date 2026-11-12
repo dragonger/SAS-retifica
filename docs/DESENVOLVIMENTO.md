@@ -2,8 +2,8 @@
 
 ## Requisitos
 
-- **JDK 21 ou mais novo.** O projeto compila com `maven.compiler.release=21`, então uma JDK mais nova (a da máquina do Miguel é a 26) faz cross-compilation sem precisar da 21.
-- **Maven.** Não precisa estar no PATH. Na máquina do Miguel ele não está; usa-se o Maven embutido do IntelliJ, cujo caminho muda com as atualizações da IDE:
+- **JDK 21 ou mais novo.** O projeto compila com `maven.compiler.release=21`, então uma JDK mais nova (a da máquina de desenvolvimento é a 26) faz cross-compilation sem precisar da 21.
+- **Maven.** Não precisa estar no PATH. Na máquina de desenvolvimento ele não está; usa-se o Maven embutido do IntelliJ, cujo caminho muda com as atualizações da IDE:
   ```
   C:\Program Files\JetBrains\IntelliJ IDEA <versão>\plugins\maven-plugin\lib\maven3\bin\mvn.cmd
   ```
