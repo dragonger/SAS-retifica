@@ -4,7 +4,11 @@
   <div class="empty">Carregando...</div>
 } @else {
   <form #formulario novalidate (submit)="salvar($event)" (input)="agendarRascunho()" (change)="agendarRascunho()" (click)="agendarRascunho()">
-    <!-- TODO fase 4: barraDitado ("Ditar pedido"), antes da dica; ver a API obterAtual/aplicar/cadastrarCliente/irParaAba/ordemAbas no PedidoForm -->
+    @if (ditadoLigado()) {
+      <div style="margin-bottom:12px">
+        <button type="button" class="btn btn-secondary btn-block" style="gap:8px" (click)="abrirDitado()"><app-icone-microfone />Ditar pedido</button>
+      </div>
+    }
     <div style="font-size:12px;opacity:.6;padding:2px 2px 0">Só o cliente é obrigatório — dá pra completar o resto depois.</div>
 
     <!-- as 4 etapas ficam montadas o tempo todo, só alternando "hidden": trocar de etapa destruindo e reconstruindo deixava a troca lenta -->
@@ -23,4 +27,7 @@
       <button type="button" class="btn btn-ghost" (click)="cancelar()">Cancelar</button>
     </div>
   </form>
+  @if (ditadoAberto()) {
+    <app-ditado-overlay [contexto]="contextoDitado" (fechou)="ditadoAberto.set(false)" />
+  }
 }

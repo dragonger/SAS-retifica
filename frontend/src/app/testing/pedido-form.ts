@@ -64,6 +64,8 @@ export interface OpcoesFormulario {
   antes?: () => void;
   /** Roda depois de o TestBed estar configurado e antes de a tela abrir (marcar o rascunho a retomar, por exemplo). */
   preparar?: () => void;
+  /** O servidor tem o ditado ligado (GET /api/ditado/status)? Padrão: não. Só é perguntado em pedido novo. */
+  ditado?: boolean;
   /** Responde ao aviso "Você tem um pedido incompleto..." (se aparecer) antes de seguir. */
   resposta?: 'continuar' | 'descartar';
 }
@@ -88,6 +90,10 @@ export async function montarFormulario(opcoes: OpcoesFormulario = {}) {
   for (const path of CATALOGO_PATHS) http.expectOne(path).flush(CATALOGOS[path]);
   if (opcoes.id) http.expectOne('/api/pedidos/' + opcoes.id).flush('pedido' in opcoes ? (opcoes.pedido ?? null) : PEDIDO_12);
   await esperar(fixture);
+  if (!opcoes.id) {
+    http.expectOne('/api/ditado/status').flush({ habilitado: !!opcoes.ditado, usosRestantesHoje: 100 });
+    await esperar(fixture);
+  }
   if (opcoes.resposta && dialogo.dialogos().length) {
     dialogo.dialogos().at(-1)!.responder(opcoes.resposta);
     await esperar(fixture);
