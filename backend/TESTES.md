@@ -1,6 +1,6 @@
 # Testes do backend
 
-Testes automatizados do backend (201 testes em JUnit hoje; os 626 do front estao mais abaixo): isolamento entre empresas, regras de dinheiro, sessao,
+Testes automatizados do backend (203 testes em JUnit hoje; os 626 do front estao mais abaixo): isolamento entre empresas, regras de dinheiro, sessao,
 integracoes, PDF, contratos da API e o ditado do pedido. Eles rodam contra um **Postgres descartavel local**, nunca contra o banco de producao.
 
 ## Como rodar
@@ -38,6 +38,7 @@ O build da imagem Docker continua com `-DskipTests`.
 | `MesDeReferenciaTest` | Mes do filtro da tela do parceiro (Alto Medidas) pelo relogio de Brasilia (virada do mes e do ano), formatos de data e fallbacks. |
 | `AltoMedidasRegrasTest` | Entrada idempotente que nunca desmarca o pago da DIH; validacoes (400); total devido (polimento, abatimento, nao pago, repassado); total geral igual em qualquer filtro de mes; pagamento (400/404/409, idempotente, pendente de sincronia). Totais conferidos por diferenca. |
 | `SessaoEIntegracoesDesligadasTest` | Header `X-Auth-Refresh` (renova perto de expirar, mantem a empresa); com Alto Medidas sem chave a entrada da 503; WhatsApp sem token fica desligado e o envio da 503 sem tentar a rede. |
+| `DemoReservaTest` | Reserva de demonstracoes: o clique entrega a demonstracao ja montada (mesmo id, token de 2 horas), as datas dos pedidos de uma reserva montada dias antes voltam para hoje, a reposicao repoe uma so (sem duplicar) e a limpeza nao apaga reserva. |
 | `DemoTest` | Demonstração: empresa nova e isolada com dados fictícios, token de 2 horas que não renova, cada clique uma empresa nova, nada vaza entre a demonstração e uma empresa real, ditado/WhatsApp/troca de senha bloqueados (403), limite de 5 por endereço por hora (429) e a limpeza que apaga só a demonstração vencida, com todos os dados, e nunca uma empresa real (nem com prazo preenchido). |
 | `RedefinicaoDeSenhaTest` | Recuperacao de acesso pelas variaveis `REDEFINIR_SENHA_EMAIL`/`REDEFINIR_SENHA`: grava a senha nova (e-mail normalizado como no login) e a antiga deixa de valer; sem as variaveis nada muda; recusa senha curta, e-mail desconhecido e usuario de demonstracao. |
 | `PedidoRegrasTest` | Pedido pela API: sincronizacao de itens (repetidos, prefixo estavel, troca no meio, descricao vazia, peca sem quantidade, categoria), totais gravados e recalculados, tipo de desconto/categoria/status desconhecidos, limites de texto (255/2000) e valores negativos, finalizar idempotente (carimbo exato no banco), encerrados por mes, dashboard, situacao atrasado/finalizado, cascade e orphanRemoval, tabela legada `pedido_categoria`, 409 ao apagar cliente/componente em uso, validacao dos cadastros e catalogos, PDF e `/health`. Cada teste usa uma empresa propria. **Pedido finalizado nao aceita edicao** (PUT responde 409 e nada muda; outra empresa continua recebendo 404, sem saber que o pedido existe). |

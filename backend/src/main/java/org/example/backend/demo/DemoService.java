@@ -18,6 +18,9 @@ import org.example.model.UsuarioModel;
 import org.example.repository.EmpresaDemoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -41,6 +44,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Demonstração para visitantes (recrutadores, curiosos): cada clique em "Abrir demonstração" cria uma
@@ -53,6 +59,11 @@ import java.util.UUID;
  * <p>Limites contra abuso (em memória; o backend roda numa instância só): no máximo {@link #MAX_ATIVAS}
  * demonstrações ao mesmo tempo, {@link #MAX_POR_IP_HORA} por endereço por hora e {@link #MAX_POR_DIA} por dia.
  * {@code DEMO_HABILITADA=false} no ambiente desliga a demonstração.
+ *
+ * <p><b>Reserva:</b> montar os dados leva centenas de acessos ao banco (dezenas de segundos com o banco em
+ * outra região). Por isso ficam {@code DEMO_RESERVA} demonstrações (padrão 2) já montadas e sem visitante;
+ * o clique só pega uma delas ({@link EmpresaDemoRepository#reivindicarReserva}) e a reposição roda em
+ * segundo plano. Com a reserva vazia, monta na hora, como antes.
  */
 @Service
 public class DemoService {
@@ -89,9 +100,21 @@ public class DemoService {
     private LocalDate diaDoContador;
     private int criadasHoje;
 
+    private final int tamanhoReserva;
+    private final Object entrega = new Object();
+    private final Object reposicao = new Object();
+    private final AtomicBoolean reposicaoAgendada = new AtomicBoolean();
+    private final ExecutorService segundoPlano = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "demo-reserva");
+        t.setDaemon(true);
+        return t;
+    });
+
     public DemoService(JwtUtil jwtUtil, PasswordEncoder passwordEncoder, ClienteController clientes,
                        CabecoteController componentes, ServicoCatalogoController servicosCatalogo,
-                       PecaCatalogoController pecasCatalogo, PedidoController pedidos) {
+                       PecaCatalogoController pecasCatalogo, PedidoController pedidos,
+                       @Value("${DEMO_RESERVA:2}") int tamanhoReserva) {
+        this.tamanhoReserva = Math.max(0, tamanhoReserva);
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.clientes = clientes;
@@ -116,6 +139,27 @@ public class DemoService {
         }
 
         LocalDateTime expira = agora.plus(DURACAO);
+        UsuarioModel usuario;
+        synchronized (entrega) { // uma entrega por vez: dois cliques juntos nunca pegam a mesma reserva
+            usuario = tamanhoReserva == 0 ? null : repositorio.reivindicarReserva(agora, expira);
+        }
+        if (usuario != null) {
+            log.info("Demonstração entregue da reserva: empresa {} (vence {})", usuario.getEmpresa().getId(), expira);
+        } else {
+            usuario = montar(expira, agora.toLocalDate());
+            log.info("Demonstração criada na hora: empresa {} (vence {})", usuario.getEmpresa().getId(), expira);
+        }
+        reporReservaEmSegundoPlano();
+
+        LoginResponseDTO dto = new LoginResponseDTO();
+        dto.token = jwtUtil.gerarDemo(usuario, expira.atZone(FUSO).toInstant());
+        dto.nome = usuario.getNome();
+        dto.empresaNome = NOME_EMPRESA;
+        return new Resultado(dto, 200, null);
+    }
+
+    /** Cria a empresa e o usuário e monta os dados fictícios. {@code expira} nulo = vai para a reserva. */
+    private UsuarioModel montar(LocalDateTime expira, LocalDate hoje) {
         byte[] senhaDescartavel = new byte[24];
         aleatorio.nextBytes(senhaDescartavel); // ninguém sabe a senha: só entra pelo token
         UsuarioModel usuario = repositorio.criar(NOME_EMPRESA, expira,
@@ -123,18 +167,41 @@ public class DemoService {
                 passwordEncoder.encode(Base64.getEncoder().encodeToString(senhaDescartavel)));
         Long empresaId = usuario.getEmpresa().getId();
         try {
-            comoDemo(usuario, () -> semear(agora.toLocalDate()));
+            comoDemo(usuario, () -> semear(hoje));
         } catch (RuntimeException e) {
             repositorio.apagar(empresaId);
             throw e;
         }
-        log.info("Demonstração criada: empresa {} (vence {})", empresaId, expira);
+        return usuario;
+    }
 
-        LoginResponseDTO dto = new LoginResponseDTO();
-        dto.token = jwtUtil.gerarDemo(usuario, expira.atZone(FUSO).toInstant());
-        dto.nome = usuario.getNome();
-        dto.empresaNome = NOME_EMPRESA;
-        return new Resultado(dto, 200, null);
+    /** Completa a reserva até {@code DEMO_RESERVA}. Uma reposição por vez; quem chamar junto espera e não duplica. */
+    public void reporReserva() {
+        if (!habilitada) return;
+        synchronized (reposicao) {
+            while (repositorio.contarReservas() < tamanhoReserva) {
+                UsuarioModel u = montar(null, LocalDate.now(relogio));
+                log.info("Demonstração montada para a reserva: empresa {}", u.getEmpresa().getId());
+            }
+        }
+    }
+
+    private void reporReservaEmSegundoPlano() {
+        if (!habilitada || tamanhoReserva == 0 || !reposicaoAgendada.compareAndSet(false, true)) return;
+        segundoPlano.execute(() -> {
+            reposicaoAgendada.set(false);
+            try {
+                reporReserva();
+            } catch (RuntimeException e) {
+                log.warn("Não consegui repor a reserva de demonstrações: {}", e.getMessage());
+            }
+        });
+    }
+
+    /** Ao subir (o servidor dorme fora do horário), já deixa a reserva pronta para o primeiro visitante. */
+    @EventListener(ApplicationReadyEvent.class)
+    public void aoSubir() {
+        reporReservaEmSegundoPlano();
     }
 
     /** Apaga as demonstrações vencidas. A cada 10 minutos, e um minuto depois de o backend subir. */
@@ -149,6 +216,7 @@ public class DemoService {
             }
         }
         if (apagadas > 0) log.info("Demonstrações vencidas apagadas: {}", apagadas);
+        reporReservaEmSegundoPlano(); // se uma reposição falhou antes, tenta de novo
         return apagadas;
     }
 

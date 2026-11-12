@@ -20,13 +20,17 @@ import java.util.List;
  */
 public class EmpresaDemoRepository {
 
-    /** Cria a empresa de demonstração e o usuário dela numa transação só. */
+    /**
+     * Cria a empresa de demonstração e o usuário dela numa transação só. Com {@code expiraEm} nulo ela fica
+     * na RESERVA: pronta, mas sem visitante, até {@link #reivindicarReserva} entregá-la a alguém.
+     */
     public UsuarioModel criar(String nomeEmpresa, LocalDateTime expiraEm, String email, String nomeUsuario, String senhaHash) {
         return emTransacao(em -> {
             EmpresaModel empresa = new EmpresaModel();
             empresa.setNome(nomeEmpresa);
             empresa.setDemo(true);
             empresa.setDemoExpiraEm(expiraEm);
+            empresa.setCriadaEm(LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo")));
             empresa.setTelefone("(31) 3333-0000");
             empresa.setInstagram("@retificaexemplo");
             empresa.setSlogan("Demonstração com dados fictícios");
@@ -39,6 +43,56 @@ public class EmpresaDemoRepository {
             usuario.setEmpresa(empresa);
             em.persist(usuario);
             return usuario;
+        });
+    }
+
+    /** Quantas demonstrações estão na reserva (prontas, sem visitante). */
+    public long contarReservas() {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            return em.createQuery("SELECT COUNT(e) FROM EmpresaModel e WHERE e.demo = true AND e.demoExpiraEm IS NULL", Long.class)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Entrega ao visitante uma demonstração da reserva: marca o prazo e traz as datas dos pedidos para hoje
+     * (a reserva pode ter sido montada dias antes, e "atrasado", "entrega hoje" e Encerrados dependem da
+     * data). Poucos acessos ao banco, então responde rápido mesmo com o banco longe. Devolve o usuário da
+     * demonstração, ou null se a reserva estiver vazia.
+     */
+    public UsuarioModel reivindicarReserva(LocalDateTime agora, LocalDateTime expiraEm) {
+        return emTransacao(em -> {
+            List<EmpresaModel> reserva = em.createQuery(
+                            "SELECT e FROM EmpresaModel e WHERE e.demo = true AND e.demoExpiraEm IS NULL ORDER BY e.id", EmpresaModel.class)
+                    .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                    .setMaxResults(1)
+                    .getResultList();
+            if (reserva.isEmpty()) {
+                return null;
+            }
+            EmpresaModel empresa = reserva.get(0);
+            long dias = empresa.getCriadaEm() == null ? 0
+                    : java.time.temporal.ChronoUnit.DAYS.between(empresa.getCriadaEm().toLocalDate(), agora.toLocalDate());
+            if (dias != 0) {
+                List<PedidoModel> pedidos = em.createQuery("SELECT p FROM PedidoModel p WHERE p.empresa.id = :e", PedidoModel.class)
+                        .setParameter("e", empresa.getId())
+                        .getResultList();
+                for (PedidoModel p : pedidos) {
+                    if (p.getDatCriacao() != null) p.setDatCriacao(p.getDatCriacao().plusDays(dias));
+                    if (p.getDatOrcamento() != null) p.setDatOrcamento(p.getDatOrcamento().plusDays(dias));
+                    if (p.getDatEntregaEstimada() != null) p.setDatEntregaEstimada(p.getDatEntregaEstimada().plusDays(dias));
+                    if (p.getDatEntrega() != null) p.setDatEntrega(p.getDatEntrega().plusDays(dias));
+                }
+            }
+            empresa.setDemoExpiraEm(expiraEm);
+            empresa.setCriadaEm(agora);
+            return em.createQuery("SELECT u FROM UsuarioModel u JOIN FETCH u.empresa WHERE u.empresa.id = :e", UsuarioModel.class)
+                    .setParameter("e", empresa.getId())
+                    .setMaxResults(1)
+                    .getSingleResult();
         });
     }
 
