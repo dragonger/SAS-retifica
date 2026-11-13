@@ -1,6 +1,6 @@
 # Testes do backend
 
-Testes automatizados do backend (218 testes em JUnit hoje; os 629 do front estao mais abaixo): isolamento entre empresas, regras de dinheiro, sessao,
+Testes automatizados do backend (218 testes em JUnit hoje; os 640 do front estao mais abaixo): isolamento entre empresas, regras de dinheiro, sessao,
 integracoes, PDF, contratos da API e o ditado do pedido. Eles rodam contra um **Postgres descartavel local**, nunca contra o banco de producao.
 
 ## Como rodar
