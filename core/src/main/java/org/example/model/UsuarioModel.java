@@ -22,6 +22,15 @@ public class UsuarioModel {
 
     private LocalDateTime criadoEm;
 
+    /**
+     * Versão das sessões do usuário: vai no token (claim "sv") e é conferida a cada requisição. Subir
+     * o número invalida todos os tokens já emitidos (troca de senha, "sair dos outros aparelhos").
+     * Nulo = 0 (usuários de antes da coluna). {@code updatable = false}: o merge de um UsuarioModel
+     * carregado antes nunca desfaz uma revogação; só {@code UsuarioRepository.revogarSessoes} muda o valor.
+     */
+    @Column(updatable = false)
+    private Integer sessaoVersao;
+
     public UsuarioModel() {
     }
 
@@ -71,6 +80,14 @@ public class UsuarioModel {
 
     public void setCriadoEm(LocalDateTime criadoEm) {
         this.criadoEm = criadoEm;
+    }
+
+    public int getSessaoVersao() {
+        return sessaoVersao == null ? 0 : sessaoVersao;
+    }
+
+    public void setSessaoVersao(Integer sessaoVersao) {
+        this.sessaoVersao = sessaoVersao;
     }
 
     @Override

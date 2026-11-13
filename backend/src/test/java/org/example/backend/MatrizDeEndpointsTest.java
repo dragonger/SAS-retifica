@@ -54,7 +54,7 @@ class MatrizDeEndpointsTest {
             "GET /api/pedidos/{id}", "POST /api/pedidos", "PUT /api/pedidos/{id}",
             "POST /api/pedidos/{id}/finalizar", "DELETE /api/pedidos/{id}", "GET /api/pedidos/{id}/pdf",
             "POST /api/pedidos/{id}/whatsapp", "GET /api/whatsapp/status",
-            "PUT /api/usuario/senha",
+            "PUT /api/usuario/senha", "POST /api/usuario/sair-dos-outros-aparelhos",
             "GET /api/ditado/status", "POST /api/ditado", "POST /api/ditado/{id}/respostas");
 
     @LocalServerPort int porta;

@@ -37,9 +37,12 @@ public class JwtUtil {
         this.chave = Keys.hmacShaKeyFor(carregarOuGerarChave());
     }
 
+    /** Claim com a versão das sessões do usuário (ver {@link SessaoService}). */
+    static final String CLAIM_VERSAO = "sv";
+
     public String gerar(UsuarioModel usuario) {
         return gerar(usuario.getEmail(), usuario.getId(),
-                usuario.getEmpresa() != null ? usuario.getEmpresa().getId() : null);
+                usuario.getEmpresa() != null ? usuario.getEmpresa().getId() : null, usuario.getSessaoVersao());
     }
 
     /**
@@ -52,6 +55,7 @@ public class JwtUtil {
                 .claim("usuarioId", usuario.getId())
                 .claim("empresaId", usuario.getEmpresa().getId())
                 .claim("demo", true)
+                .claim(CLAIM_VERSAO, usuario.getSessaoVersao())
                 .issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(expiraEm))
                 .signWith(chave)
@@ -63,17 +67,32 @@ public class JwtUtil {
         return Boolean.TRUE.equals(claims.get("demo", Boolean.class));
     }
 
-    /** Renova um token válido (mesmo usuário/empresa, nova expiração) — mantém a sessão ativa sem exigir login de novo. */
-    public String renovar(Claims claims) {
-        return gerar(claims.getSubject(), claims.get("usuarioId", Long.class), claims.get("empresaId", Long.class));
+    /**
+     * Versão das sessões gravada no token. Token sem a claim (emitido antes da revogação existir) vale
+     * como versão 0: continua funcionando até a primeira revogação do usuário.
+     */
+    public static int versaoDe(Claims claims) {
+        Object v = claims.get(CLAIM_VERSAO);
+        return v instanceof Number n ? n.intValue() : 0;
     }
 
-    private String gerar(String email, Long usuarioId, Long empresaId) {
+    /**
+     * Renova um token válido (mesmo usuário/empresa/versão, nova expiração) — mantém a sessão ativa
+     * sem exigir login de novo. Só é chamado depois de o filtro conferir a versão, então nunca
+     * ressuscita um token revogado.
+     */
+    public String renovar(Claims claims) {
+        return gerar(claims.getSubject(), claims.get("usuarioId", Long.class), claims.get("empresaId", Long.class),
+                versaoDe(claims));
+    }
+
+    private String gerar(String email, Long usuarioId, Long empresaId, int versao) {
         Instant agora = Instant.now();
         return Jwts.builder()
                 .subject(email)
                 .claim("usuarioId", usuarioId)
                 .claim("empresaId", empresaId)
+                .claim(CLAIM_VERSAO, versao)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(EXPIRACAO_DIAS, ChronoUnit.DAYS)))
                 .signWith(chave)

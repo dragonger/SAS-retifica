@@ -41,9 +41,26 @@ class SessaoEIntegracoesDesligadasTest {
         return Keys.hmacShaKeyFor(Base64.getDecoder().decode(System.getenv("JWT_SECRET").trim()));
     }
 
+    /**
+     * Usuário sintético da empresa 1 (a dona da integração): o token precisa ser de um usuário que
+     * existe, senão a revogação de sessão (SessaoService) recusa. Criado uma vez por classe.
+     */
+    private static Long usuarioId;
+
+    private static long usuarioDaEmpresa1() {
+        if (usuarioId == null) {
+            org.example.model.UsuarioModel u = new org.example.model.UsuarioModel();
+            u.setEmail("sessao-" + java.util.UUID.randomUUID().toString().substring(0, 8) + "@example.test");
+            u.setNome("Usuario Teste Sessao");
+            u.setEmpresa(new org.example.repository.EmpresaRepository().buscarPorId(1L));
+            usuarioId = new org.example.repository.UsuarioRepository().salvar(u).getId();
+        }
+        return usuarioId;
+    }
+
     private static String tokenQueExpiraEm(long dias) {
         Instant agora = Instant.now();
-        return Jwts.builder().subject("sessao@example.test").claim("usuarioId", 5L).claim("empresaId", 1L)
+        return Jwts.builder().subject("sessao@example.test").claim("usuarioId", usuarioDaEmpresa1()).claim("empresaId", 1L)
                 .issuedAt(Date.from(agora.minus(1, ChronoUnit.DAYS)))
                 .expiration(Date.from(agora.plus(dias, ChronoUnit.DAYS)))
                 .signWith(chave()).compact();
@@ -58,7 +75,7 @@ class SessaoEIntegracoesDesligadasTest {
         Claims c = jwtUtil.validar(novo);
         assertThat(c).isNotNull();
         assertThat(c.get("empresaId", Long.class)).as("a renovacao mantem a empresa").isEqualTo(1L);
-        assertThat(c.get("usuarioId", Long.class)).isEqualTo(5L);
+        assertThat(c.get("usuarioId", Long.class)).isEqualTo(usuarioDaEmpresa1());
         assertThat(c.getExpiration()).isAfter(Date.from(Instant.now().plus(25, ChronoUnit.DAYS)));
     }
 

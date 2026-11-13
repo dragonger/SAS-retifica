@@ -24,6 +24,7 @@ export class TrocarSenha implements ComGuardaSaida {
   protected readonly atual = signal('');
   protected readonly nova = signal('');
   protected readonly confirma = signal('');
+  protected readonly desconectando = signal(false);
 
   protected readonly valorDe = valorDe;
 
@@ -51,8 +52,27 @@ export class TrocarSenha implements ComGuardaSaida {
       // sem status (sem conexão): o interceptor já avisou
       return;
     }
-    this.dialogo.toast('Senha alterada.');
+    // o servidor derruba as outras sessões e manda o token novo deste aparelho no X-Auth-Refresh (o interceptor guarda)
+    this.dialogo.toast('Senha alterada. Os outros aparelhos vão precisar entrar de novo.');
     this.atual.set(''); this.nova.set(''); this.confirma.set(''); // nada a perder: a guarda deixa sair
     void this.router.navigateByUrl('/inicio');
+  }
+
+  /** Desconecta todos os outros aparelhos; este continua (token novo no X-Auth-Refresh). */
+  protected async sairDosOutros(): Promise<void> {
+    if (this.desconectando()) return;
+    const ok = await this.dialogo.confirmar(
+      'Desconectar todos os outros aparelhos? Quem estiver usando o sistema neles vai precisar entrar de novo com a senha.',
+      'Desconectar');
+    if (!ok) return;
+    this.desconectando.set(true);
+    try {
+      await this.api.post('/api/usuario/sair-dos-outros-aparelhos', undefined, { statusSemAviso: ERROS_PROPRIOS });
+      this.dialogo.toast('Os outros aparelhos foram desconectados.');
+    } catch (e) {
+      if ((e as { status?: number })?.status) this.dialogo.toast('Não foi possível desconectar os outros aparelhos.', true);
+    } finally {
+      this.desconectando.set(false);
+    }
   }
 }

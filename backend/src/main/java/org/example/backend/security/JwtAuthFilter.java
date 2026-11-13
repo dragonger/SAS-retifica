@@ -15,18 +15,21 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Lê o header "Authorization: Bearer <token>", valida via {@link JwtUtil} e,
- * se válido, popula o contexto de segurança com um {@link RetificaPrincipal}.
- * Se ausente/inválido, segue sem autenticar — o SecurityConfig decide se a
- * rota exige autenticação.
+ * Lê o header "Authorization: Bearer <token>", valida via {@link JwtUtil},
+ * confere se a sessão não foi revogada ({@link SessaoService}) e, se tudo
+ * certo, popula o contexto de segurança com um {@link RetificaPrincipal}.
+ * Se ausente/inválido/revogado, segue sem autenticar — o SecurityConfig
+ * decide se a rota exige autenticação (e responde 401).
  */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final SessaoService sessoes;
 
-    public JwtAuthFilter(JwtUtil jwtUtil) {
+    public JwtAuthFilter(JwtUtil jwtUtil, SessaoService sessoes) {
         this.jwtUtil = jwtUtil;
+        this.sessoes = sessoes;
     }
 
     @Override
@@ -35,7 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             Claims claims = jwtUtil.validar(header.substring(7));
-            if (claims != null) {
+            if (claims != null && sessoes.valida(claims.get("usuarioId", Long.class), JwtUtil.versaoDe(claims))) {
                 RetificaPrincipal principal = new RetificaPrincipal(
                         claims.get("usuarioId", Long.class),
                         claims.get("empresaId", Long.class),
