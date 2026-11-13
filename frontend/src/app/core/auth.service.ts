@@ -40,6 +40,20 @@ export function claimsDoToken(token: string | undefined | null): ClaimsToken | n
   }
 }
 
+/** True só quando os dois tokens são legíveis e o `novo` é mais velho que o `atual`. */
+function tokenMaisVelho(novo: string, atual: string | undefined): boolean {
+  const cn = claimsDoToken(novo);
+  const ca = claimsDoToken(atual);
+  if (!cn || !ca) return false;
+  const svNovo = Number(cn['sv'] ?? 0);
+  const svAtual = Number(ca['sv'] ?? 0);
+  if (svNovo !== svAtual) return svNovo < svAtual;
+  const iatNovo = Number(cn['iat']);
+  const iatAtual = Number(ca['iat']);
+  if (!Number.isFinite(iatNovo) || !Number.isFinite(iatAtual)) return false;
+  return iatNovo < iatAtual;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   /** Sessão atual (espelho reativo do localStorage). */
@@ -65,10 +79,17 @@ export class AuthService {
     this.sessao.set(auth);
   }
 
-  /** Troca só o token (cabeçalho X-Auth-Refresh), mantendo o resto da sessão. */
+  /**
+   * Troca só o token (cabeçalho X-Auth-Refresh), mantendo o resto da sessão.
+   * Não troca por um token mais velho (resposta atrasada de antes da revogação):
+   * compara a versão da sessão (claim "sv", ausente = 0) e, se igual, o "iat".
+   * Se algum dos dois não puder ser lido, grava como antes.
+   */
   gravarToken(token: string): void {
     const auth = this.lerAuth();
-    if (auth) this.gravar({ ...auth, token });
+    if (!auth) return;
+    if (tokenMaisVelho(token, auth.token)) return;
+    this.gravar({ ...auth, token });
   }
 
   /** Atualiza o nome da empresa guardado na sessão (vem de GET /api/empresa). */

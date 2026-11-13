@@ -469,8 +469,8 @@ h2.login-marca { margin: 0; font-family: var(--font-heading); font-weight: 600; 
   border-top: 1px solid var(--color-text);
 }
 .login-erro { padding: 0; text-align: left; color: var(--color-danger); font-size: 14px; font-weight: 500; }
-.login-demo { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--color-divider); display: flex; flex-direction: column; gap: 10px; }
-.login-demo p { margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--color-neutral-700); }
+.login-demo, .outros-aparelhos { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--color-divider); display: flex; flex-direction: column; gap: 10px; }
+.login-demo p, .outros-aparelhos p { margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--color-neutral-700); }
 
 /* — ditar o pedido (overlay acima do formulário e abaixo do diálogo "escolher", que usa z-index 30) — */
 .ditado-overlay {
@@ -510,3 +510,7 @@ h2.login-marca { margin: 0; font-family: var(--font-heading); font-weight: 600; 
 .ditado-ouvindo.ditado-aguarde { color: var(--color-latao); font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Tela Trocar senha: seção "Outros aparelhos" (divisória e texto compartilhados com .login-demo) */
+.outros-aparelhos { margin-top: 32px; }
+.outros-aparelhos .secao { margin: 0; }

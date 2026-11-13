@@ -112,4 +112,64 @@ describe('authInterceptor', () => {
     http.expectOne('/api/x').flush('falhou', { status: 500, statusText: 'Server Error' });
     await expect(p).rejects.toMatchObject({ status: 500, detalhe: undefined });
   });
+
+  describe('401 com o token trocado em voo', () => {
+    it('repete uma vez com o token novo e não desloga', async () => {
+      const p = api.get('/api/x');
+      const req = http.expectOne('/api/x');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer tk1');
+      auth.gravarToken('tk2');
+      req.flush({}, { status: 401, statusText: 'Unauthorized' });
+
+      const repetida = http.expectOne('/api/x');
+      expect(repetida.request.headers.get('Authorization')).toBe('Bearer tk2');
+      repetida.flush({ ok: true });
+      expect(await p).toEqual({ ok: true });
+      expect(auth.lerAuth()?.token).toBe('tk2');
+      expect(dialogo.toastVisivel()).toBe(false);
+    });
+
+    it('com o mesmo token desloga como antes, sem repetir', async () => {
+      const p = api.get('/api/x');
+      p.catch(() => undefined);
+      http.expectOne('/api/x').flush({}, { status: 401, statusText: 'Unauthorized' });
+      await expect(p).rejects.toMatchObject({ status: 401 });
+      expect(auth.lerAuth()).toBeNull();
+      http.expectNone('/api/x');
+    });
+
+    it('sessão limpa em voo (outro 401 já deslogou) não repete sem token', async () => {
+      const p = api.get('/api/x');
+      p.catch(() => undefined);
+      const req = http.expectOne('/api/x');
+      auth.limpar();
+      req.flush({}, { status: 401, statusText: 'Unauthorized' });
+      await expect(p).rejects.toMatchObject({ status: 401 });
+      expect(auth.lerAuth()).toBeNull();
+      http.expectNone('/api/x');
+    });
+
+    it('repetição que volta 401 desloga', async () => {
+      const p = api.get('/api/x');
+      p.catch(() => undefined);
+      const req = http.expectOne('/api/x');
+      auth.gravarToken('tk2');
+      req.flush({}, { status: 401, statusText: 'Unauthorized' });
+      http.expectOne('/api/x').flush({}, { status: 401, statusText: 'Unauthorized' });
+      await expect(p).rejects.toMatchObject({ status: 401 });
+      expect(auth.lerAuth()).toBeNull();
+      http.expectNone('/api/x');
+    });
+
+    it('ERRO_401_PROPRIO continua sem repetir nem deslogar', async () => {
+      const p = api.get('/api/x', { erro401Proprio: true });
+      p.catch(() => undefined);
+      const req = http.expectOne('/api/x');
+      auth.gravarToken('tk2');
+      req.flush({ erro: 'senha incorreta' }, { status: 401, statusText: 'Unauthorized' });
+      await expect(p).rejects.toMatchObject({ status: 401, detalhe: 'senha incorreta' });
+      expect(auth.lerAuth()?.token).toBe('tk2');
+      http.expectNone('/api/x');
+    });
+  });
 });

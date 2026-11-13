@@ -11,7 +11,8 @@ import { IdentidadeService } from './identidade.service';
 /**
  * Equivalente ao api() do app.js:
  * - Bearer token da sessão;
- * - X-Auth-Refresh: guarda o token renovado;
+ * - X-Auth-Refresh: guarda o token renovado (nunca um mais velho que o atual);
+ * - 401 com o token trocado em voo: repete o pedido uma vez com o token atual;
  * - 401: grava o rascunho da tela, limpa a sessão e vai para #/login (sessão vencida,
  *   ou demonstração que chegou ao fim do prazo);
  * - sem conexão: toast "Sem conexão com o servidor.";
@@ -35,8 +36,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     if (renovado) auth.gravarToken(renovado);
   };
 
-  const executar = (r: HttpRequest<unknown>): Observable<HttpEvent<unknown>> =>
-    next(comToken(r)).pipe(
+  const executar = (r: HttpRequest<unknown>, repetida = false): Observable<HttpEvent<unknown>> => {
+    const enviado = auth.lerAuth()?.token;
+    return next(comToken(r)).pipe(
       tap(ev => { if (ev instanceof HttpResponse) renovarToken(ev.headers); }),
       catchError((e: unknown) => {
         if (!(e instanceof HttpErrorResponse)) return throwError(() => e);
@@ -49,6 +51,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         if (e.status === 401 && r.context.get(ERRO_401_PROPRIO)) {
           // o chamador trata este 401 (ex.: senha atual incorreta): a sessão continua valendo
           return throwError(() => new ErroApi(401, detalheDoCorpo(e.error), r.url));
+        }
+
+        const atual = auth.lerAuth()?.token;
+        if (e.status === 401 && !repetida && atual && atual !== enviado) {
+          // o token foi trocado enquanto o pedido estava em voo (ex.: revogação já
+          // refletida neste aparelho): repete UMA vez com o token atual, sem deslogar
+          return executar(r, true);
         }
 
         if (e.status === 401) {
@@ -67,6 +76,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => new ErroApi(e.status, detalheDoCorpo(e.error), r.url));
       }),
     );
+  };
 
   return executar(req);
 };
