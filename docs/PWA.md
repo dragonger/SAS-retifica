@@ -15,7 +15,7 @@ backend/src/main/resources/static/     build do Angular (gerado, ignorado pelo g
 └── .well-known/assetlinks.json        único arquivo versionado ali: liga o APK ao domínio
 ```
 
-O visual é o "blueprint" do design compartilhado pelo dono (fontes Barlow e Barlow Condensed, tema claro, cantos em L nos cards). O ícone do PWA/APK é fixo, da plataforma, e não muda por empresa.
+O visual é o tema "bancada" (desde 2026-11-12, em `frontend/src/base.css`): fundo cinza frio com superfícies brancas, azul de traçagem como cor de ação, botões principais com cantos chanfrados, painel escuro com régua graduada nos contadores do Início e do Dashboard, e uma cor por situação do pedido (etiqueta e borda da ficha). As fontes continuam Barlow e Barlow Condensed. Substituiu o "blueprint" (cinza, cantos em L nos cards). O ícone do PWA/APK é fixo, da plataforma, e não muda por empresa.
 
 ## Navegação
 

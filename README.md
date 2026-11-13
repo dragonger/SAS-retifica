@@ -31,7 +31,7 @@ Dá para criar e editar pedidos, gerar o orçamento em PDF, ver o dashboard e mu
 | **Ditado com IA: a dúvida** | **Ditado com IA: a conferência** | **Dashboard do mês** |
 | <img src="docs/imagens/ditado-pergunta.png" width="230" alt="A IA pergunta qual cliente e qual a data de entrega"> | <img src="docs/imagens/ditado-conferencia.png" width="230" alt="Conferência do que a IA entendeu antes de preencher o formulário"> | <img src="docs/imagens/dashboard.png" width="230" alt="Dashboard com total do mês e pedidos encerrados"> |
 
-<sub>Capturas feitas com dados fictícios, num ambiente local.</sub>
+<sub>Capturas feitas na demonstração, com dados fictícios. Como o ditado fica desligado nela, as duas telas do ditado usam respostas simuladas da IA.</sub>
 
 - **Pedidos**: cliente, componentes do motor, serviços e peças por categoria, desconto, prazo e situação. O formulário guarda rascunho no aparelho e avisa antes de perder dados.
 - **Orçamento em PDF** gerado no servidor, compartilhado direto do celular (Web Share API). A foto do componente entra como última página do próprio PDF, montada no aparelho.
