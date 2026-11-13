@@ -1,7 +1,7 @@
 # Front em Angular
 
 O PWA da retífica em Angular 22 (standalone, zoneless, rotas por hash), servido pelo Spring Boot **na raiz**.
-Substituiu o `app.js` em JavaScript puro em 2026-11-12 (fase 6), com o mesmo visual (`src/base.css` é o antigo `style.css`),
+Substituiu o `app.js` em JavaScript puro em 2026-11-12 (fase 6), na época com o mesmo visual; desde então `src/base.css` ganhou o tema "bancada" (ver [PWA.md](../docs/PWA.md)),
 as mesmas rotas e as mesmas chaves do `localStorage`. Estado anterior à troca: tag `antes-fase6`.
 
 ## Rodar em desenvolvimento
