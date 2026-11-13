@@ -1,6 +1,7 @@
 package org.example.backend;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.example.backend.security.JwtUtil;
 import org.example.model.UsuarioModel;
 import org.example.repository.UsuarioRepository;
@@ -10,6 +11,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.crypto.SecretKey;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.Date;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -129,5 +135,66 @@ class SessaoRevogavelTest {
         inexistente.setEmail("inexistente@example.test");
         assertThat(new UsuarioRepository().versaoDaSessao(inexistente.getId())).isNull();
         assertThat(statusCom(jwtUtil.gerar(inexistente))).isEqualTo(401);
+    }
+
+    /** Token do Cenario, na versão atual, mas perto de expirar (dentro da janela de renovação do filtro). */
+    private String tokenNaJanelaDeRenovacao(Cenario c) {
+        var claims = jwtUtil.validar(c.token);
+        SecretKey chave = Keys.hmacShaKeyFor(Base64.getDecoder().decode(System.getenv("JWT_SECRET").trim()));
+        Instant agora = Instant.now();
+        return Jwts.builder().subject(c.email)
+                .claim("usuarioId", claims.get("usuarioId", Long.class)).claim("empresaId", c.empresaId)
+                .claim("sv", JwtUtil.versaoDe(claims))
+                .issuedAt(Date.from(agora.minus(27, ChronoUnit.DAYS)))
+                .expiration(Date.from(agora.plus(3, ChronoUnit.DAYS)))
+                .signWith(chave).compact();
+    }
+
+    @Test
+    void sairDosOutrosComTokenNaJanelaDeRenovacaoDevolveUmSoHeaderEValido() {
+        Cenario c = Cenario.nova("JanelaSair", jwtUtil, encoder);
+        String perto = tokenNaJanelaDeRenovacao(c);
+        assertThat(api().get("/api/clientes", perto).cabecalho("X-Auth-Refresh"))
+                .as("pre-condicao: o filtro renova este token").isNotNull();
+
+        var r = api().postSemCorpo("/api/usuario/sair-dos-outros-aparelhos", perto);
+        assertThat(r.status()).isEqualTo(204);
+        var valores = r.cabecalhos("X-Auth-Refresh");
+        assertThat(valores).as("exatamente um valor, o do controller").hasSize(1);
+        assertThat(valores.get(0)).doesNotContain(",");
+        assertThat(statusCom(valores.get(0))).isEqualTo(200);
+        assertThat(statusCom(perto)).isEqualTo(401);
+    }
+
+    @Test
+    void trocarSenhaComTokenNaJanelaDeRenovacaoDevolveUmSoHeaderEValido() {
+        Cenario c = Cenario.nova("JanelaSenha", jwtUtil, encoder);
+        String perto = tokenNaJanelaDeRenovacao(c);
+        assertThat(api().get("/api/clientes", perto).cabecalho("X-Auth-Refresh"))
+                .as("pre-condicao: o filtro renova este token").isNotNull();
+
+        var r = api().put("/api/usuario/senha", perto, Map.of("senhaAtual", c.senha, "novaSenha", "senha-nova-456"));
+        assertThat(r.status()).isEqualTo(204);
+        var valores = r.cabecalhos("X-Auth-Refresh");
+        assertThat(valores).as("exatamente um valor, o do controller").hasSize(1);
+        assertThat(statusCom(valores.get(0))).isEqualTo(200);
+        assertThat(statusCom(perto)).isEqualTo(401);
+    }
+
+    @Test
+    void trocarSenhaSobeAVersaoEMudaOHashJuntos() {
+        Cenario c = Cenario.nova("Atomica", jwtUtil, encoder);
+        var repo = new UsuarioRepository();
+        long id = jwtUtil.validar(c.token).get("usuarioId", Long.class);
+        assertThat(repo.versaoDaSessao(id)).isZero();
+        String hashAntigo = repo.buscarPorId(id).getSenhaHash();
+
+        var r = api().put("/api/usuario/senha", c.token, Map.of("senhaAtual", c.senha, "novaSenha", "senha-nova-789"));
+        assertThat(r.status()).isEqualTo(204);
+
+        assertThat(repo.versaoDaSessao(id)).as("versão subiu uma vez").isEqualTo(1);
+        assertThat(repo.buscarPorId(id).getSenhaHash()).isNotEqualTo(hashAntigo);
+        assertThat(statusCom(loginNovo(c, "senha-nova-789"))).as("login com a senha nova").isEqualTo(200);
+        assertThat(jwtUtil.validar(r.cabecalho("X-Auth-Refresh")).get("sv", Integer.class)).isEqualTo(1);
     }
 }

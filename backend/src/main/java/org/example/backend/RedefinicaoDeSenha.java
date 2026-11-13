@@ -71,9 +71,7 @@ public class RedefinicaoDeSenha implements CommandLineRunner {
         if (hashAtual != null && passwordEncoder.matches(senha, hashAtual)) {
             return Resultado.REDEFINIDA; // já é essa a senha (subida repetida com as variáveis): não derruba ninguém de novo
         }
-        usuario.setSenhaHash(passwordEncoder.encode(senha));
-        repo.salvar(usuario);
-        sessoes.revogarTodas(usuario.getId()); // quem entrou com a senha antiga sai
+        sessoes.trocarSenha(usuario.getId(), passwordEncoder.encode(senha)); // senha e sessões na mesma transação
         return Resultado.REDEFINIDA;
     }
 }

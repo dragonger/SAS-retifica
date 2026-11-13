@@ -16,6 +16,10 @@ final class ApiTeste {
     static final JsonMapper JSON = JsonMapper.builder().build();
 
     record Resposta(int status, String corpo, byte[] bytes, java.net.http.HttpHeaders headers) {
+        java.util.List<String> cabecalhos(String nome) {
+            return headers.allValues(nome);
+        }
+
         String cabecalho(String nome) {
             return headers.firstValue(nome).orElse(null);
         }
