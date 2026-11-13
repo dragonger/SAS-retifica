@@ -1,6 +1,7 @@
 package org.example.backend;
 
 import org.example.model.UsuarioModel;
+import org.example.backend.security.SessaoService;
 import org.example.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -11,7 +12,8 @@ import org.springframework.stereotype.Component;
  * Recuperação de acesso pelo dono do servidor: com {@code REDEFINIR_SENHA_EMAIL} e {@code REDEFINIR_SENHA}
  * definidas (no painel do Railway), a subida grava essa senha para o usuário daquele e-mail. Só quem tem acesso
  * às variáveis do servidor consegue usar, então não abre nenhuma porta pela internet. A senha nunca vai para o
- * log. Depois de entrar, apague as duas variáveis: enquanto existirem, toda subida volta a gravar essa senha.
+ * log. Redefinir derruba todas as sessões abertas do usuário. Depois de entrar, apague as duas variáveis:
+ * enquanto existirem, toda subida confere a senha (se já for a mesma, não muda nada nem derruba ninguém).
  */
 @Component
 public class RedefinicaoDeSenha implements CommandLineRunner {
@@ -21,13 +23,15 @@ public class RedefinicaoDeSenha implements CommandLineRunner {
     enum Resultado { NADA_A_FAZER, REDEFINIDA, USUARIO_NAO_ENCONTRADO, SENHA_CURTA, USUARIO_DE_DEMONSTRACAO }
 
     private final PasswordEncoder passwordEncoder;
+    private final SessaoService sessoes;
     private final String email;
     private final String senha;
 
-    public RedefinicaoDeSenha(PasswordEncoder passwordEncoder,
+    public RedefinicaoDeSenha(PasswordEncoder passwordEncoder, SessaoService sessoes,
                               @Value("${REDEFINIR_SENHA_EMAIL:}") String email,
                               @Value("${REDEFINIR_SENHA:}") String senha) {
         this.passwordEncoder = passwordEncoder;
+        this.sessoes = sessoes;
         this.email = email;
         this.senha = senha;
     }
@@ -63,8 +67,13 @@ public class RedefinicaoDeSenha implements CommandLineRunner {
         if (usuario.getEmpresa() != null && usuario.getEmpresa().isDemo()) {
             return Resultado.USUARIO_DE_DEMONSTRACAO;
         }
+        String hashAtual = usuario.getSenhaHash();
+        if (hashAtual != null && passwordEncoder.matches(senha, hashAtual)) {
+            return Resultado.REDEFINIDA; // já é essa a senha (subida repetida com as variáveis): não derruba ninguém de novo
+        }
         usuario.setSenhaHash(passwordEncoder.encode(senha));
         repo.salvar(usuario);
+        sessoes.revogarTodas(usuario.getId()); // quem entrou com a senha antiga sai
         return Resultado.REDEFINIDA;
     }
 }

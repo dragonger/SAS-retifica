@@ -9,3 +9,11 @@
   <input class="input" type="password" placeholder="Confirmar nova senha" autocomplete="new-password" [value]="confirma()" (input)="confirma.set(valorDe($event))">
 </app-campo>
 <button type="button" class="btn btn-primary btn-block" (click)="salvar()">Salvar</button>
+
+<section class="outros-aparelhos" aria-labelledby="tituloOutros" style="margin-top:32px;padding-top:22px;border-top:1px solid var(--color-divider);display:flex;flex-direction:column;gap:10px">
+  <h3 id="tituloOutros" class="secao" style="margin:0">Outros aparelhos</h3>
+  <p style="margin:0;font-size:14.5px;line-height:1.45;color:var(--color-neutral-700)">
+    Perdeu o celular ou entrou num aparelho que não é seu? Desconecte todos os outros. Este continua conectado.
+  </p>
+  <button type="button" class="btn btn-secondary btn-block" [disabled]="desconectando()" (click)="sairDosOutros()">Sair dos outros aparelhos</button>
+</section>

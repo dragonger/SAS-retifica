@@ -61,7 +61,7 @@ describe('TrocarSenha', () => {
     http.expectNone('/api/usuario/senha');
   });
 
-  it('sucesso: PUT com {senhaAtual, novaSenha} e token, "Senha alterada.", limpa os campos e vai ao Início', async () => {
+  it('sucesso: PUT com {senhaAtual, novaSenha} e token, avisa dos outros aparelhos, limpa os campos e vai ao Início', async () => {
     const { fixture, html, comp } = criar();
     preencher(html, 'antiga', 'nova123', 'nova123');
     expect(comp.guardaSaida().sujo()).toBe(true);
@@ -73,10 +73,48 @@ describe('TrocarSenha', () => {
     expect(req.request.headers.get('Authorization')).toBe('Bearer tk');
     req.flush(null, { status: 204, statusText: 'No Content' });
     await esperar(fixture);
-    expect(dialogo.toastTexto()).toBe('Senha alterada.');
+    expect(dialogo.toastTexto()).toBe('Senha alterada. Os outros aparelhos vão precisar entrar de novo.');
     expect(dialogo.toastErro()).toBe(false);
     expect(comp.guardaSaida().sujo()).toBe(false);
     expect(navegar).toHaveBeenCalledWith('/inicio');
+  });
+
+  it('a troca derruba os outros aparelhos: o token novo do X-Auth-Refresh fica guardado neste', async () => {
+    const { fixture, html } = criar();
+    preencher(html, 'antiga', 'nova123', 'nova123');
+    salvar(html).click();
+    await esperar(fixture);
+    http.expectOne('/api/usuario/senha').flush(null, { status: 204, statusText: 'No Content', headers: { 'X-Auth-Refresh': 'tk-novo' } });
+    await esperar(fixture);
+    expect(JSON.parse(localStorage.getItem(CHAVE_AUTH)!).token).toBe('tk-novo');
+  });
+
+  const sairDosOutros = (html: HTMLElement) =>
+    [...html.querySelectorAll('button')].find(b => b.textContent?.trim() === 'Sair dos outros aparelhos') as HTMLButtonElement;
+
+  it('"Sair dos outros aparelhos": confirma, POST, guarda o token novo e avisa', async () => {
+    const { fixture, html } = criar();
+    sairDosOutros(html).click();
+    await esperar(fixture);
+    const d = dialogo.dialogos().at(-1)!;
+    expect(d.mensagem).toContain('outros aparelhos');
+    d.responder(true);
+    await esperar(fixture);
+    const req = http.expectOne('/api/usuario/sair-dos-outros-aparelhos');
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 204, statusText: 'No Content', headers: { 'X-Auth-Refresh': 'tk-novo' } });
+    await esperar(fixture);
+    expect(dialogo.toastTexto()).toBe('Os outros aparelhos foram desconectados.');
+    expect(JSON.parse(localStorage.getItem(CHAVE_AUTH)!).token).toBe('tk-novo');
+  });
+
+  it('"Sair dos outros aparelhos" cancelado: não chama o servidor', async () => {
+    const { fixture, html } = criar();
+    sairDosOutros(html).click();
+    await esperar(fixture);
+    dialogo.dialogos().at(-1)!.responder(false);
+    await esperar(fixture);
+    http.expectNone('/api/usuario/sair-dos-outros-aparelhos');
   });
 
   it('401 = "Senha atual incorreta." sem derrubar a sessão nem refazer o login', async () => {

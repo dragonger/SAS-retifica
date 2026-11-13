@@ -55,7 +55,7 @@ Detalhes do proxy: [railway-wake-proxy/LEIA-ME.txt](../railway-wake-proxy/LEIA-M
 |---|---|---|---|
 | `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` | sim | Postgres local do `docker-compose.yml` | Conexão com o Neon. |
 | `JWT_SECRET` | sim | gera um arquivo local | Chave de assinatura dos tokens (Base64, 32 bytes ou mais). Trocar derruba todas as sessões. |
-| `REDEFINIR_SENHA_EMAIL` + `REDEFINIR_SENHA` | não | vazias | Recuperação de acesso: na subida, grava essa senha para o usuário desse e-mail (mínimo 6 caracteres; recusa usuário de demonstração; a senha não vai para o log). **Apague as duas depois de entrar**, senão toda subida volta a gravar a mesma senha. |
+| `REDEFINIR_SENHA_EMAIL` + `REDEFINIR_SENHA` | não | vazias | Recuperação de acesso: na subida, grava essa senha para o usuário desse e-mail (mínimo 6 caracteres; recusa usuário de demonstração; a senha não vai para o log). Derruba todas as sessões abertas desse usuário. **Apague as duas depois de entrar**: enquanto existirem, toda subida confere a senha (se já for a mesma, não muda nada nem derruba ninguém). |
 | `DEMO_HABILITADA` | não | ligada | `false` desliga o botão "Abrir demonstração" (o servidor responde 503). |
 | `DEMO_RESERVA` | não | `2` | Demonstrações já montadas esperando visitante. O clique entrega uma na hora e a reposição roda em segundo plano; `0` desliga a reserva (monta na hora, uns 30 s com o banco em outra região). |
 | `DEMO_LIMPEZA_MS` | não | `600000` | Intervalo da limpeza das demonstrações vencidas. |

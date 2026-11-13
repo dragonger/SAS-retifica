@@ -54,6 +54,49 @@ public class UsuarioRepository {
         }
     }
 
+    /** Versão atual das sessões do usuário (0 se nunca foram revogadas), ou null se o usuário não existe. */
+    public Integer versaoDaSessao(Long id) {
+        EntityManager em = JPAUtil.getEntityManager();
+        try {
+            return em.createQuery("SELECT COALESCE(u.sessaoVersao, 0) FROM UsuarioModel u WHERE u.id = :id", Integer.class)
+                    .setParameter("id", id)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+        } finally {
+            em.close();
+        }
+    }
+
+    /**
+     * Invalida todos os tokens já emitidos para o usuário (sobe a versão das sessões). Devolve a versão
+     * nova, ou null se o usuário não existe.
+     */
+    public Integer revogarSessoes(Long id) {
+        EntityManager em = JPAUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            int alterados = em.createQuery(
+                            "UPDATE UsuarioModel u SET u.sessaoVersao = COALESCE(u.sessaoVersao, 0) + 1 WHERE u.id = :id")
+                    .setParameter("id", id)
+                    .executeUpdate();
+            Integer nova = alterados == 0 ? null
+                    : em.createQuery("SELECT u.sessaoVersao FROM UsuarioModel u WHERE u.id = :id", Integer.class)
+                            .setParameter("id", id)
+                            .getSingleResult();
+            tx.commit();
+            return nova;
+        } catch (RuntimeException e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
     public long contar() {
         EntityManager em = JPAUtil.getEntityManager();
         try {

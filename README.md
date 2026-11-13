@@ -7,7 +7,7 @@ Sistema web e mobile usado **em produção, todos os dias**, pela Retífica Dih 
 ![Angular 22](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
 [![Testes](https://github.com/dragonger/SAS-retifica/actions/workflows/testes.yml/badge.svg)](https://github.com/dragonger/SAS-retifica/actions/workflows/testes.yml)
-![Testes](https://img.shields.io/badge/testes-203%20backend%20%7C%20626%20front-2E7D32)
+![Testes](https://img.shields.io/badge/testes-210%20backend%20%7C%20629%20front-2E7D32)
 
 > **English summary** at the [end of this page](#english-summary).
 
@@ -123,9 +123,9 @@ O app abre em `http://localhost:8443`. Para entrar, use **Abrir demonstração**
 
 ```bash
 docker compose -f docker-compose.test.yml up -d --wait   # Postgres descartável em localhost:5544
-mvn -pl core,backend -am test                             # 203 testes do backend
+mvn -pl core,backend -am test                             # 210 testes do backend
 docker compose -f docker-compose.test.yml down
-(cd frontend && npm test -- --watch=false)                # 626 testes do front
+(cd frontend && npm test -- --watch=false)                # 629 testes do front
 ```
 
 O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
@@ -153,7 +153,6 @@ O que cada teste garante está em [backend/TESTES.md](backend/TESTES.md).
 
 Registradas de propósito, com o motivo:
 
-- **Sessões não são revogáveis.** Trocar a senha não invalida tokens já emitidos; só trocar o `JWT_SECRET` derruba todas as sessões. O próximo passo é guardar uma versão da sessão por usuário.
 - **O módulo desktop** (JavaFX) é o app original e não acompanha o modelo atual. Está fora do build.
 
 ## Cuidados para quem for mexer
@@ -171,7 +170,7 @@ Registradas de propósito, com o motivo:
 - **Zero-downtime front-end rewrite:** a vanilla JS single-file app was migrated to Angular in six phases, running side by side at `/novo/` until approved on real phones, with a transition service worker that moves cached clients to the new app.
 - **Native Android voice plugin** (Java `SpeechRecognizer`, segmented sessions) to fix word cuts in the browser's speech API.
 - **Live demo:** open the app and tap *Abrir demonstração*: you get your own isolated company with fictitious data, deleted after 2 hours.
-- **Tests:** 203 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 626 front-end tests with Vitest, run by GitHub Actions on every push.
+- **Tests:** 210 backend tests against a disposable PostgreSQL (they refuse to run against any other database), fake servers for the AI and WhatsApp APIs, and 629 front-end tests with Vitest, run by GitHub Actions on every push.
 
 ## Autor
 
