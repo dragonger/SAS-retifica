@@ -10,6 +10,7 @@ import { ComGuardaSaida, GuardaSaida } from '../../core/guarda-saida.service';
 import { OrcamentoCacheService } from '../../core/orcamento-cache.service';
 import { RascunhoService } from '../../core/rascunho.service';
 import { TopoService } from '../../core/topo.service';
+import { moeda } from '../../shared/formatacao';
 import { IconeMicrofone } from '../../shared/icone-microfone';
 import { Cabecote, Categoria, Cliente, ItemCatalogo, PedidoDetalhe } from '../../shared/modelos';
 import { comOcupado } from '../../shared/ocupado';
@@ -36,6 +37,8 @@ export const ATRASO_RASCUNHO_MS = 400;
  * O que é digitado fica guardado como rascunho neste aparelho (mesma chave e formato do app atual) e a saída com
  * dados não salvos pergunta antes (guarda "pedido").
  */
+const NOMES_PASSOS: Record<Aba, string> = { cliente: 'Cliente', pedido: 'Pedido', componentes: 'Componentes', itens: 'Itens' };
+
 @Component({
   selector: 'app-pedido-form',
   templateUrl: './pedido-form.html',
@@ -177,6 +180,13 @@ export class PedidoForm implements ComGuardaSaida {
 
   protected idxAba(): number {
     return ORDEM_ABAS.indexOf(this.estado.aba());
+  }
+
+  protected readonly moeda = moeda;
+
+  /** Nome do passo atual, para o indicador no topo do formulário. */
+  protected nomePasso(): string {
+    return NOMES_PASSOS[this.estado.aba()];
   }
 
   protected ultimaEtapa(): boolean {

@@ -36,7 +36,7 @@ export function linkWhatsApp(telefone: string | null | undefined, texto?: string
   selector: 'app-pedido',
   templateUrl: './pedido.html',
   imports: [TagSituacao],
-  host: { style: 'display: contents' }, // a barra do total é sticky em relação ao <main>
+  host: { class: 'tela-pedido' },
 })
 export class Pedido implements ComGuardaSaida {
   private readonly api = inject(ApiService);
@@ -85,13 +85,18 @@ export class Pedido implements ComGuardaSaida {
   protected readonly moeda = moeda;
   protected readonly telefoneExibicao = telefoneExibicao;
 
+  /** Link tel: com só os dígitos, para ligar com um toque. */
+  protected hrefTelefone(telefone: string | null | undefined): string {
+    return 'tel:' + soDigitos(telefone);
+  }
+
   protected readonly numeroOrcamento = computed(() => String(this.pedido()?.id ?? this.id).padStart(4, '0'));
 
   protected readonly enderecoCliente = computed(() => {
     const c = this.pedido()?.cliente;
     if (!c || !(c.rua || c.municipio)) return null;
     return [c.rua, c.numero].filter(Boolean).join(', ')
-      + (c.bairro ? ' – ' + c.bairro : '')
+      + (c.bairro ? ', ' + c.bairro : '')
       + (c.municipio ? ', ' + c.municipio + (c.uf ? '/' + c.uf : '') : '');
   });
 
@@ -198,7 +203,7 @@ export class Pedido implements ComGuardaSaida {
   protected rotuloItem(itens: ItemPedido[], i: ItemPedido, idx: number, comQuantidade: boolean): string {
     // mesmo nome em dois componentes: mostra de qual é cada um
     const ambiguo = itens.some((o, j) => j !== idx && chaveNome(o.descricao) === chaveNome(i.descricao));
-    const rotulo = i.descricao + (ambiguo && i.categoria ? ' · ' + (ROTULOS_CATEGORIA[i.categoria] || i.categoria) : '');
+    const rotulo = i.descricao + (ambiguo && i.categoria ? ' (' + (ROTULOS_CATEGORIA[i.categoria] || i.categoria) + ')' : '');
     return comQuantidade ? rotulo + ' ×' + i.quantidade : rotulo;
   }
 
@@ -334,7 +339,7 @@ export class Pedido implements ComGuardaSaida {
     const pronto = this.pdfsProntos.get(promessa);
     if (pronto) {
       this.compartilhar.baixarArquivo(pronto, 'orcamento-' + this.numeroOrcamento() + '.pdf');
-      this.dialogo.toast('PDF salvo no aparelho — na conversa, anexe em 📎 › Documento.');
+      this.dialogo.toast('PDF salvo no aparelho. Na conversa, anexe em Anexar, Documento.');
       this.abrirWhatsApp();
       return;
     }

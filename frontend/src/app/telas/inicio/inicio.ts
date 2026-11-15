@@ -58,7 +58,7 @@ export class Inicio {
     return [
       { kicker: 'Em aberto', valor: d.abertos, sub: 'pedidos', variante: 'accent', filtro: 'abertos' },
       { kicker: 'Entregas hoje', valor: d.hoje, sub: 'pedidos', variante: 'neutral', filtro: 'hoje' },
-      { kicker: 'Prontos', valor: d.prontos, sub: 'p/ retirada', variante: 'accent-2', filtro: 'prontos' },
+      { kicker: 'Prontos', valor: d.prontos, sub: 'para retirada', variante: 'accent-2', filtro: 'prontos' },
       { kicker: 'Atrasados', valor: d.atrasados, sub: 'pedidos', variante: 'danger', filtro: 'atrasados' },
     ];
   }

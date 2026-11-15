@@ -23,7 +23,7 @@ describe('Catalogo (menu)', () => {
     return { fixture, html: fixture.nativeElement as HTMLElement };
   }
 
-  const titulos = (html: HTMLElement) => [...html.querySelectorAll('.menu-card-titulo')].map(e => e.textContent);
+  const titulos = (html: HTMLElement) => [...html.querySelectorAll('.catalogo-menu .menu-card-titulo')].map(e => e.textContent);
 
   afterEach(() => http.verify());
 

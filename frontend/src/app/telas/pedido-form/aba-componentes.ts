@@ -33,11 +33,10 @@ const ATRASO_BUSCA_MS = 120;
     </div>
 
     <!-- um valor de serviços + um de peças por categoria, em vez de preço por item -->
-    <div style="display:flex;flex-direction:column;gap:12px">
+    <div class="pilha pilha-12">
       @for (c of cartoes(); track c.nome + ':' + estado.versao()) {
-        <div class="card-destaque elev-md blueprint" style="padding:14px">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-          <div class="card-destaque-titulo" style="margin-bottom:10px">{{ estado.rotuloCategoria(c.nome) }}</div>
+        <div class="card-destaque blueprint">
+          <div class="card-destaque-titulo">{{ estado.rotuloCategoria(c.nome) }}</div>
           <div class="row">
             <app-campo rotulo="Valor serviços">
               <input class="input" type="number" min="0" step="0.01" placeholder="0,00" data-valor="servicos"
@@ -53,13 +52,13 @@ const ATRASO_BUSCA_MS = 120;
     </div>
 
     <div>
-      <div class="empty" style="padding:16px 0" [hidden]="temCategoria()">Marque uma categoria acima pra ver os modelos disponíveis.</div>
+      <div class="empty" [hidden]="temCategoria()">Marque uma categoria acima pra ver os modelos disponíveis.</div>
       <div [hidden]="!temCategoria()">
         <div class="field">
           <label>Adicionar modelo</label>
           <!-- o catálogo de modelos é grande (centenas de motores): a busca filtra a lista antes de abrir o seletor -->
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <input class="input" type="search" placeholder="Buscar modelo (ex.: AP 1.8, Fire, OM 366)..." aria-label="Buscar modelo"
+          <div class="pilha pilha-8">
+            <input class="input" type="search" placeholder="Buscar modelo (ex.: AP 1.8, Fire, OM 366)…" aria-label="Buscar modelo"
                    [appModelo]="textoBusca()" (appModeloChange)="aoDigitarBusca($event)">
             <select class="input" aria-label="Modelo" (change)="modeloSel.set(valorDe($event))">
               <option value="" [selected]="modeloSel() === ''">{{ opcoes().placeholder }}</option>
@@ -74,11 +73,10 @@ const ATRASO_BUSCA_MS = 120;
           </div>
         </div>
         <button type="button" class="btn btn-secondary btn-block" (click)="adicionarModelo()">Adicionar modelo</button>
-        <button type="button" class="btn btn-ghost btn-block" style="gap:8px" (click)="novoAberto.set(!novoAberto())">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Novo modelo
+        <button type="button" class="btn btn-ghost btn-block btn-com-icone" (click)="novoAberto.set(!novoAberto())">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Novo modelo
         </button>
-        <div class="caixa-form blueprint" style="margin-top:10px" [hidden]="!novoAberto()">
-          <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+        <div class="caixa-form blueprint espaco-acima-sm" [hidden]="!novoAberto()">
           <app-campo rotulo="Categoria">
             <select class="input" (change)="novaCategoria.set(valorDe($event))">
               @for (cat of estado.categoriasDeComponente(); track cat) {
@@ -101,7 +99,7 @@ const ATRASO_BUSCA_MS = 120;
         </div>
         <div>
           @if (!estado.componentes().length) {
-            <div style="text-align:center;font-size:13px;opacity:.55;padding:10px 0">Nenhum modelo adicionado ainda</div>
+            <div class="vazio-nota">Nenhum modelo adicionado ainda</div>
           }
           @for (item of estado.componentes(); track item.id; let idx = $index) {
             <div class="item-linha">
@@ -152,7 +150,7 @@ export class AbaComponentes {
       ? (palavras.length
         ? casam.length + (casam.length === 1 ? ' modelo encontrado' : ' modelos encontrados')
         : (casam.length > LIMITE_MODELOS_SEM_BUSCA
-          ? 'Selecione · digite para buscar entre ' + casam.length + ' modelos'
+          ? 'Selecione. Digite para buscar entre ' + casam.length + ' modelos'
           : 'Selecione'))
       : 'Nenhum modelo com esse nome';
     return { casam, placeholder, grupos: agruparPorCategoria(mostrados) };

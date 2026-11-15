@@ -53,16 +53,16 @@ describe('AltoMedidas', () => {
 
   afterEach(() => http.verify());
 
-  it('mostra "Carregando..." até a lista chegar', async () => {
+  it('mostra "Carregando…" até a lista chegar', async () => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: provedoresDeTela() });
     http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(AltoMedidas);
     await esperar(fixture);
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carregando...');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carregando…');
     http.expectOne(ALTO_OS).flush(lista());
     await esperar(fixture);
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Carregando...');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Carregando…');
   });
 
   it('cartão grande com o total geral e a linha do mês quando o mês tem só uma parte', async () => {
@@ -71,7 +71,7 @@ describe('AltoMedidas', () => {
     expect(cartao.textContent).toContain('Você deve ao Daniel');
     expect(cartao.textContent).toContain('R$ 1.500,00');
     expect(cartao.textContent).toContain('2 virabrequins que o cliente já pagou');
-    expect(cartao.textContent).toContain('Em Outubro de 2026: R$ 700,00 (1 virabrequim) · o resto é de outros meses');
+    expect(cartao.textContent).toContain('Em Outubro de 2026: R$ 700,00 (1 virabrequim), o resto é de outros meses');
   });
 
   it('sem diferença entre mês e geral (ou em "todos") não mostra a linha extra', async () => {
@@ -82,16 +82,16 @@ describe('AltoMedidas', () => {
   it('as três listas, na ordem, com subtotal e o mês no título', async () => {
     const { html } = await criar();
     expect(secoes(html)).toEqual([
-      'Pago pelo cliente — a repassar ao Daniel — Outubro de 2026 — R$ 700,00',
-      'Aguardando o cliente pagar — Outubro de 2026 — R$ 800,00',
-      'Já repassado ao Daniel — Outubro de 2026 — R$ 0,00',
+      'Pago pelo cliente, a repassar ao Daniel, Outubro de 2026: R$ 700,00',
+      'Aguardando o cliente pagar, Outubro de 2026: R$ 800,00',
+      'Já repassado ao Daniel, Outubro de 2026: R$ 0,00',
     ]);
     expect(html.textContent).toContain('Nenhum repasse confirmado neste mês.');
   });
 
   it('em "todos os meses" não põe sufixo e usa as mensagens gerais de lista vazia', async () => {
     const { html } = await criar(lista({ mes: 'todos', aRepassar: { total: 0, itens: [] }, aguardando: { total: 0, itens: [] } }));
-    expect(secoes(html)[0]).toBe('Pago pelo cliente — a repassar ao Daniel — R$ 0,00');
+    expect(secoes(html)[0]).toBe('Pago pelo cliente, a repassar ao Daniel: R$ 0,00');
     expect(html.textContent).toContain('Nenhum virabrequim pago aguardando repasse.');
     expect(html.textContent).toContain('Nenhum virabrequim aguardando pagamento.');
     expect(html.textContent).toContain('Nenhum repasse confirmado ainda.');
@@ -105,13 +105,13 @@ describe('AltoMedidas', () => {
     expect(linhas).toHaveLength(4);
     expect(linhas[0].textContent).toContain('OS #1001');
     expect(linhas[0].textContent).toContain('R$ 700,00 (com polimento)');
-    expect(linhas[0].textContent).toContain('Oficina Silva · MWM 4.10 · STD');
+    expect(linhas[0].textContent).toContain('Oficina Silva, MWM 4.10, STD');
     expect(linhas[0].textContent).toContain('Cliente pagou em 25/10/2026');
     expect(linhas[0].querySelector('button')!.textContent?.trim()).toBe('Desfazer');
     expect(linhas[0].textContent).not.toContain('Ainda não avisado');
     expect(linhas[1].textContent).toContain('Finalizado em 20/10/2026');
     expect(linhas[1].querySelector('button')!.textContent?.trim()).toBe('Cliente pagou');
-    expect(linhas[2].textContent).toContain('Ainda não avisado ao Alto Medidas — vai tentar de novo sozinho.');
+    expect(linhas[2].textContent).toContain('Ainda não avisado ao Alto Medidas. Vai tentar de novo sozinho.');
     expect(linhas[3].textContent).toContain('Repassado em 28/10/2026');
     expect(linhas[3].querySelector('button')).toBeNull(); // já repassado: sem ação
   });
@@ -120,7 +120,7 @@ describe('AltoMedidas', () => {
     const { html } = await criar();
     const select = html.querySelector('select') as HTMLSelectElement;
     expect([...select.options].map(o => o.textContent)).toEqual([
-      'Todos os meses', 'Outubro de 2026 · 3 virabrequins', 'Setembro de 2026 · 1 virabrequim',
+      'Todos os meses', 'Outubro de 2026, 3 virabrequins', 'Setembro de 2026, 1 virabrequim',
     ]);
     expect(select.value).toBe('2026-10');
   });
@@ -220,7 +220,7 @@ describe('AltoMedidas', () => {
     fixture.destroy();
     const outra = TestBed.createComponent(AltoMedidas);
     await esperar(outra);
-    expect((outra.nativeElement as HTMLElement).textContent).not.toContain('Carregando...'); // veio do cache
+    expect((outra.nativeElement as HTMLElement).textContent).not.toContain('Carregando…'); // veio do cache
     http.expectOne(ALTO_OS).flush(lista());
   });
 

@@ -30,5 +30,5 @@ export class CartaoDevidoAoDaniel {
   protected readonly estilo = computed(() =>
     'padding:' + (this.grande() ? '18px' : '14px') + (this.tocavel() ? ';cursor:pointer' : ''));
   protected readonly detalhe = computed(() =>
-    textoQuantidade(this.quantidade()) + ' que o cliente já pagou' + (this.tocavel() ? ' · toque para conferir' : ''));
+    textoQuantidade(this.quantidade()) + ' que o cliente já pagou' + (this.tocavel() ? '. Toque para conferir' : ''));
 }

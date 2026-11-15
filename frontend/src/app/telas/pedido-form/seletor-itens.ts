@@ -22,22 +22,22 @@ import { EstadoPedidoForm } from './estado-pedido-form';
   imports: [Campo, ModeloEntrada],
   host: { style: 'display: contents' },
   template: `
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="pilha pilha-12">
+      <div class="pilha pilha-14">
         @if (!disponiveis().length) {
-          <div class="empty" style="padding:12px 0">Nenhum item disponível pra adicionar.</div>
+          <div class="empty">Nenhum item disponível pra adicionar.</div>
         }
         @for (g of grupos(); track g.rotulo) {
           <div class="grupo-categoria">
             <h3>{{ g.rotulo }}</h3>
             @for (item of g.itens; track item.id) {
-              <label class="item-linha" style="cursor:pointer">
-                <div style="display:flex;align-items:center;gap:10px">
+              <label class="item-linha">
+                <div class="item-marcar">
                   <input type="checkbox" [checked]="marcados().has(item.id)" (change)="alternar(item.id)">
                   <span>{{ item.nome }}</span>
                 </div>
                 @if (comQuantidade()) {
-                  <input class="input" type="number" min="1" step="1" style="width:56px" [hidden]="!marcados().has(item.id)"
+                  <input class="input input-qtd" type="number" min="1" step="1" aria-label="Quantidade" [hidden]="!marcados().has(item.id)"
                          [appModelo]="quantidadeDe(item.id)" (appModeloChange)="definirQuantidade(item.id, $event)">
                 }
               </label>
@@ -46,11 +46,10 @@ import { EstadoPedidoForm } from './estado-pedido-form';
         }
       </div>
       <button type="button" class="btn btn-secondary btn-block" (click)="adicionarSelecionados()">Adicionar selecionados</button>
-      <button type="button" class="btn btn-ghost btn-block" style="gap:8px" (click)="alternarNovo()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>{{ rotuloNovo() }}
+      <button type="button" class="btn btn-ghost btn-block btn-com-icone" (click)="alternarNovo()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>{{ rotuloNovo() }}
       </button>
-      <div class="caixa-form blueprint" style="margin-top:10px" [hidden]="!novoAberto()">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <div class="caixa-form blueprint espaco-acima-sm" [hidden]="!novoAberto()">
         <app-campo rotulo="Categoria">
           <select class="input" (change)="novaCategoria.set(valorDe($event))">
             @for (c of categoriasNovo(); track c.nome) {
@@ -74,7 +73,7 @@ import { EstadoPedidoForm } from './estado-pedido-form';
     <!-- o que já está no pedido -->
     <div>
       @if (!lista().length) {
-        <div style="text-align:center;font-size:13px;opacity:.55;padding:20px 0">Nenhum item adicionado ainda</div>
+        <div class="vazio-nota">Nenhum item adicionado ainda</div>
       }
       @for (item of lista(); track $index; let idx = $index) {
         <div class="item-linha">

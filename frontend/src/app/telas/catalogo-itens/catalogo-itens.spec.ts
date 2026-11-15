@@ -54,7 +54,7 @@ describe('CatalogoItens', () => {
 
   it('mostra a lista agrupada por categoria com o valor', async () => {
     const { html } = await criar();
-    expect(html.querySelector('.titulo')?.textContent).toBe('Serviços');
+    expect(html.querySelector('.titulo')).toBeNull(); // o cabeçalho já diz o nome da tela
     expect(html.querySelector('.subtitulo')?.textContent).toBe('2 cadastrados');
     expect([...html.querySelectorAll('.grupo-categoria h3')].map(h => h.textContent)).toEqual(['Cabeçote', 'Bloco']);
     expect(html.querySelectorAll('.grupo-categoria .linha').length).toBe(2);
@@ -64,7 +64,7 @@ describe('CatalogoItens', () => {
 
   it('peças: título, lista vazia e mensagem', async () => {
     const { html } = await criar('pecas');
-    expect(html.querySelector('.titulo')?.textContent).toBe('Peças');
+    expect(html.querySelector('.titulo')).toBeNull();
     expect(html.querySelector('.empty')?.textContent).toBe('Nada cadastrado ainda.');
     expect(botao(html, 'Nova peça')).toBeTruthy();
   });

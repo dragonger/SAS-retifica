@@ -29,7 +29,7 @@ describe('rascunho do pedido (funções puras)', () => {
   });
 
   it('título: cliente e descrição; sem cliente "Sem cliente"', () => {
-    expect(tituloDoRascunho(PARTES.cliente, ' Retífica ')).toBe('Maria · Retífica');
+    expect(tituloDoRascunho(PARTES.cliente, ' Retífica ')).toBe('Maria, Retífica');
     expect(tituloDoRascunho(PARTES.cliente, '  ')).toBe('Maria');
     expect(tituloDoRascunho(null, '')).toBe('Sem cliente');
   });

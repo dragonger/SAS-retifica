@@ -60,7 +60,7 @@ export function fotografiaDoRascunho(p: PartesDoFormulario): string {
 export function tituloDoRascunho(cliente: ClienteEscolhido | null, descricao: string): string {
   const nome = cliente ? cliente.nome : 'Sem cliente';
   const d = descricao.trim();
-  return d ? nome + ' · ' + d : nome;
+  return d ? nome + ', ' + d : nome;
 }
 
 /** Lê um rascunho (possivelmente feito pelo app atual) de volta para os campos (parte de aplicarRascunho do app.js). */

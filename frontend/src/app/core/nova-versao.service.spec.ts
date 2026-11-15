@@ -6,7 +6,7 @@ import { esperar } from '../testing/ajuda';
 import { NovaVersaoService, RECARREGAR_PAGINA } from './nova-versao.service';
 
 describe('aviso de nova versão', () => {
-  const TEXTO = 'Nova versão disponível — toque para atualizar';
+  const TEXTO = 'Nova versão disponível. Toque para atualizar';
   let eventos: Subject<VersionEvent>;
   let activateUpdate: ReturnType<typeof vi.fn>;
   let recarregar: ReturnType<typeof vi.fn>;
@@ -34,15 +34,13 @@ describe('aviso de nova versão', () => {
     expect(botao(html)).toBeNull();
   });
 
-  it('aparece ao receber VERSION_READY, com o mesmo texto e posição do app atual', async () => {
+  it('aparece ao receber VERSION_READY, com o texto e a classe de posição', async () => {
     const { fixture, html } = criar();
     eventos.next(pronta);
     await esperar(fixture);
     const b = botao(html)!;
     expect(b.textContent?.trim()).toBe(TEXTO);
-    expect(b.getAttribute('style')).toContain('position: fixed');
-    expect(b.getAttribute('style')).toContain('bottom: calc(140px + env(safe-area-inset-bottom))');
-    expect(b.getAttribute('style')).toContain('z-index: 20');
+    expect(b.classList.contains('aviso-versao')).toBe(true);
   });
 
   it('ignora os outros eventos (detectada, sem novidade, falha de instalação)', async () => {

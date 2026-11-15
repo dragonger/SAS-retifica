@@ -30,7 +30,7 @@ function gravarAntigo(chave: string, opcoes: { dono?: string; quando?: number; t
   const dono = opcoes.dono ?? '7|3';
   todos[dono] = {
     ...(todos[dono] || {}),
-    [chave]: { quando: opcoes.quando ?? Date.now() - 5 * MIN, titulo: opcoes.titulo ?? 'Maria Souza · Retífica', dados: opcoes.dados ?? DADOS_ANTIGOS },
+    [chave]: { quando: opcoes.quando ?? Date.now() - 5 * MIN, titulo: opcoes.titulo ?? 'Maria Souza, Retífica', dados: opcoes.dados ?? DADOS_ANTIGOS },
   };
   localStorage.setItem(CHAVE_RASCUNHOS, JSON.stringify(todos));
 }
@@ -47,7 +47,7 @@ describe('PedidoForm: rascunhos', () => {
     clicar([...f.html.querySelectorAll('.lista-escolha button')].find(b => b.textContent!.includes(nome))!);
   const descricao = () => painel(f.html, 'pedido').querySelector('input') as HTMLInputElement;
   const mensagem = () => f.dialogo.dialogos().at(-1)!;
-  const barra = () => [...f.html.querySelectorAll('.barra-total-form span')].map(e => e.textContent).join(' ');
+  const barra = () => [...f.html.querySelectorAll('.valores-form span, .barra-acoes-total span')].map(e => e.textContent).join(' ');
 
   afterEach(() => { f.http.verify(); vi.unstubAllGlobals(); });
 
@@ -61,7 +61,7 @@ describe('PedidoForm: rascunhos', () => {
       expect(meus().novo).toBeUndefined(); // ainda não passou o atraso
       await esperarRascunho(f.fixture);
       const r = meus().novo;
-      expect(r.titulo).toBe('Maria Souza · Retífica');
+      expect(r.titulo).toBe('Maria Souza, Retífica');
       expect(Math.abs(Date.now() - r.quando)).toBeLessThan(5000);
       expect(r.dados).toEqual({
         cliente: { id: 3, nome: 'Maria Souza', telefone: '31985565586' }, status: 'ABERTO', descricao: 'Retífica', entrega: '', observacao: '',
@@ -151,7 +151,7 @@ describe('PedidoForm: rascunhos', () => {
     it('pedido novo: pergunta com o texto do app atual e as duas opções', async () => {
       f = await montarFormulario({ antes: () => gravarAntigo('novo') });
       const d = mensagem();
-      expect(d.mensagem).toBe('Você tem um pedido incompleto, guardado há 5 min neste aparelho (Maria Souza · Retífica).');
+      expect(d.mensagem).toBe('Você tem um pedido incompleto, guardado há 5 min neste aparelho (Maria Souza, Retífica).');
       expect(d.opcoes.map(o => [o.rotulo, o.valor, o.estilo])).toEqual([
         ['Continuar pedido incompleto', 'continuar', 'btn-primary'],
         ['Começar um novo (descarta o rascunho)', 'descartar', 'btn-danger'],
@@ -270,7 +270,7 @@ describe('PedidoForm: rascunhos', () => {
       await escolherCliente('Maria');
       await esperarRascunho(f.fixture);
       expect(Object.keys(guardado()).sort()).toEqual(['7|3', '7|4', '8|3']); // cada dono guarda o seu
-      expect(guardado()['8|3'].novo.titulo).toBe('Maria Souza · Retífica');
+      expect(guardado()['8|3'].novo.titulo).toBe('Maria Souza, Retífica');
     });
 
     it('rascunho com 14 dias ou mais não é oferecido', async () => {
@@ -406,7 +406,7 @@ describe('PedidoForm: rascunhos', () => {
       await clicar(botao(f.html, 'Avançar'));
       await digitando(descricao(), 'Retífica completa e montagem');
       await esperarRascunho(f.fixture);
-      expect(meus()['pedido:12'].titulo).toBe('Maria Souza · Retífica completa e montagem');
+      expect(meus()['pedido:12'].titulo).toBe('Maria Souza, Retífica completa e montagem');
       expect(meus().novo).toBeUndefined();
       await digitando(descricao(), 'Retífica completa');
       await esperarRascunho(f.fixture);

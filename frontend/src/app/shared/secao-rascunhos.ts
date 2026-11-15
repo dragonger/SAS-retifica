@@ -39,7 +39,7 @@ export class SecaoRascunhos {
   protected readonly haQuanto = haQuanto;
 
   protected titulo(r: Rascunho): string {
-    return r.chave !== 'novo' ? 'Alterações não salvas · pedido #' + r.chave.slice('pedido:'.length) : 'Pedido incompleto';
+    return r.chave !== 'novo' ? 'Alterações não salvas, pedido #' + r.chave.slice('pedido:'.length) : 'Pedido incompleto';
   }
 
   protected continuar(r: Rascunho): void {

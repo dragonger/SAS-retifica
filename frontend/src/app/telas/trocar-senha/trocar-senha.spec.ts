@@ -37,7 +37,7 @@ describe('TrocarSenha', () => {
   it('mostra os três campos de senha e o botão Salvar', async () => {
     const { fixture, html } = criar();
     await esperar(fixture);
-    expect(html.querySelector('h2.titulo')!.textContent).toBe('Trocar senha');
+    expect(html.querySelector('h2.titulo')).toBeNull();
     expect(html.querySelectorAll('input[type=password]')).toHaveLength(3);
     expect(salvar(html).textContent).toBe('Salvar');
   });

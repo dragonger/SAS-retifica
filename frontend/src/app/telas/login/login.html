@@ -1,7 +1,7 @@
 <div class="login">
   <h2 class="titulo login-marca">Retífica</h2>
   <div class="login-regua" aria-hidden="true"></div>
-  <div class="subtitulo" style="margin-bottom:4px">Entre com sua conta</div>
+  <div class="subtitulo login-chamada">Entre com sua conta</div>
   <div class="empty login-erro" [hidden]="!erro()">{{ erro() }}</div>
   <app-campo rotulo="E-mail">
     <input class="input" type="email" placeholder="seu@email.com" autocomplete="username" [value]="email()" (input)="email.set(valorDe($event))">
@@ -13,7 +13,7 @@
   <button type="button" class="btn btn-primary btn-block" [disabled]="ocupado()" (click)="entrar()">Entrar</button>
 
   <section class="demo-login login-demo" aria-labelledby="tituloDemo">
-    <h3 id="tituloDemo" class="secao" style="margin:0">Quer conhecer o sistema?</h3>
+    <h3 id="tituloDemo" class="secao">Quer conhecer o sistema?</h3>
     <p>
       Abra uma demonstração com dados fictícios. Ela fica separada dos dados reais e é apagada depois de 2 horas.
     </p>

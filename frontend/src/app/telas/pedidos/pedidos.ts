@@ -77,7 +77,7 @@ export class Pedidos {
     const n = this.doFiltroDaUrl().length;
     if (this.filtrando()) return this.encontrados(this.visiveis().length);
     const f = this.filtro();
-    return f ? f.rotulo + ' — ' + n : n + ' em aberto';
+    return f ? f.rotulo + ': ' + n : n + ' em aberto';
   });
 
   protected readonly visiveis = computed(() =>

@@ -7,9 +7,7 @@ import { NovaVersaoService } from '../core/nova-versao.service';
   host: { style: 'display: contents' },
   template: `
     @if (versao.disponivel()) {
-      <button type="button"
-              style="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom));width:calc(100% - 32px);max-width:688px;z-index:20;border:none;cursor:pointer;padding:12px 16px;font:inherit;font-size:14px;background:var(--color-text);color:var(--color-bg);box-shadow:var(--shadow-md)"
-              (click)="versao.atualizar()">Nova versão disponível — toque para atualizar</button>
+      <button type="button" class="aviso-versao" (click)="versao.atualizar()">Nova versão disponível. Toque para atualizar</button>
     }
   `,
 })

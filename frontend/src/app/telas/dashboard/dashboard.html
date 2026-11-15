@@ -1,12 +1,11 @@
 @if (grupos(); as lista) {
-  <h2 class="titulo">Dashboard</h2>
   <div class="subtitulo">Pedidos encerrados, valores por cliente e por categoria</div>
 
   @if (!lista.length) {
     <div class="empty">Nenhum pedido encerrado ainda.</div>
   } @else {
     <div class="field">
-      <select class="input" (change)="escolherMes($event)">
+      <select class="input" aria-label="Mês" (change)="escolherMes($event)">
         @for (g of lista; track g.mes) {
           <option [value]="g.mes" [selected]="g.mes === mes()">{{ g.mes }}</option>
         }
@@ -25,7 +24,7 @@
           <app-linha-pedido [pedido]="p" />
         }
 
-        <div class="seg" style="margin-top:20px">
+        <div class="seg seg-topo">
           @for (o of opcoes; track o[0]) {
             <button type="button" [class.active]="tipoAgregado() === o[0]" (click)="tipoAgregado.set(o[0])">{{ o[1] }}</button>
           }
@@ -36,5 +35,5 @@
     }
   }
 } @else {
-  <div class="empty">Carregando...</div>
+  <div class="empty">Carregando…</div>
 }

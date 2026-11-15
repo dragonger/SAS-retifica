@@ -35,6 +35,6 @@ export function rotuloDoItem(lista: readonly ItemPedido[], idx: number, rotuloCa
   const item = lista[idx];
   // mesmo nome em dois componentes (ex.: Plainar do Bloco e do Cabeçote): mostra de qual é cada um
   const ambiguo = lista.some((o, j) => j !== idx && chaveNome(o.descricao) === chaveNome(item.descricao));
-  const rotulo = item.descricao + (ambiguo && item.categoria ? ' · ' + rotuloCategoria(item.categoria) : '');
+  const rotulo = item.descricao + (ambiguo && item.categoria ? ' (' + rotuloCategoria(item.categoria) + ')' : '');
   return comQuantidade ? rotulo + ' ×' + item.quantidade : rotulo;
 }

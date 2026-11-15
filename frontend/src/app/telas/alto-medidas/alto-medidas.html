@@ -1,6 +1,6 @@
 @if (dados(); as d) {
   <h2 class="titulo">Virabrequins do Daniel</h2>
-  <div class="subtitulo">Finalizados no Alto Medidas — marque quando o cliente pagar</div>
+  <div class="subtitulo">Finalizados no Alto Medidas. Marque quando o cliente pagar</div>
 
   <!-- o total devido é SEMPRE o geral (todos os meses); o mês só filtra as listas -->
   <div style="margin-bottom:18px">
@@ -14,7 +14,7 @@
       <select class="input" aria-label="Mês de finalização" (change)="trocarMes($event)">
         <option value="todos" [selected]="d.mes === 'todos'">Todos os meses</option>
         @for (m of d.meses; track m.mes) {
-          <option [value]="m.mes" [selected]="d.mes === m.mes">{{ rotuloMes(m.mes) }} · {{ textoQuantidade(m.quantidade) }}</option>
+          <option [value]="m.mes" [selected]="d.mes === m.mes">{{ rotuloMes(m.mes) }}, {{ textoQuantidade(m.quantidade) }}</option>
         }
       </select>
     </div>
@@ -22,13 +22,13 @@
 
   @for (s of secoes(d); track s.titulo) {
     <div style="margin-bottom:22px">
-      <h2 class="secao">{{ s.titulo + sufixo(d) }} — {{ moeda(s.g.total) }}</h2>
+      <h2 class="secao">{{ s.titulo + sufixo(d) }}: {{ moeda(s.g.total) }}</h2>
       @if (s.g.itens.length) {
         <div>
           @for (os of s.g.itens; track os.id) {
             <div class="linha" style="cursor:default">
               <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
-                <div class="linha-titulo">OS #{{ os.numero || '—' }}</div>
+                <div class="linha-titulo">{{ os.numero ? 'OS #' + os.numero : 'OS sem número' }}</div>
                 <strong>{{ valor(os) }}</strong>
               </div>
               <div style="font-size:13px;opacity:.75">{{ detalhes(os) }}</div>
@@ -36,7 +36,7 @@
                 <div style="font-size:12px;opacity:.6">{{ datas(os) }}</div>
               }
               @if (!os.pagoSincronizado) {
-                <div style="font-size:12px;color:var(--color-danger)">Ainda não avisado ao Alto Medidas — vai tentar de novo sozinho.</div>
+                <div style="font-size:12px;color:var(--color-danger)">Ainda não avisado ao Alto Medidas. Vai tentar de novo sozinho.</div>
               }
               @if (!os.repassadoEm) {
                 <div style="margin-top:8px">
@@ -53,5 +53,5 @@
     </div>
   }
 } @else {
-  <div class="empty">Carregando...</div>
+  <div class="empty">Carregando…</div>
 }

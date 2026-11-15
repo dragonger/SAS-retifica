@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { GuardsCheckEnd, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
@@ -52,6 +52,9 @@ export class App {
     ),
     { initialValue: '/' },
   );
+
+  /** Fluxos de foco (novo pedido e editar pedido): sem barra de abas, com barra de ações própria. */
+  protected readonly modoFoco = computed(() => /^\/pedidos\/(novo|\d+\/editar)$/.test(this.caminho()));
 
   constructor() {
     this.router.events.subscribe(e => {

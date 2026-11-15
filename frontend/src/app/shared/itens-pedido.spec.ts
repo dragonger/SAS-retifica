@@ -45,8 +45,8 @@ describe('itens do pedido', () => {
       { descricao: 'Junta', categoria: 'BLOCO', quantidade: 3 },
     ];
     const rotulo = (n: string) => ({ BLOCO: 'Bloco', CABECOTE: 'Cabeçote' } as Record<string, string>)[n] ?? n;
-    expect(rotuloDoItem(lista, 0, rotulo, false)).toBe('Plainar · Bloco');
-    expect(rotuloDoItem(lista, 1, rotulo, false)).toBe('Plainar · Cabeçote');
+    expect(rotuloDoItem(lista, 0, rotulo, false)).toBe('Plainar (Bloco)');
+    expect(rotuloDoItem(lista, 1, rotulo, false)).toBe('Plainar (Cabeçote)');
     expect(rotuloDoItem(lista, 2, rotulo, true)).toBe('Junta ×3');
   });
 });

@@ -29,7 +29,7 @@ describe('Inicio', () => {
     return fixture;
   }
 
-  it('mostra "Carregando..." antes do dado e os cards depois', async () => {
+  it('mostra "Carregando…" antes do dado e os cards depois', async () => {
     const fixture = criar(DASH);
     await fixture.whenStable();
     const html = fixture.nativeElement as HTMLElement;
@@ -61,7 +61,7 @@ describe('Inicio', () => {
     const cartao = html.querySelector('.card-destaque') as HTMLElement;
     expect(cartao.textContent).toContain('Você deve ao Daniel');
     expect(cartao.textContent).toContain('R$ 1.234,50');
-    expect(cartao.textContent).toContain('2 virabrequins que o cliente já pagou · toque para conferir');
+    expect(cartao.textContent).toContain('2 virabrequins que o cliente já pagou. Toque para conferir');
     expect(cartao.style.padding).toBe('14px');
     expect(cartao.compareDocumentPosition(html.querySelector('.stat-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
@@ -104,7 +104,7 @@ describe('Inicio', () => {
       const html = fixture.nativeElement as HTMLElement;
       const titulos = [...html.querySelectorAll('.card-destaque-titulo')].map(e => e.textContent);
       // os dois do rascunho primeiro, depois o cartão do Daniel
-      expect(titulos).toEqual(['Pedido incompleto', 'Alterações não salvas · pedido #12', 'Você deve ao Daniel']);
+      expect(titulos).toEqual(['Pedido incompleto', 'Alterações não salvas, pedido #12', 'Você deve ao Daniel']);
       const primeiro = html.querySelector('.card-destaque')!;
       expect(html.querySelector('.data-hoje')!.compareDocumentPosition(primeiro) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(primeiro.compareDocumentPosition(html.querySelector('.stat-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

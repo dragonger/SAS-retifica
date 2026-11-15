@@ -43,7 +43,7 @@ describe('Clientes', () => {
     expect(linhas.length).toBe(2);
     expect(linhas[0].textContent).toContain('Oficina Silva');
     expect(linhas[0].textContent).toContain('(31) 98556-5586');
-    expect(linhas[1].querySelector('.linha-sub')?.textContent).toBe('-');
+    expect(linhas[1].querySelector('.linha-sub')).toBeNull(); // sem telefone, o trecho some
   });
 
   it('busca por nome e por telefone (ignorando a formatação)', async () => {

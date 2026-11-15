@@ -154,7 +154,7 @@ describe('App: faixa da demonstração', () => {
     const fim = new Date(2026, 10, 12, 14, 32);
     const { html } = await criar({ usuarioId: 9, empresaId: 8, demo: true, exp: fim.getTime() / 1000 });
     const faixa = html.querySelector('.faixa-demo') as HTMLElement;
-    expect(faixa.textContent).toContain('Demonstração com dados fictícios');
+    expect(faixa.textContent).toContain('Demonstração. Apagada às');
     expect(faixa.textContent).toContain('14:32');
   });
 

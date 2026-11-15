@@ -8,7 +8,6 @@ import { ItemAgregado } from '../encerrados/encerrados';
  */
 @Component({
   selector: 'app-bloco-agregado',
-  host: { style: 'display: block; margin-top: 20px' },
   template: `
     @if (!itens()?.length) {
       <div class="empty">Sem dados.</div>

@@ -1,9 +1,7 @@
 @if (carregado()) {
-  <h2 class="titulo">Clientes</h2>
-  <div class="subtitulo">{{ subtitulo() }}</div>
-
   <app-formulario-recolhivel
     #cadastro
+    [subtitulo]="subtitulo()"
     rotuloNovo="Novo cliente"
     tituloNovo="Novo cliente"
     tituloEditar="Editar cliente"
@@ -47,10 +45,9 @@
     </form>
   </app-formulario-recolhivel>
 
-  <h2 class="secao">Cadastrados</h2>
-  <app-campo rotulo="Buscar">
-    <input class="input" type="search" placeholder="Buscar por nome ou telefone..." (input)="busca.set(valorDe($event))">
-  </app-campo>
+  <div class="busca-lista">
+    <input class="input" type="search" aria-label="Buscar cliente" placeholder="Buscar por nome ou telefone…" (input)="busca.set(valorDe($event))">
+  </div>
   <div>
     @if (!filtrados().length) {
       <div class="empty">{{ busca().trim() ? 'Nenhum cliente encontrado.' : 'Nenhum cliente cadastrado.' }}</div>
@@ -58,11 +55,13 @@
       @for (c of filtrados(); track c.id) {
         <div class="linha" (click)="cadastro.abrir(c)">
           <div class="linha-titulo">{{ c.nome }}</div>
-          <div class="linha-sub">{{ telefoneExibicao(c.telefone) || '-' }}</div>
+          @if (telefoneExibicao(c.telefone); as tel) {
+            <div class="linha-sub">{{ tel }}</div>
+          }
         </div>
       }
     }
   </div>
 } @else {
-  <div class="empty">Carregando...</div>
+  <div class="empty">Carregando…</div>
 }

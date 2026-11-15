@@ -121,11 +121,11 @@ describe('Pedido (visualizar)', () => {
   });
 
   describe('apresentação', () => {
-    it('mostra "Carregando..." e depois os dados; título "Pedido #12"', async () => {
+    it('mostra "Carregando…" e depois os dados; título "Pedido #12"', async () => {
       const { html, carregando } = await criar();
-      expect(carregando).toContain('Carregando...');
+      expect(carregando).toContain('Carregando…');
       expect(TestBed.inject(MenuPedidoService).pedido()).toEqual({ id: '12', finalizado: false });
-      expect(html.querySelector('.card-destaque-titulo')?.textContent).toBe('MARIA souza da Silva');
+      expect(html.querySelector('.cartao-cliente-nome')?.textContent).toBe('MARIA souza da Silva');
     });
 
     it('pedido inexistente: "Pedido não encontrado."', async () => {
@@ -136,12 +136,15 @@ describe('Pedido (visualizar)', () => {
 
     it('cliente: telefone formatado e endereço montado', async () => {
       const { html } = await criar();
-      expect(textos(html, '.card-destaque .linha-sub')).toEqual(['(31) 98556-5586', 'Rua A, 10 – Centro, Belo Horizonte/MG']);
+      const tel = html.querySelector('.cartao-cliente a.link-tel') as HTMLAnchorElement;
+      expect(tel.textContent?.trim()).toBe('(31) 98556-5586');
+      expect(tel.getAttribute('href')).toBe('tel:31985565586');
+      expect(textos(html, '.cartao-cliente .cartao-cliente-linha')).toEqual(['Rua A, 10, Centro, Belo Horizonte/MG']);
     });
 
     it('cliente sem telefone nem endereço: só o nome', async () => {
       const { html } = await criar({ ...BASE, cliente: { id: 3, nome: 'Zé' } });
-      expect(html.querySelectorAll('.card-destaque .linha-sub').length).toBe(0);
+      expect(html.querySelectorAll('.cartao-cliente .cartao-cliente-linha, .cartao-cliente a').length).toBe(0);
       expect(botao(html, 'WhatsApp')).toBeUndefined();
     });
 
@@ -155,17 +158,18 @@ describe('Pedido (visualizar)', () => {
       expect(linha(html, 'Situação')?.querySelector('.tag')?.textContent?.trim()).toBe('Aberto');
     });
 
-    it('sem componentes mostra a Descrição; sem datas, travessão', async () => {
+    it('sem componentes mostra a Descrição; sem datas, "Não informado"', async () => {
       const { html } = await criar({ ...BASE, componentes: [], pedidoDescricao: 'Motor completo', datCriacao: null, datEntregaEstimada: null });
       expect(linha(html, 'Descrição')?.lastElementChild?.textContent).toBe('Motor completo');
-      expect(linha(html, 'Criado em')?.lastElementChild?.textContent).toBe('-');
-      expect(linha(html, 'Entrega estimada')?.lastElementChild?.textContent).toBe('-');
+      expect(linha(html, 'Criado em')?.lastElementChild?.textContent).toBe('Não informado');
+      expect(linha(html, 'Entrega estimada')?.lastElementChild?.textContent).toBe('Não informado');
+      expect(linha(html, 'Criado em')?.lastElementChild?.classList.contains('nao-informado')).toBe(true);
     });
 
     it('serviços e peças: mesmo nome em categorias diferentes mostra a categoria; peças com ×quantidade', async () => {
       const { html } = await criar();
       const itens = textos(html, '.item-linha');
-      expect(itens).toEqual(['Retífica · Cabeçote', 'Retífica · Bloco', 'Teste', 'Junta ×2']);
+      expect(itens).toEqual(['Retífica (Cabeçote)', 'Retífica (Bloco)', 'Teste', 'Junta ×2']);
     });
 
     it('listas vazias mostram as mensagens', async () => {
@@ -195,27 +199,30 @@ describe('Pedido (visualizar)', () => {
       expect(tag.querySelector('svg')).not.toBeNull();
     });
 
-    it('barra do total: sem desconto só o Total', async () => {
+    it('barra do total: só Total e valor, com as ações; sem desconto não há seção Valores', async () => {
       const { html } = await criar();
-      const barra = html.querySelector('.barra-total') as HTMLElement;
-      expect(barra.className).toContain('barra-total-view');
-      expect(barra.querySelector('.linha-total')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('TotalR$ 1.000,00');
+      const barra = html.querySelector('.barra-pedido') as HTMLElement;
+      expect(barra.querySelector('.barra-pedido-total')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('TotalR$ 1.000,00');
       expect(barra.textContent).not.toContain('Subtotal');
+      expect(barra.textContent).not.toContain('Desconto');
+      expect([...barra.querySelectorAll('button')].map(b => b.textContent?.trim())).toEqual(['Gerar orçamento', 'Finalizar']);
+      expect(textos(html, 'h2.secao')).not.toContain('Valores');
     });
 
-    it('barra do total: desconto percentual mostra Subtotal, Desconto (10%) e o valor descontado', async () => {
+    it('desconto percentual: seção Valores no fluxo (fora da barra) com Subtotal, Desconto (10%) e Total', async () => {
       const { html } = await criar({ ...BASE, descontoTipo: 'PERCENTUAL', descontoValor: 10, subtotal: 1000, totalGeral: 900 });
-      const barra = html.querySelector('.barra-total') as HTMLElement;
-      expect(barra.textContent).toContain('Subtotal');
-      expect(barra.textContent).toContain('R$ 1.000,00');
-      expect(barra.textContent).toContain('Desconto (10%)');
-      expect(barra.textContent).toContain('- R$ 100,00');
+      const barra = html.querySelector('.barra-pedido') as HTMLElement;
+      expect(barra.textContent).not.toContain('Subtotal');
       expect(barra.querySelector('.valor')?.textContent).toBe('R$ 900,00');
+      expect(textos(html, 'h2.secao')).toContain('Valores');
+      expect(linha(html, 'Subtotal')?.lastElementChild?.textContent).toBe('R$ 1.000,00');
+      expect(linha(html, 'Desconto (10%)')?.lastElementChild?.textContent).toBe('- R$ 100,00');
+      expect(linha(html, 'Total')?.lastElementChild?.textContent).toBe('R$ 900,00');
     });
 
     it('desconto em valor fixo chama-se só "Desconto"', async () => {
       const { html } = await criar({ ...BASE, descontoTipo: 'VALOR', descontoValor: 50, subtotal: 1000, totalGeral: 950 });
-      expect((html.querySelector('.barra-total') as HTMLElement).textContent).toContain('Desconto- R$ 50,00');
+      expect(linha(html, 'Desconto')?.lastElementChild?.textContent).toBe('- R$ 50,00');
     });
 
     it('pedido em aberto tem Gerar orçamento e Finalizar; finalizado só Gerar orçamento', async () => {
@@ -536,7 +543,7 @@ describe('Pedido (visualizar)', () => {
       expect(cliques[1].target).toBe('_blank');
       expect(cliques[1].href).toContain('https://wa.me/5531985565586?text=');
       expect(textoDoLink(cliques[1])).toBe('Olá, Maria! Segue o orçamento nº 0012 da DIH Retífica.\nModelo: Fiat Uno, Gol, Scania');
-      expect(dialogo.toastTexto()).toBe('PDF salvo no aparelho — na conversa, anexe em 📎 › Documento.');
+      expect(dialogo.toastTexto()).toBe('PDF salvo no aparelho. Na conversa, anexe em Anexar, Documento.');
     });
 
     it('mensagem usa a descrição do pedido quando não há componentes, e omite o modelo se também vazio', async () => {

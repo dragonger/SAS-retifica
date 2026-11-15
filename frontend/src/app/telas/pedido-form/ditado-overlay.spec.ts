@@ -100,7 +100,7 @@ describe('Ditar pedido (painel)', () => {
       await abrirFormulario();
       const b = botao(f.html, 'Ditar pedido');
       expect(b).toBeTruthy();
-      expect(b.className).toBe('btn btn-secondary btn-block');
+      expect(b.className).toBe('btn btn-secondary btn-block btn-com-icone');
       expect(b.querySelector('svg')).toBeTruthy();
       const form = f.html.querySelector('form')!;
       expect(textoDe(form.firstElementChild)).toBe('Ditar pedido');

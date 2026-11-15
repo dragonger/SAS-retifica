@@ -18,10 +18,9 @@ import { EstadoPedidoForm } from './estado-pedido-form';
   template: `
     @if (estado.cliente(); as c) {
       <div class="cliente-selecionado card-destaque elev-sm blueprint">
-        <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div>
           <div class="card-destaque-titulo">{{ c.nome }}</div>
-          <div style="font-size:12px;opacity:.7">{{ telefoneExibicao(c.telefone) }}</div>
+          @if (c.telefone) { <div class="cliente-selecionado-tel">{{ telefoneExibicao(c.telefone) }}</div> }
         </div>
         <button type="button" (click)="estado.cliente.set(null)">Trocar</button>
       </div>
@@ -30,22 +29,22 @@ import { EstadoPedidoForm } from './estado-pedido-form';
     <div [hidden]="!!estado.cliente()">
       <div class="field" [hidden]="!recentes().length">
         <label>Recentes</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <div class="chip-group">
           @for (c of recentes(); track c.id) {
             <button type="button" class="chip chip-outline" (click)="estado.escolherCliente(c)">{{ c.nome }}</button>
           }
         </div>
       </div>
       <!-- o campo tem margin-bottom próprio; aqui a lista vem logo abaixo da busca -->
-      <app-campo rotulo="Buscar cliente" style="margin-bottom:0">
-        <input class="input" type="search" placeholder="Buscar por nome ou telefone..." [value]="busca()" (input)="busca.set(valorDe($event))">
+      <app-campo class="campo-sem-margem" rotulo="Buscar cliente">
+        <input class="input" type="search" placeholder="Buscar por nome ou telefone…" aria-label="Buscar cliente" [value]="busca()" (input)="busca.set(valorDe($event))">
       </app-campo>
       <div class="lista-escolha">
         @if (!filtrados().length) {
           <div class="lista-escolha-vazia">Nenhum cliente encontrado</div>
         }
         @for (c of filtrados(); track c.id) {
-          <button type="button" (click)="estado.escolherCliente(c)">{{ c.nome }}@if (c.telefone) {<span class="tel">{{ ' — ' + telefoneExibicao(c.telefone) }}</span>}</button>
+          <button type="button" (click)="estado.escolherCliente(c)"><span class="nome">{{ c.nome }}</span>@if (c.telefone) {<span class="tel">{{ telefoneExibicao(c.telefone) }}</span>}</button>
         }
       </div>
     </div>
@@ -53,7 +52,6 @@ import { EstadoPedidoForm } from './estado-pedido-form';
     <button type="button" class="btn btn-secondary btn-block" [hidden]="!!estado.cliente()"
             (click)="estado.novoClienteAberto.set(!estado.novoClienteAberto())">Novo cliente</button>
     <div class="caixa-form blueprint" [hidden]="!estado.novoClienteAberto()">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <app-campo rotulo="Nome">
         <input class="input" type="text" maxlength="255" placeholder="Nome completo" [value]="estado.novoClienteNome()"
                (input)="estado.novoClienteNome.set(valorDe($event))">

@@ -44,11 +44,11 @@ describe('SecaoRascunhos (cartões "Pedido incompleto")', () => {
     expect(cartao.querySelectorAll('i.corner').length).toBe(4);
   });
 
-  it('edição: "Alterações não salvas · pedido #<id>"; sem título "Sem cliente"', async () => {
+  it('edição: "Alterações não salvas, pedido #<id>"; sem título "Sem cliente"', async () => {
     const { fixture, html } = criar({ 'pedido:12': { quando: Date.now() - 2 * 60 * MIN, titulo: '' } });
     await fixture.whenStable();
     const cartao = html.querySelector('.card-destaque')!;
-    expect(cartao.querySelector('.card-destaque-titulo')!.textContent).toBe('Alterações não salvas · pedido #12');
+    expect(cartao.querySelector('.card-destaque-titulo')!.textContent).toBe('Alterações não salvas, pedido #12');
     expect(cartao.textContent).toContain('Sem cliente');
     expect(cartao.textContent).toContain('Guardado há 2 h neste aparelho');
   });

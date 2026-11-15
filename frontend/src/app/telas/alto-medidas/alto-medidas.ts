@@ -36,7 +36,7 @@ export class AltoMedidas {
   /** As três listas, na ordem da tela, com os textos de "vazio" (com e sem mês escolhido). */
   protected secoes(d: ListaAltoMedidas) {
     return [
-      { titulo: 'Pago pelo cliente — a repassar ao Daniel', g: d.aRepassar, vazioMes: 'Nenhum virabrequim deste mês pago aguardando repasse.', vazioTodos: 'Nenhum virabrequim pago aguardando repasse.' },
+      { titulo: 'Pago pelo cliente, a repassar ao Daniel', g: d.aRepassar, vazioMes: 'Nenhum virabrequim deste mês pago aguardando repasse.', vazioTodos: 'Nenhum virabrequim pago aguardando repasse.' },
       { titulo: 'Aguardando o cliente pagar', g: d.aguardando, vazioMes: 'Nenhum virabrequim deste mês aguardando pagamento.', vazioTodos: 'Nenhum virabrequim aguardando pagamento.' },
       { titulo: 'Já repassado ao Daniel', g: d.repassado, vazioMes: 'Nenhum repasse confirmado neste mês.', vazioTodos: 'Nenhum repasse confirmado ainda.' },
     ];
@@ -47,12 +47,12 @@ export class AltoMedidas {
     const doMes = d.mes !== 'todos';
     const diferente = doMes && Math.abs(Number(d.devidoAoDaniel) - Number(d.devidoNoPeriodo)) > 0.004;
     return diferente
-      ? 'Em ' + rotuloMes(d.mes) + ': ' + moeda(d.devidoNoPeriodo) + ' (' + textoQuantidade(d.quantidadeDevidaNoPeriodo) + ') · o resto é de outros meses'
+      ? 'Em ' + rotuloMes(d.mes) + ': ' + moeda(d.devidoNoPeriodo) + ' (' + textoQuantidade(d.quantidadeDevidaNoPeriodo) + '), o resto é de outros meses'
       : null;
   }
 
   protected detalhes(os: OsAltoMedidas): string {
-    return [os.cliente, os.modelo, os.medidas].filter(Boolean).join(' · ');
+    return [os.cliente, os.modelo, os.medidas].filter(Boolean).join(', ');
   }
 
   protected datas(os: OsAltoMedidas): string {
@@ -66,7 +66,7 @@ export class AltoMedidas {
   }
 
   protected sufixo(d: ListaAltoMedidas): string {
-    return d.mes !== 'todos' ? ' — ' + rotuloMes(d.mes) : '';
+    return d.mes !== 'todos' ? ', ' + rotuloMes(d.mes) : '';
   }
 
   protected trocarMes(ev: Event): void {

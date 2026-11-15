@@ -41,14 +41,16 @@ describe('Cabecotes (Produtos)', () => {
 
   it('lista agrupada por categoria com as faixas', async () => {
     const { html } = await criar();
-    expect(html.querySelector('.titulo')?.textContent).toBe('Produtos');
-    expect(html.querySelector('.subtitulo')?.textContent).toBe('Cabeçotes, blocos, bielas e virabrequins — 3 cadastrados');
+    expect(html.querySelector('.titulo')).toBeNull(); // o cabeçalho já diz o nome da tela
+    expect(html.querySelector('.subtitulo')?.textContent).toBe('3 cadastrados');
     // ordenado por nome, agrupado na ordem em que a categoria aparece
     expect([...html.querySelectorAll('.grupo-categoria h3')].map(h => h.textContent)).toEqual(['Cabeçote', 'Bloco']);
     const primeira = html.querySelector('.grupo-categoria .linha')!;
     expect(primeira.querySelector('.linha-titulo')?.textContent).toBe('AP 1.8');
     expect(primeira.textContent).toContain('25,045-27,070 mm');
-    expect(primeira.textContent).toContain('—');
+    // faixa vazia some em vez de aparecer como travessão
+    expect(primeira.textContent).not.toContain('Fixo');
+    expect(primeira.textContent).not.toContain('—');
   });
 
   it('lista vazia mostra a mensagem', async () => {
@@ -89,7 +91,7 @@ describe('Cabecotes (Produtos)', () => {
     await esperar(fixture);
     digitar(html.querySelector('form select') as HTMLSelectElement, 'BLOCO');
     digitar(campo(html, 'Nome / Motor'), '  Gol 1.0 ');
-    digitar(campo(html, 'Fixo'), ' 1,5-2 ');
+    digitar(campo(html, '29,990'), ' 1,5-2 ');
     enviar(html);
     const req = http.expectOne(r => r.method === 'POST' && r.url === PATH);
     expect(req.request.body).toEqual({ categoria: 'BLOCO', nome: 'Gol 1.0', movelFaixa: null, fixoFaixa: '1,5-2' });
@@ -107,8 +109,8 @@ describe('Cabecotes (Produtos)', () => {
     await esperar(fixture);
     expect(html.querySelector('.caixa-form-titulo')?.textContent).toBe('Editar produto');
     expect(campo(html, 'Nome / Motor').value).toBe('AP 1.8');
-    expect(campo(html, 'Móvel').value).toBe('25,045-27,070');
-    digitar(campo(html, 'Fixo'), '30');
+    expect(campo(html, '25,045').value).toBe('25,045-27,070');
+    digitar(campo(html, '29,990'), '30');
     enviar(html);
     const req = http.expectOne(r => r.method === 'PUT' && r.url === PATH + '/1');
     expect(req.request.body).toEqual({ categoria: 'CABECOTE', nome: 'AP 1.8', movelFaixa: '25,045-27,070', fixoFaixa: '30' });

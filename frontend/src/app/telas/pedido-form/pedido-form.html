@@ -3,30 +3,41 @@
 } @else if (finalizado()) {
   <div class="empty">Este pedido já foi finalizado e não pode mais ser editado.</div>
 } @else if (!pronto()) {
-  <div class="empty">Carregando...</div>
+  <div class="empty">Carregando…</div>
 } @else {
   <form #formulario novalidate (submit)="salvar($event)" (input)="agendarRascunho()" (change)="agendarRascunho()" (click)="agendarRascunho()">
     @if (ditadoLigado()) {
-      <div style="margin-bottom:12px">
-        <button type="button" class="btn btn-secondary btn-block" style="gap:8px" (click)="abrirDitado()"><app-icone-microfone />Ditar pedido</button>
+      <div class="espaco-abaixo">
+        <button type="button" class="btn btn-secondary btn-block btn-com-icone" (click)="abrirDitado()"><app-icone-microfone />Ditar pedido</button>
       </div>
     }
-    <div style="font-size:12px;opacity:.6;padding:2px 2px 0">Só o cliente é obrigatório — dá pra completar o resto depois.</div>
+    <div class="passo-indicador" aria-live="polite">
+      <span class="passo-numero">Passo {{ idxAba() + 1 }} de {{ ordemAbas.length }}</span>
+      <span class="passo-nome">{{ nomePasso() }}</span>
+    </div>
+    @if (estado.aba() === 'cliente') {
+      <div class="dica-passo">Só o cliente é obrigatório. O resto pode ficar para depois.</div>
+    }
 
     <!-- as 4 etapas ficam montadas o tempo todo, só alternando "hidden": trocar de etapa destruindo e reconstruindo deixava a troca lenta -->
-    <div style="padding-top:16px">
-      <div data-aba="cliente" style="display:flex;flex-direction:column;gap:16px" [hidden]="estado.aba() !== 'cliente'"><app-aba-cliente /></div>
-      <div data-aba="pedido" style="display:flex;flex-direction:column;gap:14px" [hidden]="estado.aba() !== 'pedido'"><app-aba-pedido /></div>
-      <div data-aba="componentes" style="display:flex;flex-direction:column;gap:14px" [hidden]="estado.aba() !== 'componentes'"><app-aba-componentes /></div>
-      <div data-aba="itens" style="display:flex;flex-direction:column;gap:14px" [hidden]="estado.aba() !== 'itens'"><app-aba-itens /></div>
+    <div class="passos">
+      <div data-aba="cliente" [hidden]="estado.aba() !== 'cliente'"><app-aba-cliente /></div>
+      <div data-aba="pedido" [hidden]="estado.aba() !== 'pedido'"><app-aba-pedido /></div>
+      <div data-aba="componentes" [hidden]="estado.aba() !== 'componentes'"><app-aba-componentes /></div>
+      <div data-aba="itens" [hidden]="estado.aba() !== 'itens'"><app-aba-itens /></div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:var(--space-4)">
-      <div class="btn-group" style="margin:0">
+    <button type="button" class="btn btn-ghost btn-block cancelar-fluxo" (click)="cancelar()">Cancelar</button>
+
+    <!-- barra de ações fixa no rodapé (a barra de abas some neste fluxo) -->
+    <div class="barra-acoes">
+      @if (estado.aba() === 'itens') {
+        <div class="barra-acoes-total"><span>Total</span><span class="valor">{{ moeda(estado.totais().total) }}</span></div>
+      }
+      <div class="barra-acoes-botoes">
         <button type="button" class="btn btn-secondary" [hidden]="idxAba() === 0" (click)="voltarPasso()">Voltar</button>
         <button type="submit" class="btn btn-primary" [disabled]="salvando()" (click)="avancar($event)">{{ salvando() ? 'Salvando…' : (ultimaEtapa() ? 'Salvar' : 'Avançar') }}</button>
       </div>
-      <button type="button" class="btn btn-ghost" (click)="cancelar()">Cancelar</button>
     </div>
   </form>
   @if (ditadoAberto()) {

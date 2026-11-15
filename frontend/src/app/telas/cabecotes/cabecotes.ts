@@ -33,7 +33,7 @@ export class Cabecotes implements ComGuardaSaida {
   protected readonly lista = signal<Cabecote[]>([]);
   protected readonly categorias = signal<Categoria[]>([]);
   protected readonly carregado = signal(false);
-  protected readonly subtitulo = computed(() => 'Cabeçotes, blocos, bielas e virabrequins — ' + cadastrados(this.lista().length));
+  protected readonly subtitulo = computed(() => cadastrados(this.lista().length));
 
   // busca: cada palavra precisa aparecer no nome (sem acento/maiúscula) — "ap 1.8", "om 366", "fire 16v"
   protected readonly termo = signal('');

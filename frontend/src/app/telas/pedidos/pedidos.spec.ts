@@ -68,16 +68,18 @@ describe('Pedidos', () => {
     expect(nomes(html)).toEqual(['João da Silva', 'Maria Souza', 'Ônibus Ltda']);
     expect(botao(html, 'Ver todos os pedidos')).toBeUndefined();
     expect(botao(html, 'Ver finalizados')).toBeDefined();
-    expect(html.querySelector('.btn-fab')?.getAttribute('aria-label')).toBe('Novo pedido');
+    expect(html.querySelector('.btn-fab')).toBeNull(); // sem botão flutuante cobrindo as fichas
+    expect(html.querySelector('.topo-lista .btn-primary')?.textContent?.trim()).toBe('Novo pedido');
+    expect(busca(html).getAttribute('aria-label')).toBe('Buscar pedido');
   });
 
-  it('enquanto carrega mostra "Carregando..."', async () => {
+  it('enquanto carrega mostra "Carregando…"', async () => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: provedoresDeTela() });
     http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(Pedidos);
     await fixture.whenStable();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carregando...');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carregando…');
     http.expectOne('/api/clientes').flush([]);
     http.expectOne('/api/pedidos?abertos=true').flush([]);
     await esperar(fixture);
@@ -86,7 +88,7 @@ describe('Pedidos', () => {
 
   it('?filtro=prontos mostra só os prontos, com rótulo e botão Ver todos os pedidos (sem Ver finalizados)', async () => {
     const { html } = await criar({ filtro: 'prontos' });
-    expect(html.querySelector('.subtitulo')?.textContent).toBe('Prontos — 1');
+    expect(html.querySelector('.subtitulo')?.textContent).toBe('Prontos: 1');
     expect(nomes(html)).toEqual(['Maria Souza']);
     expect(botao(html, 'Ver todos os pedidos')).toBeDefined();
     expect(botao(html, 'Ver finalizados')).toBeUndefined();
@@ -97,14 +99,14 @@ describe('Pedidos', () => {
   it('?filtro=hoje, atrasados e abertos', async () => {
     let r = await criar({ filtro: 'hoje' });
     expect(nomes(r.html)).toEqual(['João da Silva']);
-    expect(r.html.querySelector('.subtitulo')?.textContent).toBe('Entregas hoje — 1');
+    expect(r.html.querySelector('.subtitulo')?.textContent).toBe('Entregas hoje: 1');
     TestBed.resetTestingModule();
     r = await criar({ filtro: 'atrasados' });
     expect(nomes(r.html)).toEqual(['Ônibus Ltda']);
-    expect(r.html.querySelector('.subtitulo')?.textContent).toBe('Atrasados — 1');
+    expect(r.html.querySelector('.subtitulo')?.textContent).toBe('Atrasados: 1');
     TestBed.resetTestingModule();
     r = await criar({ filtro: 'abertos' });
-    expect(r.html.querySelector('.subtitulo')?.textContent).toBe('Em aberto — 3');
+    expect(r.html.querySelector('.subtitulo')?.textContent).toBe('Em aberto: 3');
   });
 
   it('filtro desconhecido é ignorado (lista tudo, sem botão Ver todos)', async () => {
@@ -182,7 +184,7 @@ describe('Pedidos', () => {
     expect(nomes(html).length).toBe(3);
   });
 
-  it('?cliente=ID filtra pelo cliente, busca os encerrados dele e o select vem sem "Carregando..." depois dos clientes', async () => {
+  it('?cliente=ID filtra pelo cliente, busca os encerrados dele e o select vem sem "Carregando…" depois dos clientes', async () => {
     const { fixture, html } = await criar({ cliente: '10' });
     http.expectOne('/api/pedidos/encerrados').flush(ENCERRADOS);
     await esperar(fixture);
@@ -231,13 +233,13 @@ describe('Pedidos', () => {
     expect(html.querySelector('.subtitulo')?.textContent).toBe('3 em aberto');
   });
 
-  it('navegação: clicar numa linha abre o pedido; Ver finalizados e o + levam às telas certas', async () => {
+  it('navegação: clicar numa linha abre o pedido; Ver finalizados e Novo pedido levam às telas certas', async () => {
     const { html } = await criar();
     (html.querySelector('.linha') as HTMLElement).click();
     expect(navegar).toHaveBeenCalledWith(['/pedidos', 1]);
     botao(html, 'Ver finalizados').click();
     expect(navegar).toHaveBeenCalledWith(['/encerrados']);
-    (html.querySelector('.btn-fab') as HTMLElement).click();
+    botao(html, 'Novo pedido').click();
     expect(navegar).toHaveBeenCalledWith(['/pedidos/novo']);
   });
 
@@ -250,10 +252,10 @@ describe('Pedidos', () => {
       });
     };
 
-    it('mostra os cartões depois do título e antes da busca', async () => {
+    it('mostra os cartões depois da contagem e antes da busca', async () => {
       const { html } = await criar({}, comRascunhos);
       const cartoes = [...html.querySelectorAll('.card-destaque')];
-      expect(cartoes.map(c => c.querySelector('.card-destaque-titulo')!.textContent)).toEqual(['Pedido incompleto', 'Alterações não salvas · pedido #2']);
+      expect(cartoes.map(c => c.querySelector('.card-destaque-titulo')!.textContent)).toEqual(['Pedido incompleto', 'Alterações não salvas, pedido #2']);
       expect(html.querySelector('.subtitulo')!.compareDocumentPosition(cartoes[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
       expect(cartoes[0].compareDocumentPosition(busca(html)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });

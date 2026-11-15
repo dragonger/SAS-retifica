@@ -1,15 +1,16 @@
-<h2 class="titulo">Minha empresa</h2>
 <div class="subtitulo">A logo aparece no topo do app e nos orçamentos em PDF</div>
 
-<img class="logo-previa" alt="Logo da empresa" [hidden]="!logo()" [attr.src]="logo()">
-<div class="empty" [hidden]="!!logo()">Nenhuma logo enviada. Os orçamentos saem só com o nome da empresa.</div>
-<div class="subtitulo" style="text-align:center;margin-bottom:var(--space-3)">PNG ou JPG, até 5 MB. PNG com fundo transparente fica melhor no orçamento (um JPG leva o fundo branco junto).</div>
-<input #seletor type="file" accept="image/png,image/jpeg" style="display:none" (change)="aoEscolherArquivo($event)">
-<button type="button" class="btn btn-primary btn-block" [disabled]="enviando()" (click)="escolherImagem()">{{ enviando() ? 'Enviando…' : 'Escolher imagem' }}</button>
-<button type="button" class="btn btn-danger btn-block" [hidden]="!logo()" [disabled]="removendo()" (click)="removerLogo()">{{ removendo() ? 'Removendo…' : 'Remover logo' }}</button>
+<div class="logo-area">
+  <img class="logo-previa" alt="Logo da empresa" [hidden]="!logo()" [attr.src]="logo()">
+  <div class="empty logo-vazia" [hidden]="!!logo()">Nenhuma logo enviada. Os orçamentos saem só com o nome da empresa.</div>
+</div>
+<div class="subtitulo">PNG ou JPG, até 5 MB. PNG com fundo transparente fica melhor no orçamento (um JPG leva o fundo branco junto).</div>
+<input #seletor type="file" accept="image/png,image/jpeg" class="oculto" (change)="aoEscolherArquivo($event)">
+<button type="button" class="btn btn-secondary btn-block" [disabled]="enviando()" (click)="escolherImagem()">{{ enviando() ? 'Enviando…' : 'Escolher imagem' }}</button>
+<button type="button" class="btn btn-danger btn-block espaco-acima-sm" [hidden]="!logo()" [disabled]="removendo()" (click)="removerLogo()">{{ removendo() ? 'Removendo…' : 'Remover logo' }}</button>
 
 <!-- dados que aparecem no cabeçalho do orçamento -->
-<h2 class="secao" style="margin-top:28px">Dados no orçamento</h2>
+<h2 class="secao secao-grupo">Dados no orçamento</h2>
 <app-campo rotulo="Nome da empresa">
   <input class="input" type="text" maxlength="120" placeholder="Nome da empresa" [value]="nome()" (input)="nome.set(valorDe($event))">
 </app-campo>

@@ -27,7 +27,7 @@ describe('PedidoForm', () => {
   const escolherCliente = async (nome: string) =>
     clicar([...f.html.querySelectorAll('.lista-escolha button')].find(b => b.textContent!.includes(nome))!);
   const chip = (cat: string) => f.html.querySelector(`button.chip[data-categoria="${cat}"]`) as HTMLButtonElement;
-  const barra = () => [...f.html.querySelectorAll('.barra-total-form span')].map(e => e.textContent).join(' ');
+  const barra = () => [...f.html.querySelectorAll('.valores-form span, .barra-acoes-total span')].map(e => e.textContent).join(' ');
   const valores = (n: number, tipo: 'servicos' | 'pecas') => f.html.querySelectorAll<HTMLInputElement>(`input[data-valor="${tipo}"]`)[n];
   const seletores = () => f.html.querySelectorAll<HTMLElement>('app-seletor-itens');
   const checks = (seletor: HTMLElement) => [...seletor.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
@@ -42,7 +42,7 @@ describe('PedidoForm', () => {
     beforeEach(async () => { f = await montarFormulario(); });
 
     it('abre na etapa Cliente, com a dica e sem o botão Voltar', () => {
-      expect(textoDe(f.html.querySelector('form'))).toContain('Só o cliente é obrigatório — dá pra completar o resto depois.');
+      expect(textoDe(f.html.querySelector('form'))).toContain('Só o cliente é obrigatório. O resto pode ficar para depois.');
       expect(abaVisivel(f.html)).toEqual(['cliente']);
       expect(botao(f.html, 'Voltar').hidden).toBe(true);
       expect(botao(f.html, 'Avançar')).toBeTruthy();
@@ -98,12 +98,12 @@ describe('PedidoForm', () => {
 
     it('lista os clientes e busca por nome ou por telefone sem a formatação', async () => {
       const lista = () => [...f.html.querySelectorAll('.lista-escolha button')].map(b => textoDe(b));
-      expect(lista()).toEqual(['Maria Souza — (31) 98556-5586', 'João da Silva']);
+      expect(lista()).toEqual(['Maria Souza(31) 98556-5586', 'João da Silva']);
       const busca = f.html.querySelector('input[type=search]') as HTMLInputElement;
       await digitando(busca, 'joão');
       expect(lista()).toEqual(['João da Silva']);
       await digitando(busca, '9855');
-      expect(lista()).toEqual(['Maria Souza — (31) 98556-5586']);
+      expect(lista()).toEqual(['Maria Souza(31) 98556-5586']);
       await digitando(busca, 'xyz');
       expect(f.html.querySelector('.lista-escolha-vazia')?.textContent).toBe('Nenhum cliente encontrado');
     });
@@ -151,7 +151,7 @@ describe('PedidoForm', () => {
       expect(cache.tem('/api/clientes')).toBe(false);
       // o novo cliente entrou no catálogo do formulário
       await clicar(botao(f.html, 'Trocar'));
-      expect([...f.html.querySelectorAll('.lista-escolha button')].map(b => b.textContent)).toContain('Oficina Nova — (31) 98556-5586');
+      expect([...f.html.querySelectorAll('.lista-escolha button')].map(b => b.textContent)).toContain('Oficina Nova(31) 98556-5586');
     });
 
     it('cadastro rápido sem telefone manda telefone nulo', async () => {
@@ -261,7 +261,7 @@ describe('PedidoForm', () => {
       await clicar(chkJunta);
       await digitando(pecas.querySelector<HTMLInputElement>('input[type=number]')!, '3');
       await clicar(botao(pecas, 'Adicionar selecionados'));
-      const [tipo, valor] = [f.html.querySelector('.barra-total-form select') as HTMLSelectElement, f.html.querySelector('.barra-total-form input') as HTMLInputElement];
+      const [tipo, valor] = [f.html.querySelector('.valores-form select') as HTMLSelectElement, f.html.querySelector('.valores-form input') as HTMLInputElement];
       await digitando(tipo, 'PERCENTUAL');
       await digitando(valor, '10');
       await clicar(botao(f.html, 'Salvar'));
@@ -434,7 +434,7 @@ describe('PedidoForm', () => {
       // o mesmo nome em duas categorias mostra de qual é cada um
       await clicar(checks(servicos)[0]);
       await clicar(botao(servicos, 'Adicionar selecionados'));
-      expect(linhasDoPedido(servicos)).toEqual(['Plainar · Bloco', 'Plainar · Cabeçote']);
+      expect(linhasDoPedido(servicos)).toEqual(['Plainar (Bloco)', 'Plainar (Cabeçote)']);
     });
 
     it('peça: a quantidade só aparece ao marcar, vale no mínimo 1 e entra como "× n"', async () => {
@@ -555,8 +555,8 @@ describe('PedidoForm', () => {
     });
 
     const irParaItens = () => avancar();
-    const tipoDesconto = () => f.html.querySelector('.barra-total-form select') as HTMLSelectElement;
-    const valorDesconto = () => f.html.querySelector('.barra-total-form input') as HTMLInputElement;
+    const tipoDesconto = () => f.html.querySelector('.valores-form select') as HTMLSelectElement;
+    const valorDesconto = () => f.html.querySelector('.valores-form input') as HTMLInputElement;
 
     it('começa zerada, com as três linhas e o seletor de desconto', async () => {
       await irParaItens();
@@ -651,7 +651,7 @@ describe('PedidoForm', () => {
 
     it('desconto negativo também é recusado', async () => {
       await avancar();
-      await digitando(f.html.querySelector('.barra-total-form input') as HTMLInputElement, '-1');
+      await digitando(f.html.querySelector('.valores-form input') as HTMLInputElement, '-1');
       enviar();
       await esperar(f.fixture);
       expect(toast()).toContain('valor inválido');
@@ -768,7 +768,7 @@ describe('PedidoForm', () => {
   });
 
   describe('carga', () => {
-    it('mostra "Carregando..." até as respostas chegarem e pede os 5 catálogos de uma vez', async () => {
+    it('mostra "Carregando…" até as respostas chegarem e pede os 5 catálogos de uma vez', async () => {
       localStorage.clear();
       TestBed.configureTestingModule({
         providers: [...provedoresDeTela(), { provide: ActivatedRoute, useValue: { paramMap: new BehaviorSubject(convertToParamMap({})) } }],
@@ -776,7 +776,7 @@ describe('PedidoForm', () => {
       const http = TestBed.inject(HttpTestingController);
       const fixture = TestBed.createComponent(PedidoForm);
       await fixture.whenStable();
-      expect(textoDe(fixture.nativeElement)).toBe('Carregando...');
+      expect(textoDe(fixture.nativeElement)).toBe('Carregando…');
       const pedidos = http.match(() => true);
       expect(pedidos.map(r => r.request.url)).toEqual(CATALOGO_PATHS);
       pedidos.forEach(r => r.flush([]));
@@ -828,7 +828,7 @@ describe('PedidoForm', () => {
       expect(textoDe(f.html.querySelector('.cliente-selecionado'))).toContain('João da Silva');
       expect(abaVisivel(f.html)).toEqual(['componentes']);
       expect(valores(0, 'servicos').value).toBe('10');
-      expect(JSON.parse(localStorage.getItem('retifica_rascunhos')!)['7|3'].novo.titulo).toBe('João da Silva · Ditado');
+      expect(JSON.parse(localStorage.getItem('retifica_rascunhos')!)['7|3'].novo.titulo).toBe('João da Silva, Ditado');
     });
 
     it('cadastrarCliente abre o cadastro rápido com o nome', async () => {

@@ -24,11 +24,14 @@ export const CLASSE_SITUACAO: Record<string, string> = {
 /** Linha de pedido das listas (linhaPedido + tagSituacao do app.js). */
 @Component({
   selector: 'app-linha-pedido',
-  host: { style: 'display: contents' },
   template: `
     <div class="linha" (click)="abrir()">
       <div class="linha-topo">
-        <span class="linha-titulo">{{ pedido().clienteNome || '-' }}</span>
+        @if (pedido().clienteNome) {
+          <span class="linha-titulo">{{ pedido().clienteNome }}</span>
+        } @else {
+          <span class="linha-titulo nao-informado">Não informado</span>
+        }
         <span [class]="'tag ' + classeSituacao()">
           @if (pedido().situacao === 'Atrasado') {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
@@ -39,11 +42,18 @@ export const CLASSE_SITUACAO: Record<string, string> = {
           {{ pedido().situacao }}
         </span>
       </div>
-      <div class="linha-sub">{{ pedido().componentesResumo || '-' }}</div>
-      <div class="linha-meta">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+      @if (pedido().componentesResumo) {
+        <div class="linha-sub">{{ pedido().componentesResumo }}</div>
+      }
+      <div class="linha-rodape">
         <!-- nº do pedido = nº do orçamento no PDF (ex.: 0137) -->
-        <span>{{ meta() }}</span>
+        <span class="linha-meta">
+          <span>{{ numero() }}</span>
+          @if (pedido().dataEntrega) {
+            <span>{{ pedido().finalizado ? 'Entregue' : 'Entrega' }} {{ pedido().dataEntrega }}</span>
+          }
+        </span>
+        <span class="linha-valor">{{ valor() }}</span>
       </div>
     </div>
   `,
@@ -56,10 +66,12 @@ export class LinhaPedido {
     return CLASSE_SITUACAO[this.pedido().situacao] || 'tag-neutral';
   }
 
-  meta(): string {
-    const p = this.pedido();
-    return 'Nº ' + String(p.id).padStart(4, '0') + '  ·  ' + (p.finalizado ? 'Entregue ' : 'Entrega ')
-      + (p.dataEntrega || '-') + '  ·  ' + moeda(p.totalGeral);
+  numero(): string {
+    return 'Nº ' + String(this.pedido().id).padStart(4, '0');
+  }
+
+  valor(): string {
+    return moeda(this.pedido().totalGeral);
   }
 
   abrir(): void {

@@ -20,7 +20,7 @@ describe('Encerrados', () => {
     const fixture = TestBed.createComponent(Encerrados);
     expect((fixture.nativeElement as HTMLElement).textContent).toBe('');
     await fixture.whenStable();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carregando...');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Carregando…');
     http.expectOne('/api/pedidos/encerrados').flush(grupos);
     await esperar(fixture);
     return { fixture, html: fixture.nativeElement as HTMLElement };
@@ -33,7 +33,7 @@ describe('Encerrados', () => {
     expect(html.querySelector('.subtitulo')?.textContent).toBe('3 pedidos concluídos');
     const cabs = [...html.querySelectorAll<HTMLElement>('.accordion-cab')];
     expect(cabs.map(c => c.querySelector('.linha-titulo')?.textContent)).toEqual(['Outubro de 2026', 'Setembro de 2026']);
-    expect(cabs[0].querySelector('.accordion-meta')?.textContent).toContain('2 · R$ 1.500,00');
+    expect(cabs[0].querySelector('.accordion-meta')?.textContent).toContain('2 pedidos R$ 1.500,00');
     const corpos = [...html.querySelectorAll<HTMLElement>('.accordion-body')];
     expect(corpos[0].hidden).toBe(false);
     expect(corpos[1].hidden).toBe(true);

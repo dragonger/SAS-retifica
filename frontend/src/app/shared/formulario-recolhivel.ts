@@ -15,10 +15,11 @@ import { GuardaSaida } from '../core/guarda-saida.service';
 @Component({
   selector: 'app-formulario-recolhivel',
   template: `
-    <div style="margin-bottom:8px">
-      <button type="button" class="btn btn-secondary btn-block" style="gap:8px" [hidden]="aberto()" (click)="abrir(null)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>{{ rotuloNovo() }}
-      </button>
+    <div class="topo-lista">
+      <span class="subtitulo">{{ subtitulo() }}</span>
+      <button type="button" class="btn btn-primary btn-compacto" [hidden]="aberto()" (click)="abrir(null)">{{ rotuloNovo() }}</button>
+    </div>
+    <div class="espaco-abaixo">
       <div #caixa class="caixa-form elev-sm blueprint" [hidden]="!aberto()">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="caixa-form-titulo">{{ emEdicao() ? tituloEditar() : tituloNovo() }}</div>
@@ -31,6 +32,8 @@ export class FormularioRecolhivel<T = unknown> {
   private readonly dialogo = inject(DialogoService);
   private readonly injector = inject(Injector);
 
+  /** Contagem ou resumo da lista, na linha de topo ao lado do botão de novo item. */
+  readonly subtitulo = input('');
   readonly rotuloNovo = input.required<string>();
   readonly tituloNovo = input.required<string>();
   readonly tituloEditar = input.required<string>();
