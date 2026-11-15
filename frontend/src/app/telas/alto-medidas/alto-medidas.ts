@@ -19,7 +19,7 @@ export class AltoMedidas {
   private readonly dialogo = inject(DialogoService);
   private readonly alto = inject(AltoMedidasService);
 
-  /** null = "Carregando...". */
+  /** null = "Carregando…". */
   protected readonly dados = signal<ListaAltoMedidas | null>(null);
   /** Ids das OS com o PUT em andamento (botão desabilitado, "Salvando…"). */
   protected readonly salvando = signal<ReadonlySet<number>>(new Set());
@@ -76,7 +76,7 @@ export class AltoMedidas {
 
   private async carregar(): Promise<void> {
     const caminho = this.alto.caminhoDaLista();
-    if (!this.cache.tem(caminho)) this.dados.set(null); // "Carregando..." (mês ainda sem cache)
+    if (!this.cache.tem(caminho)) this.dados.set(null); // "Carregando…" (mês ainda sem cache)
     try {
       await this.cache.comCache<ListaAltoMedidas>(caminho, d => {
         // resposta atrasada de um mês que já não é o escolhido não sobrescreve a tela

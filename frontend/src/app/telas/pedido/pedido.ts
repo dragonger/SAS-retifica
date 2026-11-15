@@ -174,7 +174,7 @@ export class Pedido implements ComGuardaSaida {
     try {
       p = await this.api.get<PedidoDetalhe | null>('/api/pedidos/' + id);
     } catch {
-      return; // o interceptor já avisou; fica em "Carregando..."
+      return; // o interceptor já avisou; fica em "Carregando…"
     }
     if (minha !== this.carga || this.destruido) return; // usuário já saiu dessa tela
     if (!p) { this.pedido.set(null); return; }

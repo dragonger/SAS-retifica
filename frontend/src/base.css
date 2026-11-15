@@ -130,9 +130,10 @@ p, .subtitulo, .empty { text-wrap: pretty; }
 .app-bar-logo[hidden] { display: none; }
 .app-bar-logo { cursor: pointer; -webkit-tap-highlight-color: transparent; border-radius: var(--radius-sm, 6px); }
 .app-bar-logo:focus-visible { outline: 2px solid var(--color-accent-700); outline-offset: 2px; }
-.logo-area { display: flex; align-items: center; justify-content: center; min-height: 140px; padding: var(--space-4); margin-bottom: var(--space-3); border: 1px solid var(--color-neutral-300); border-radius: var(--radius-lg); background: var(--color-surface); }
+.logo-area { display: flex; align-items: center; justify-content: center; min-height: 96px; padding: var(--space-4); margin-bottom: var(--space-3); border: 1px solid var(--color-neutral-300); border-radius: var(--radius-lg); background: var(--color-surface); }
 .logo-previa { display: block; max-width: 220px; max-height: 190px; object-fit: contain; }
 .logo-area .logo-vazia { padding: 0; text-align: left; }
+.logo-area:not(:has(.logo-previa:not([hidden]))) { justify-content: flex-start; min-height: 0; max-height: 96px; }
 .oculto { display: none; }
 /* 44x44 minimo de area de toque (recomendacao Apple/Material) */
 .icon-btn {
@@ -665,3 +666,26 @@ app-bloco-agregado { display: block; margin-top: var(--space-6); }
 .tela-pedido { display: contents; }
 .linha-estatica { cursor: default; }
 .linha-estatica:active { background: var(--color-surface); }
+
+/* — cartão "Você deve ao Daniel", rascunhos e lista do Alto Medidas — */
+.card-devido { padding: 14px; }
+.card-devido-grande { padding: 18px; }
+.card-devido-tocavel { cursor: pointer; }
+.card-devido-titulo { margin-bottom: 4px; }
+.card-devido-valor { font-size: 24px; font-weight: 700; line-height: 1.1; }
+.card-devido-grande .card-devido-valor { font-size: 30px; }
+.card-devido-detalhe { font-size: 12px; color: var(--color-muted); margin-top: 4px; }
+.card-devido-extra { font-size: 12px; margin-top: 6px; padding-top: 6px; border-top: 1px solid color-mix(in srgb, var(--color-text) 14%, transparent); }
+.rascunhos-lista { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+.rascunho-cliente { font-size: 14px; }
+.rascunho-quando { font-size: 12px; color: var(--color-muted); margin: 2px 0 12px; }
+.btn-group-colado { margin: 0; }
+.btn-group-inicio { margin-top: 0; margin-bottom: 30px; }
+.cartao-daniel-espaco { margin-bottom: 18px; }
+.secao-espaco { margin-bottom: 22px; }
+.espaco-acima-xs { margin-top: 8px; }
+.linha-topo-base { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.linha-detalhe-os { font-size: 13px; color: var(--color-muted); }
+.linha-datas-os { font-size: 12px; color: var(--color-muted); }
+.linha-aviso-os { font-size: 12px; color: var(--color-danger); }
+.ditado-btn-voz { gap: 8px; }

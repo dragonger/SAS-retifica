@@ -9,7 +9,7 @@ export const PATH_ENCERRADOS_PEDIDOS = '/api/pedidos/encerrados';
 /**
  * Cache leve das telas (Início/Pedidos/Encerrados/Dashboard). Guarda a última
  * resposta de cada GET: ao reabrir a tela mostra o que já tem na hora (sem
- * "Carregando..." nem esperar rede) e busca de novo por trás; só redesenha
+ * "Carregando…" nem esperar rede) e busca de novo por trás; só redesenha
  * com o dado fresco se ele realmente mudou. Equivale a respostaCache /
  * cacheVersao / cacheInvalidar / comCache / carregarComCache do app.js.
  */
@@ -61,7 +61,7 @@ export class CacheService {
     return dado;
   }
 
-  /** True quando todos os caminhos já têm resposta guardada (a tela pode abrir sem "Carregando..."). */
+  /** True quando todos os caminhos já têm resposta guardada (a tela pode abrir sem "Carregando…"). */
   todosEmCache(paths: string[]): boolean {
     return paths.every(p => this.respostas.get(p) !== undefined);
   }

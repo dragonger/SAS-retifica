@@ -7,7 +7,7 @@ import { TopoService } from '../../core/topo.service';
 import { Campo } from '../../shared/campo';
 import { valorDe } from '../../shared/evento';
 
-/** Status de erro que a tela trata com mensagem própria (sem o toast genérico "Erro ao acessar..."). */
+/** Status de erro que a tela trata com mensagem própria (sem o toast genérico "Erro ao acessar…"). */
 const ERROS_PROPRIOS = Array.from({ length: 200 }, (_, i) => 400 + i);
 
 /** Trocar senha (#/trocar-senha): telaTrocarSenha do app.js. O botão do topo continua escondido, como hoje. */

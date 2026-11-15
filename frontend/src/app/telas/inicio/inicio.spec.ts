@@ -62,7 +62,7 @@ describe('Inicio', () => {
     expect(cartao.textContent).toContain('Você deve ao Daniel');
     expect(cartao.textContent).toContain('R$ 1.234,50');
     expect(cartao.textContent).toContain('2 virabrequins que o cliente já pagou. Toque para conferir');
-    expect(cartao.style.padding).toBe('14px');
+    expect(cartao.classList.contains('card-devido-pequeno')).toBe(true);
     expect(cartao.compareDocumentPosition(html.querySelector('.stat-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const ir = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     cartao.click();

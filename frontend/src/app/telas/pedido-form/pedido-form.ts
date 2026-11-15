@@ -137,7 +137,7 @@ export class PedidoForm implements ComGuardaSaida {
         id ? this.api.get<PedidoDetalhe | null>('/api/pedidos/' + id) : Promise.resolve(null),
       ]);
     } catch {
-      return; // o interceptor já avisou; fica em "Carregando..."
+      return; // o interceptor já avisou; fica em "Carregando…"
     }
     if (minha !== this.carga || this.destruido) return; // usuário já saiu dessa tela
     if (id && !pedido) { this.naoEncontrado.set(true); return; }

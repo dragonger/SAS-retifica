@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 /**
  * Códigos HTTP que o chamador trata com mensagem própria: o interceptor não
- * mostra o toast genérico "Erro ao acessar..." para eles (evita dois avisos).
+ * mostra o toast genérico "Erro ao acessar…" para eles (evita dois avisos).
  */
 export const STATUS_SEM_AVISO = new HttpContextToken<readonly number[]>(() => []);
 

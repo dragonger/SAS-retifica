@@ -3,7 +3,7 @@
 
   <app-secao-rascunhos />
   @if (daniel(); as r) {
-    <div style="margin-bottom:22px">
+    <div class="secao-espaco">
       <app-cartao-devido-ao-daniel [valor]="r.devidoAoDaniel" [quantidade]="r.quantidadeDevida" [tocavel]="true" (tocar)="abrirAltoMedidas()" />
     </div>
   }
@@ -38,7 +38,7 @@
     }
   </div>
 
-  <div class="btn-group" style="margin-top:0;margin-bottom:30px">
+  <div class="btn-group btn-group-inicio">
     <button type="button" class="btn btn-primary" (click)="novoPedido()">Novo pedido</button>
     <button type="button" class="btn btn-secondary" (click)="irParaPedidos()">Ver pedidos</button>
   </div>

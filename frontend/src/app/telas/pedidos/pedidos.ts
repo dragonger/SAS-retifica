@@ -61,7 +61,7 @@ export class Pedidos {
 
   protected readonly clientesOrdenados = computed(() =>
     (this.clientes() ?? []).slice().sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR')));
-  /** Cliente da URL ainda não carregado: o select mostra "Carregando..." com o id dele. */
+  /** Cliente da URL ainda não carregado: o select mostra "Carregando…" com o id dele. */
   protected readonly clienteCarregando = computed(() => this.clientes() === null && this.clienteSel() !== '');
 
   private readonly termo = computed(() => semAcentoBusca(this.busca()));

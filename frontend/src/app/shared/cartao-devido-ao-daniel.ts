@@ -6,13 +6,13 @@ import { moeda, textoQuantidade } from './formatacao';
   selector: 'app-cartao-devido-ao-daniel',
   host: { style: 'display: contents' },
   template: `
-    <div class="card-destaque elev-md blueprint" [style]="estilo()" (click)="tocar.emit()">
+    <div class="card-destaque elev-md blueprint" [class]="'card-devido ' + (grande() ? 'card-devido-grande' : 'card-devido-pequeno') + (tocavel() ? ' card-devido-tocavel' : '')" (click)="tocar.emit()">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="card-destaque-titulo" style="margin-bottom:4px">Você deve ao Daniel</div>
-      <div [style]="'font-size:' + (grande() ? '30px' : '24px') + ';font-weight:700;line-height:1.1'">{{ moedaValor() }}</div>
-      <div style="font-size:12px;opacity:.65;margin-top:4px">{{ detalhe() }}</div>
+      <div class="card-destaque-titulo card-devido-titulo">Você deve ao Daniel</div>
+      <div class="card-devido-valor">{{ moedaValor() }}</div>
+      <div class="card-devido-detalhe">{{ detalhe() }}</div>
       @if (linhaExtra()) {
-        <div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:1px solid color-mix(in srgb, var(--color-text) 14%, transparent)">{{ linhaExtra() }}</div>
+        <div class="card-devido-extra">{{ linhaExtra() }}</div>
       }
     </div>
   `,
@@ -27,8 +27,6 @@ export class CartaoDevidoAoDaniel {
   readonly tocar = output<void>();
 
   protected readonly moedaValor = computed(() => moeda(this.valor()));
-  protected readonly estilo = computed(() =>
-    'padding:' + (this.grande() ? '18px' : '14px') + (this.tocavel() ? ';cursor:pointer' : ''));
   protected readonly detalhe = computed(() =>
     textoQuantidade(this.quantidade()) + ' que o cliente já pagou' + (this.tocavel() ? '. Toque para conferir' : ''));
 }

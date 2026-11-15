@@ -66,7 +66,7 @@ export interface OpcoesFormulario {
   preparar?: () => void;
   /** O servidor tem o ditado ligado (GET /api/ditado/status)? Padrão: não. Só é perguntado em pedido novo. */
   ditado?: boolean;
-  /** Responde ao aviso "Você tem um pedido incompleto..." (se aparecer) antes de seguir. */
+  /** Responde ao aviso "Você tem um pedido incompleto…" (se aparecer) antes de seguir. */
   resposta?: 'continuar' | 'descartar';
 }
 

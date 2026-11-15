@@ -13,14 +13,14 @@ import { haQuanto, rotaDoRascunho } from './rascunho-pedido';
   host: { style: 'display: contents' },
   template: `
     @if (lista().length) {
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px">
+      <div class="rascunhos-lista">
         @for (r of lista(); track r.chave) {
-          <div class="card-destaque elev-md blueprint" style="padding:14px">
+          <div class="card-destaque elev-md blueprint">
             <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-            <div class="card-destaque-titulo" style="margin-bottom:4px">{{ titulo(r) }}</div>
-            <div style="font-size:14px">{{ r.titulo || 'Sem cliente' }}</div>
-            <div style="font-size:12px;opacity:.6;margin:2px 0 12px">{{ 'Guardado ' + haQuanto(r.quando) + ' neste aparelho' }}</div>
-            <div class="btn-group" style="margin:0">
+            <div class="card-destaque-titulo card-devido-titulo">{{ titulo(r) }}</div>
+            <div class="rascunho-cliente">{{ r.titulo || 'Sem cliente' }}</div>
+            <div class="rascunho-quando">{{ 'Guardado ' + haQuanto(r.quando) + ' neste aparelho' }}</div>
+            <div class="btn-group btn-group-colado">
               <button type="button" class="btn btn-primary" (click)="continuar(r)">Continuar</button>
               <button type="button" class="btn btn-secondary" (click)="descartar(r)">Descartar</button>
             </div>

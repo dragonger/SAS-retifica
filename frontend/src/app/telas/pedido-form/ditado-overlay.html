@@ -10,7 +10,7 @@
           <p class="ditado-nota ditado-erro">{{ mensagem }}</p>
         }
         @if (comVoz) {
-          <button type="button" class="btn btn-secondary btn-block" style="gap:8px" [class.ditado-gravando]="ouvindo()" (click)="alternarVoz()">
+          <button type="button" class="btn btn-secondary btn-block ditado-btn-voz" [class.ditado-gravando]="ouvindo()" (click)="alternarVoz()">
             <app-icone-microfone />{{ ouvindo() ? 'Parar' : 'Falar' }}
           </button>
         } @else {
