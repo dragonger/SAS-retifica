@@ -97,6 +97,37 @@ public class UsuarioRepository {
         }
     }
 
+    /**
+     * Troca o hash da senha e sobe a versão das sessões numa transação só: ou muda os dois, ou nenhum.
+     * Devolve a versão nova, ou null se o usuário não existe.
+     */
+    public Integer trocarSenha(Long id, String novoHash) {
+        EntityManager em = JPAUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            int alterados = em.createQuery(
+                            "UPDATE UsuarioModel u SET u.senhaHash = :hash, "
+                                    + "u.sessaoVersao = COALESCE(u.sessaoVersao, 0) + 1 WHERE u.id = :id")
+                    .setParameter("hash", novoHash)
+                    .setParameter("id", id)
+                    .executeUpdate();
+            Integer nova = alterados == 0 ? null
+                    : em.createQuery("SELECT u.sessaoVersao FROM UsuarioModel u WHERE u.id = :id", Integer.class)
+                            .setParameter("id", id)
+                            .getSingleResult();
+            tx.commit();
+            return nova;
+        } catch (RuntimeException e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
+    }
+
     public long contar() {
         EntityManager em = JPAUtil.getEntityManager();
         try {

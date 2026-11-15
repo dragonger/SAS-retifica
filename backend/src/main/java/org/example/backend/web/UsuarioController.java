@@ -1,5 +1,6 @@
 package org.example.backend.web;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.example.backend.dto.TrocarSenhaRequestDTO;
 import org.example.backend.security.JwtUtil;
 import org.example.backend.security.SecurityUtils;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/usuario")
 public class UsuarioController {
 
+    static final String HEADER_RENOVACAO = "X-Auth-Refresh";
+
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private final PasswordEncoder passwordEncoder;
     private final SessaoService sessoes;
@@ -32,11 +35,11 @@ public class UsuarioController {
 
     /**
      * Troca a senha e derruba todas as outras sessões do usuário (quem tinha a senha antiga deixa de
-     * entrar). Este aparelho continua: o token novo vai no X-Auth-Refresh, que o front já guarda.
+     * entrar), numa transação só. Este aparelho continua: o token novo vai no X-Auth-Refresh, que o
+     * front já guarda.
      */
-
     @PutMapping("/senha")
-    public ResponseEntity<Void> trocarSenha(@RequestBody TrocarSenhaRequestDTO request) {
+    public ResponseEntity<Void> trocarSenha(@RequestBody TrocarSenhaRequestDTO request, HttpServletResponse response) {
         if (SecurityUtils.ehDemo()) {
             return ResponseEntity.status(403).build(); // o usuário da demonstração não tem senha conhecida
         }
@@ -50,9 +53,12 @@ public class UsuarioController {
         if (request.senhaAtual == null || !passwordEncoder.matches(request.senhaAtual, usuario.getSenhaHash())) {
             return ResponseEntity.status(401).build();
         }
-        usuario.setSenhaHash(passwordEncoder.encode(request.novaSenha));
-        usuarioRepository.salvar(usuario);
-        return ResponseEntity.noContent().header("X-Auth-Refresh", revogarOutras(usuario)).build();
+        String novoHash = passwordEncoder.encode(request.novaSenha);
+        int versao = sessoes.trocarSenha(usuario.getId(), novoHash);
+        usuario.setSenhaHash(novoHash);
+        usuario.setSessaoVersao(versao);
+        renovarToken(response, usuario);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -60,7 +66,7 @@ public class UsuarioController {
      * outra pessoa) e mantém só este, com um token novo no X-Auth-Refresh.
      */
     @PostMapping("/sair-dos-outros-aparelhos")
-    public ResponseEntity<Void> sairDosOutrosAparelhos() {
+    public ResponseEntity<Void> sairDosOutrosAparelhos(HttpServletResponse response) {
         if (SecurityUtils.ehDemo()) {
             return ResponseEntity.status(403).build();
         }
@@ -68,12 +74,16 @@ public class UsuarioController {
         if (usuario == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.noContent().header("X-Auth-Refresh", revogarOutras(usuario)).build();
+        usuario.setSessaoVersao(sessoes.revogarTodas(usuario.getId()));
+        renovarToken(response, usuario);
+        return ResponseEntity.noContent().build();
     }
 
-    /** Sobe a versão das sessões e devolve um token na versão nova para o aparelho que pediu. */
-    private String revogarOutras(UsuarioModel usuario) {
-        usuario.setSessaoVersao(sessoes.revogarTodas(usuario.getId()));
-        return jwtUtil.gerar(usuario);
+    /**
+     * Põe o token na versão nova no X-Auth-Refresh. Usa setHeader porque o JwtAuthFilter já pode ter
+     * posto um token renovado (na versão antiga) ali: o valor novo substitui, sem ficar "A, B".
+     */
+    private void renovarToken(HttpServletResponse response, UsuarioModel usuario) {
+        response.setHeader(HEADER_RENOVACAO, jwtUtil.gerar(usuario));
     }
 }

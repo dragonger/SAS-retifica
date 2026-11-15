@@ -91,4 +91,49 @@ describe('AuthService', () => {
     auth.limpar();
     expect(auth.demoExpiraEm()).toBeNull();
   });
+
+  describe('gravarToken não troca por token mais velho', () => {
+    const tokenAtual = () => auth.lerAuth()?.token;
+
+    it('sv menor não substitui', () => {
+      const atual = jwt({ usuarioId: 1, sv: 2, iat: 100 });
+      auth.gravar({ token: atual });
+      auth.gravarToken(jwt({ usuarioId: 1, sv: 1, iat: 999 }));
+      expect(tokenAtual()).toBe(atual);
+    });
+
+    it('sv ausente conta como 0', () => {
+      const atual = jwt({ usuarioId: 1, sv: 1, iat: 100 });
+      auth.gravar({ token: atual });
+      auth.gravarToken(jwt({ usuarioId: 1, iat: 999 }));
+      expect(tokenAtual()).toBe(atual);
+    });
+
+    it('sv igual e iat menor não substitui', () => {
+      const atual = jwt({ usuarioId: 1, sv: 1, iat: 200 });
+      auth.gravar({ token: atual });
+      auth.gravarToken(jwt({ usuarioId: 1, sv: 1, iat: 100 }));
+      expect(tokenAtual()).toBe(atual);
+    });
+
+    it('sv igual e iat maior ou igual substitui', () => {
+      auth.gravar({ token: jwt({ usuarioId: 1, sv: 1, iat: 100 }) });
+      const novo = jwt({ usuarioId: 1, sv: 1, iat: 200 });
+      auth.gravarToken(novo);
+      expect(tokenAtual()).toBe(novo);
+    });
+
+    it('sv maior substitui, mesmo com iat menor', () => {
+      auth.gravar({ token: jwt({ usuarioId: 1, sv: 1, iat: 500 }) });
+      const novo = jwt({ usuarioId: 1, sv: 2, iat: 100 });
+      auth.gravarToken(novo);
+      expect(tokenAtual()).toBe(novo);
+    });
+
+    it('token não decodificável substitui como antes', () => {
+      auth.gravar({ token: jwt({ usuarioId: 1, sv: 5, iat: 500 }) });
+      auth.gravarToken('tk-novo');
+      expect(tokenAtual()).toBe('tk-novo');
+    });
+  });
 });

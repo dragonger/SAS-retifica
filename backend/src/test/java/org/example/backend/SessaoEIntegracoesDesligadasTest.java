@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.example.backend.security.JwtUtil;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,6 +57,27 @@ class SessaoEIntegracoesDesligadasTest {
             usuarioId = new org.example.repository.UsuarioRepository().salvar(u).getId();
         }
         return usuarioId;
+    }
+
+    @AfterAll
+    static void apagaUsuarioSintetico() {
+        if (usuarioId == null) {
+            return;
+        }
+        var em = org.example.persistence.JPAUtil.getEntityManager();
+        var tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.createQuery("DELETE FROM UsuarioModel u WHERE u.id = :id").setParameter("id", usuarioId).executeUpdate();
+            tx.commit();
+        } catch (RuntimeException e) {
+            if (tx.isActive()) {
+                tx.rollback();
+            }
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 
     private static String tokenQueExpiraEm(long dias) {
